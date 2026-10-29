@@ -14,6 +14,7 @@
     }
   },
   "scripts": {
+    "setup:browsers": "pnpm --filter @teamtown/website exec playwright install chromium",
     "dev": "turbo run dev --filter=@teamtown/server --filter=@teamtown/web",
     "dev:desktop": "turbo run dev --filter=@teamtown/desktop",
     "dev:website": "turbo run dev --filter=@teamtown/website",

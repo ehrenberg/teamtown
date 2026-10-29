@@ -52,7 +52,7 @@ room meetings (open/knock/locked), channels and DMs with scoped roles.
 
 | Task                                                          | Command                                                                                      |
 | ------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| Install (also downloads Node 24 for this project)             | `pnpm install`                                                                               |
+| Install (also downloads Node 24 for this project)             | `pnpm install`, then once `pnpm setup:browsers` (Chromium for website diagrams)              |
 | Backing services (Postgres, Keycloak, LiveKit, observability) | `pnpm stack:up` / `pnpm stack:down`                                                          |
 | Server + web client in dev mode                               | `pnpm dev` (web on :5173, API on :3000)                                                      |
 | Desktop shell / website                                       | `pnpm dev:desktop` / `pnpm dev:website`                                                      |

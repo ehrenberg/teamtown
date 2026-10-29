@@ -30,6 +30,10 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      # Needed by the website's typecheck and build: Astro renders Mermaid diagrams via Playwright (decision N-07).
+      - name: Chromium for build-time Mermaid rendering (website)
+        run: pnpm --filter @teamtown/website exec playwright install --with-deps chromium
+
       - name: DCO sign-off
         if: github.event_name == 'pull_request'
         run: pnpm check:dco ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }}
@@ -40,8 +44,5 @@ jobs:
       - run: pnpm arch
       - run: pnpm tokens:check
       - run: pnpm test
-      - name: Chromium for build-time Mermaid rendering (website)
-        run: pnpm --filter @teamtown/website exec playwright install --with-deps chromium
-
       - run: pnpm build
       - run: pnpm check:licenses

@@ -30,6 +30,7 @@ Requirements: [pnpm](https://pnpm.io) 12 and Docker. Node.js 24 is downloaded by
 
 ```bash
 pnpm install       # dependencies + Git hooks
+pnpm setup:browsers  # Chromium for rendering the docs diagrams (once)
 pnpm stack:up      # Postgres, Keycloak, LiveKit, observability (see docker/README.md)
 pnpm dev           # server on :3000, web client on http://localhost:5173
 pnpm check         # everything CI checks

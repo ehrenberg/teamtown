@@ -8,6 +8,7 @@ and the [idea catalogue](docs/product/brainstorming.md).
 
 ```bash
 pnpm install     # pnpm 12; downloads Node 24 for this project and installs the Git hooks
+pnpm setup:browsers  # once: Chromium for build-time Mermaid diagrams on the website
 pnpm stack:up    # backing services in Docker
 pnpm dev         # server + web client
 pnpm check       # format, lint, types, architecture rules, tokens, tests, licences
