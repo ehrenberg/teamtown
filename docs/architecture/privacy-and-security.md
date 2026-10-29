@@ -11,7 +11,8 @@ Privacy is TeamTown's #1 quality goal. Decided: **live position, no history**
    Aggregated, anonymous, instance-wide metrics (e.g. "concurrent users") are allowed for operations.
 3. **No meeting history by default.** Who met whom is not stored. (Messages in room walls are, of course,
    persisted like any channel message.) A room host may explicitly start a **logged meeting** (ADR-0026).
-   Only then are the title, participants and times stored, and this is shown before and during the meeting.
+   Only then are the title, participants and times stored. Each participant must explicitly consent before
+   joining, and logs are deleted automatically after the configured retention period (default 90 days, ADR-0027).
 4. **Visibility control.** Every person can switch to ghost mode or focus mode at any time.
 5. **Transparency.** An in-app page "What TeamTown stores about you" lists exactly what is persisted.
 6. **Telemetry without personal data.** In logs, metrics and traces (ADR-0019), log person IDs only where needed for debugging, never positions or

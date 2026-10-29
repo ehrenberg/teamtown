@@ -7,14 +7,7 @@ Legend: 💡 = recommendation by the architect (not a decision).
 
 ## Open
 
-| ID | Question | Options | 💡 Recommendation |
-|----|----------|---------|-------------------|
-| N-01 | **GitHub username** for the repository path `<github-user>/teamtown` | | |
-| N-02 | **Logged meetings:** consent and retention details. Is entering a room with a visible "logged" indicator enough, or must each participant confirm explicitly? How long are logs kept? | implicit with indicator / explicit confirmation; retention fixed / configurable | Explicit one-click confirmation on joining; retention configurable by admins, default 90 days |
-| N-03 | **Code of conduct enforcement contact** (required by Contributor Covenant) | dedicated e-mail / GitHub Discussions moderators / … | A dedicated project address, e.g. `conduct@teamtown.bastianswelt.de` |
-| N-04 | **Observability retention** and **Grafana hostname** | e.g. 7 / 14 / 30 days; `grafana.teamtown.bastianswelt.de` or a path on `demo.` | 7 days; own subdomain behind Caddy auth |
-| N-05 | **LiveKit hostname** (signalling + TURN) | `rtc.teamtown.bastianswelt.de` / other | `rtc.…` |
-| N-06 | **netcup product** for the VPS (with the always-on observability stack) | e.g. VPS 2000/4000 G11 or a root server | At least 8 vCores / 16 GB RAM |
+*No open questions right now.* New questions are added here as they come up (template: ID, question, options, recommendation).
 
 ## Decision log (2026-10-29)
 
@@ -55,3 +48,11 @@ Legend: 💡 = recommendation by the architect (not a decision).
 | O-08 | GitHub location | Personal account, repo `teamtown` (username → N-01) | workflow.md |
 | O-09 | Git repository | Initialised with a first commit | — |
 | O-10 | Code of conduct & security reporting | Contributor Covenant 2.1 + GitHub private vulnerability reporting | CODE_OF_CONDUCT.md, SECURITY.md |
+| N-01 | GitHub username | `ehrenberg` → repository `ehrenberg/teamtown` | workflow.md, deployment.md |
+| N-02 | Logged-meeting consent & retention | Explicit consent by click; retention configurable, default 90 days | ADR-0027 |
+| N-03 | Code of conduct contact | Via GitHub (maintainer @ehrenberg, "Report content") | CODE_OF_CONDUCT.md |
+| N-04 | Observability retention, Grafana host | Logs and traces 7 days, metrics 30 days; `grafana.teamtown.bastianswelt.de` | deployment.md |
+| N-05 | LiveKit host | `rtc.teamtown.bastianswelt.de` | deployment.md |
+| N-06 | netcup product | Chosen by the owner when ordering (minimum 8 vCores / 16 GB) | deployment.md |
+| — | Commit identity | GitHub noreply address `2414183+ehrenberg@users.noreply.github.com` (repo-local git config) | — |
+| — | `.idea/` | Ignored, stays local | .gitignore |

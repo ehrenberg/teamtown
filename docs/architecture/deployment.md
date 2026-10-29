@@ -23,8 +23,8 @@ Base domain: `teamtown.bastianswelt.de` (the owner still has to create it).
 | `teamtown.bastianswelt.de` | Landing page; documentation under `/docs` | Classic webhosting |
 | `demo.teamtown.bastianswelt.de` | TeamTown app: web client, REST API, WebSocket | netcup VPS (Caddy) |
 | `auth.teamtown.bastianswelt.de` | Keycloak | netcup VPS (Caddy) |
-| LiveKit signalling / TURN | open question | netcup VPS |
-| Grafana (admin only) | open question | netcup VPS (Caddy + auth) |
+| `rtc.teamtown.bastianswelt.de` | LiveKit signalling + TURN | netcup VPS |
+| `grafana.teamtown.bastianswelt.de` | Grafana (admin only) | netcup VPS (Caddy + login) |
 
 ## Topology (showcase)
 
@@ -72,7 +72,7 @@ flowchart LR
 | `keycloak` | OIDC identity provider (pre-configured realm export) |
 | `livekit` | WebRTC SFU with built-in TURN |
 | `postgres` | Databases for TeamTown (one schema per module) and Keycloak |
-| `otel-collector`, `prometheus`, `loki`, `tempo`, `grafana` | Observability stack, always on (ADR-0019) |
+| `otel-collector`, `prometheus`, `loki`, `tempo`, `grafana` | Observability stack, always on (ADR-0019). Retention: logs and traces **7 days**, metrics **30 days** *(decided)* |
 
 Volumes: `postgres-data`, `files` (uploads, ADR-0017), `prometheus-data`, `loki-data`, `tempo-data`, `grafana-data`, `caddy-data`.
 Backups must cover the PostgreSQL dumps **and** the `files` volume.
@@ -87,7 +87,7 @@ The always-on observability stack adds about 1.5–2 GB RAM.
 | 50–500 | 8+ vCPU, 16–32 GB RAM; LiveKit possibly on its own host |
 
 Audio/video bandwidth dominates the cost, because with an SFU every subscribed stream is routed through the server.
-The concrete netcup product is an open question.
+The concrete netcup product is chosen by the owner when ordering. Minimum recommendation: 8 vCores / 16 GB RAM.
 
 ## Static website on the webhosting
 
@@ -98,7 +98,7 @@ The concrete netcup product is an open question.
 ## Desktop app distribution
 
 Built with electron-builder in GitHub Actions and published as **GitHub Releases** under
-`<github-user>/teamtown`. Builds are **unsigned at first**: the docs explain the SmartScreen (Windows) and
+`ehrenberg/teamtown`. Builds are **unsigned at first**: the docs explain the SmartScreen (Windows) and
 Gatekeeper (macOS) warnings. Auto-update works on Windows and Linux; macOS needs manual updates until signing is added.
 
 ## Showcase demo mode (decided)

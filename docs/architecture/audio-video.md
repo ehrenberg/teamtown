@@ -38,7 +38,7 @@ participants in a meeting never accidentally hear the floor.
 | Video layout | Small video bubbles above avatars in proximity; a grid view in room calls |
 | Screen share | Room calls and direct calls; shows on the room's wall screen in the world |
 | Simulcast / adaptive stream | On (LiveKit), so bandwidth scales with what is visible |
-| Logged meetings | Opt-in by the room host; metadata only (title, participants, times), visibly indicated *(decided, ADR-0026)* |
+| Logged meetings | Opt-in by the room host; metadata only (title, participants, times); each participant consents explicitly by clicking "Join"; retention configurable, default 90 days *(decided, ADR-0026/0027)* |
 | Recording | Not in the MVP. If added: explicit consent of all participants plus a visible indicator |
 
 ## 5. Desktop specifics (Electron)

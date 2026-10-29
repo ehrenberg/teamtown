@@ -1,6 +1,6 @@
 # Development Workflow
 
-Decided: code on **GitHub** under the owner's personal account (`<github-user>/teamtown`), CI/CD with
+Decided: code on **GitHub** under the owner's personal account ([`ehrenberg/teamtown`](https://github.com/ehrenberg/teamtown)), CI/CD with
 **GitHub Actions** (ADR-0013), DCO sign-off. Items marked (proposal) are not yet confirmed.
 
 ## Branching & commits

@@ -31,3 +31,4 @@ See [ADR-0001](0001-record-architecture-decisions.md) for the process. New ADRs 
 | [0024](0024-search-postgres-fts-no-telemetry.md) | PostgreSQL full-text search; no telemetry | Accepted |
 | [0025](0025-showcase-hosting-and-website.md) | netcup VPS, hostnames, Astro + Starlight website | Accepted |
 | [0026](0026-admin-access-and-meeting-logs.md) | Admins can't read private content; opt-in meeting logs | Accepted |
+| [0027](0027-logged-meeting-consent-and-retention.md) | Explicit consent and retention for logged meetings | Accepted |

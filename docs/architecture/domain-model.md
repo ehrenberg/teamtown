@@ -96,7 +96,8 @@ flowchart TB
 - **`DirectCall`**: `caller`, `callee`, `state: ringing | active | ended`.
 - **`KnockRequest`**: `roomId`, `requester`, `state`, `expiresAt`.
 - **`MeetingLog`** (the only persisted Meetings aggregate; created only by explicit host action, ADR-0026):
-  `roomId`, `title`, `participants[]`, `startedAt`, `endedAt?`.
+  `roomId`, `title`, `participants[]`, `consents[] {personId, consentedAt}`, `startedAt`, `endedAt?`, `expiresAt`.
+  Invariant: only persons with a recorded consent are participants (ADR-0027).
 
 ### Messaging
 - **`Channel`** (root): `kind`, `name`, `visibility`, `memberships[]`, `archived`.

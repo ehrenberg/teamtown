@@ -8,7 +8,7 @@
 - [Brainstorming: idea catalogue](product/brainstorming.md): all feature ideas, rated
 - [MVP scope](product/mvp-scope.md)
 - [Roadmap](product/roadmap.md)
-- [Open questions](product/open-questions.md) ⬅ **decisions needed**
+- [Open questions & decision log](product/open-questions.md)
 
 ## Architecture
 - [Overview (arc42-lite)](architecture/overview.md): quality goals, containers, runtime scenarios
