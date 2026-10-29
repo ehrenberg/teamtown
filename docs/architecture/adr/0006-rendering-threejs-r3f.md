@@ -17,11 +17,11 @@ Electron, integrate with a React UI and perform well on office laptops.
 
 ## Alternatives considered
 
-| Option | Why not |
-|--------|---------|
+| Option                | Why not                                                                         |
+| --------------------- | ------------------------------------------------------------------------------- |
 | PixiJS (2.5D sprites) | No camera rotation; depth sorting and multi-angle sprites must be built by hand |
-| Babylon.js | Heavier, weaker React integration |
-| Godot/Unity WebGL | Bundle size, UI integration, accessibility |
+| Babylon.js            | Heavier, weaker React integration                                               |
+| Godot/Unity WebGL     | Bundle size, UI integration, accessibility                                      |
 
 ## Consequences
 

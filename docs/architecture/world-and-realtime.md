@@ -11,11 +11,11 @@ Details marked **(proposal)** are open for discussion.
 The office is a **2D tile grid with height information**, rendered in 3D. The grid makes three hard
 problems easy:
 
-| Problem | Solved by the grid |
-|---------|--------------------|
-| Editing a real floor plan | Draw walls and rooms on tile edges, snap furniture to tiles |
-| Pathfinding & collision | A* on walkable tiles; walls are blocked edges between tiles |
-| Synchronisation | Positions are small integers (tile coordinates) plus a path, not floats streamed at 60 Hz |
+| Problem                   | Solved by the grid                                                                        |
+| ------------------------- | ----------------------------------------------------------------------------------------- |
+| Editing a real floor plan | Draw walls and rooms on tile edges, snap furniture to tiles                               |
+| Pathfinding & collision   | A* on walkable tiles; walls are blocked edges between tiles                               |
+| Synchronisation           | Positions are small integers (tile coordinates) plus a path, not floats streamed at 60 Hz |
 
 - **Tile size (proposal):** 1 tile = 0.5 m × 0.5 m in real-world scale. A 30 × 20 m office is a 60 × 40 grid.
 - **Walls** live on **tile edges**, not on tiles. That gives thin walls and real room shapes.
@@ -34,13 +34,13 @@ problems easy:
 
 ### Performance budget (proposal)
 
-| Item | Budget |
-|------|--------|
-| Draw calls per frame | < 150 (instancing, merged static geometry per floor) |
-| Triangles per avatar | ≤ 1,500 |
-| Triangles per floor (static) | ≤ 150k |
-| Texture memory | ≤ 64 MB |
-| Target | 60 fps with 50 avatars on an integrated GPU; performance mode 30 fps |
+| Item                         | Budget                                                               |
+| ---------------------------- | -------------------------------------------------------------------- |
+| Draw calls per frame         | < 150 (instancing, merged static geometry per floor)                 |
+| Triangles per avatar         | ≤ 1,500                                                              |
+| Triangles per floor (static) | ≤ 150k                                                               |
+| Texture memory               | ≤ 64 MB                                                              |
+| Target                       | 60 fps with 50 avatars on an integrated GPU; performance mode 30 fps |
 
 ## 3. Movement synchronisation: paths, not positions
 

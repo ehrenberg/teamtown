@@ -1,0 +1,21 @@
+---
+import Default from '@astrojs/starlight/components/Footer.astro';
+import { LEGAL_LINKS } from '../legal.ts';
+---
+
+<Default><slot /></Default>
+<nav class="legal" aria-label="Legal">
+  {LEGAL_LINKS.map((link) => <a href={link.href}>{link.label}</a>)}
+</nav>
+
+<style>
+  .legal {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+    font-size: var(--sl-text-sm);
+  }
+  .legal a {
+    color: var(--sl-color-gray-3);
+  }
+</style>

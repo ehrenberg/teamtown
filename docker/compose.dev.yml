@@ -1,0 +1,105 @@
+# TeamTown development stack. Start with `pnpm stack:up`, stop with `pnpm stack:down`.
+# The TeamTown server and web client run on the host (`pnpm dev`) and use these services.
+# Credentials here are for local development only, never use them in production.
+name: teamtown-dev
+
+services:
+  postgres:
+    image: postgres:18.6-alpine
+    environment:
+      POSTGRES_USER: teamtown
+      POSTGRES_PASSWORD: teamtown
+      POSTGRES_DB: teamtown
+    ports: ['5432:5432']
+    volumes:
+      - postgres-data:/var/lib/postgresql
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U teamtown']
+      interval: 5s
+      retries: 10
+
+  keycloak:
+    image: keycloak/keycloak:26.8.1
+    command: ['start-dev', '--import-realm']
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: teamtown
+      KC_DB_PASSWORD: teamtown
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_HEALTH_ENABLED: 'true'
+    ports: ['8080:8080']
+    volumes:
+      - ./keycloak/realm-teamtown.json:/opt/keycloak/data/import/realm-teamtown.json:ro
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  livekit:
+    image: livekit/livekit-server:v1.13.11
+    # --dev uses the API key "devkey" with secret "secret".
+    command: ['--dev', '--bind', '0.0.0.0']
+    ports:
+      - '7880:7880'
+      - '7881:7881'
+      - '7882:7882/udp'
+
+  # ---- Observability (ADR-0019): always part of the stack ----
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.164.0
+    command: ['--config=/etc/otelcol/config.yaml']
+    volumes:
+      - ./observability/otel-collector.yaml:/etc/otelcol/config.yaml:ro
+    ports:
+      - '4317:4317'
+      - '4318:4318'
+    depends_on: [loki, tempo]
+
+  prometheus:
+    image: prom/prometheus:v3.15.1
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=30d
+      - --web.enable-otlp-receiver
+    volumes:
+      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    ports: ['9090:9090']
+
+  loki:
+    image: grafana/loki:3.7.9
+    command: ['-config.file=/etc/loki/config.yaml']
+    volumes:
+      - ./observability/loki.yaml:/etc/loki/config.yaml:ro
+      - loki-data:/loki
+    ports: ['3100:3100']
+
+  tempo:
+    image: grafana/tempo:3.1.1
+    command: ['-target=all', '-config.file=/etc/tempo/config.yaml']
+    volumes:
+      - ./observability/tempo.yaml:/etc/tempo/config.yaml:ro
+      - tempo-data:/var/tempo
+
+  grafana:
+    image: grafana/grafana:13.3.0
+    environment:
+      # Development only: no login. Production uses Caddy + Grafana login (ADR-0025).
+      GF_AUTH_ANONYMOUS_ENABLED: 'true'
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_AUTH_DISABLE_LOGIN_FORM: 'true'
+      GF_ANALYTICS_REPORTING_ENABLED: 'false'
+      GF_ANALYTICS_CHECK_FOR_UPDATES: 'false'
+    volumes:
+      - ./observability/grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml:ro
+      - grafana-data:/var/lib/grafana
+    ports: ['3001:3000']
+    depends_on: [prometheus, loki, tempo]
+
+volumes:
+  postgres-data:
+  prometheus-data:
+  loki-data:
+  tempo-data:
+  grafana-data:

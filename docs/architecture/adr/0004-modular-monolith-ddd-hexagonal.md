@@ -20,10 +20,10 @@ self-hosted, so operational simplicity matters. Maintainability for many contrib
 
 ## Alternatives considered
 
-| Option | Why not |
-|--------|---------|
-| Microservices | Operational overhead and distributed consistency; makes self-hosting harder |
-| Layered monolith without contexts | Erodes into a big ball of mud as contributors grow |
+| Option                            | Why not                                                                     |
+| --------------------------------- | --------------------------------------------------------------------------- |
+| Microservices                     | Operational overhead and distributed consistency; makes self-hosting harder |
+| Layered monolith without contexts | Erodes into a big ball of mud as contributors grow                          |
 
 ## Consequences
 

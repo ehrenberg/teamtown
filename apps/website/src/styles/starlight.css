@@ -1,0 +1,31 @@
+/* Starlight theming with the TeamTown palette (docs/design/brand-guide.md §4). */
+@import '@fontsource-variable/inter';
+@import '@fontsource-variable/outfit';
+
+:root {
+  --sl-font: 'Inter Variable', Inter, system-ui, sans-serif;
+  --sl-font-heading: 'Outfit Variable', Outfit, system-ui, sans-serif;
+}
+
+:root[data-theme='light'] {
+  --sl-color-accent-low: #f8ded3;
+  --sl-color-accent: #b54d2a;
+  --sl-color-accent-high: #7a3018;
+  --sl-color-white: #2b1f1a;
+  --sl-color-black: #fbf6ee;
+  --sl-color-bg-nav: #ffffff;
+  --sl-color-bg-sidebar: #f3ece1;
+}
+
+:root[data-theme='dark'] {
+  --sl-color-accent-low: #3a2d26;
+  --sl-color-accent: #e27a52;
+  --sl-color-accent-high: #f8ded3;
+}
+
+h1,
+h2,
+h3,
+.site-title {
+  font-family: var(--sl-font-heading);
+}

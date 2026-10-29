@@ -18,8 +18,8 @@ Follow **RFC 8252 (OAuth for native apps)**:
 
 ## Alternatives considered
 
-| Option | Why not |
-|--------|---------|
+| Option                | Why not                                                                              |
+| --------------------- | ------------------------------------------------------------------------------------ |
 | Embedded login window | Some IdPs block embedded browsers; weaker support for passkeys and password managers |
 
 ## Consequences

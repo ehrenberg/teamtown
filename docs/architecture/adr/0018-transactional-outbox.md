@@ -21,8 +21,8 @@ apart.
 
 ## Alternatives considered
 
-| Option | Why not |
-|--------|---------|
+| Option                   | Why not                     |
+| ------------------------ | --------------------------- |
 | In-process dispatch only | Events can be lost on crash |
 
 ## Consequences

@@ -19,10 +19,10 @@ shortcuts and robust screen sharing. Guests and quick onboarding need a browser 
 
 ## Alternatives considered
 
-| Option | Why not |
-|--------|---------|
-| Tauri | System WebView (WebKit on macOS/Linux) with inconsistent WebRTC and screen-capture behaviour, a risk for calls |
-| Web first, desktop later | Rejected by product decision; desktop is part of the MVP |
+| Option                   | Why not                                                                                                        |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------- |
+| Tauri                    | System WebView (WebKit on macOS/Linux) with inconsistent WebRTC and screen-capture behaviour, a risk for calls |
+| Web first, desktop later | Rejected by product decision; desktop is part of the MVP                                                       |
 
 ## Consequences
 

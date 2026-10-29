@@ -1,0 +1,17 @@
+{
+  "name": "@teamtown/i18n",
+  "version": "0.0.0",
+  "private": true,
+  "description": "i18next message catalogues (English base, German with informal 'du').",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@teamtown/config": "workspace:*"
+  }
+}

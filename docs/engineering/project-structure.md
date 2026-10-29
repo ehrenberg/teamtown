@@ -1,7 +1,6 @@
 # Project Structure
 
-> The repository is in the **planning phase**. This is the target structure that code will follow.
-> Package names marked **(proposal)** may change.
+> Implemented in M0 (ADR-0028). Folders marked **(planned)** follow with later milestones.
 
 ```
 teamtown/
@@ -13,7 +12,7 @@ teamtown/
 ├── packages/
 │   ├── contracts/           Zod schemas: REST DTOs + realtime messages (single source of truth)
 │   ├── world-core/          Framework-free world maths: grid, iso projection, A* pathfinding, walls
-│   ├── kernel/              Shared kernel: Result, typed IDs, DomainEvent base, Clock (proposal)
+│   ├── kernel/              Shared kernel: Result, typed IDs, DomainEvent/AggregateRoot, Clock
 │   ├── ui/                  Design-system components (Radix + Tailwind)
 │   ├── i18n/                i18next message catalogues EN/DE
 │   └── config/              Shared tsconfig, ESLint, Prettier, Tailwind preset
@@ -23,7 +22,8 @@ teamtown/
 │   └── mockups/             HTML/SVG design mockups
 ├── docs/                    Product, architecture (incl. ADRs), engineering, design
 ├── docker/                  Compose files, Caddyfile, Keycloak realm, LiveKit and observability config
-├── postman/                 Postman CLI collections (REST API tests)
+├── postman/                 Postman CLI collections for REST API tests (planned, M1)
+├── scripts/                 Repository checks: licences, DCO sign-off
 ├── .claude/skills/          Project skills for Claude Code
 ├── .github/                 Workflows, issue and PR templates
 ├── CLAUDE.md

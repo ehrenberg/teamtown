@@ -20,13 +20,13 @@ process) while leaving room to grow.
 
 ## Alternatives considered
 
-| Option | Why not |
-|--------|---------|
-| Traefik | Label-based configuration is more complex for self-hosters |
-| nginx | TLS certificates need separate handling (certbot) |
-| Redis from day one | An additional service without a current need |
-| Always MinIO | An additional service; volumes are enough for the target size |
-| Files in PostgreSQL | Bad for backups and performance |
+| Option              | Why not                                                       |
+| ------------------- | ------------------------------------------------------------- |
+| Traefik             | Label-based configuration is more complex for self-hosters    |
+| nginx               | TLS certificates need separate handling (certbot)             |
+| Redis from day one  | An additional service without a current need                  |
+| Always MinIO        | An additional service; volumes are enough for the target size |
+| Files in PostgreSQL | Bad for backups and performance                               |
 
 ## Consequences
 

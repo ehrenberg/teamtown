@@ -9,18 +9,18 @@
           ▲▲▲▲▲▲▲▲ Unit (many)          Domain + application with in-memory adapters (Vitest)
 ```
 
-| Level | What | Tooling |
-|-------|------|------------------|
-| **Unit — domain** | Aggregates, value objects, invariants, `world-core` pathfinding. Fast, no I/O. | Vitest |
-| **Unit — application** | Use cases with in-memory repositories and a fake `AccessPolicy` | Vitest |
-| **Permissions** | Table-driven matrix: actor × assignment × permission × resource → expected | Vitest |
-| **Architecture** | Layer and module boundaries, "Presence has no persistence adapter" | dependency-cruiser |
-| **Integration** | Repositories, migrations, REST endpoints, realtime gateway with a real WebSocket | Vitest + Testcontainers (PostgreSQL) |
-| **Contract** | Realtime messages round-trip through MessagePack + Zod; REST against OpenAPI | Vitest; Postman CLI collections for the REST API (in `postman/`) |
-| **Component** | UI components, accessibility checks | Testing Library + axe |
-| **Visual** | Design-system components, world snapshots | Storybook + visual regression (proposal) |
-| **E2E** | Login → walk → talk → message → knock, in two browsers at once | Playwright (also drives Electron) |
-| **Load** | N simulated clients walking and chatting on one floor | k6 |
+| Level                  | What                                                                             | Tooling                                                          |
+| ---------------------- | -------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| **Unit — domain**      | Aggregates, value objects, invariants, `world-core` pathfinding. Fast, no I/O.   | Vitest                                                           |
+| **Unit — application** | Use cases with in-memory repositories and a fake `AccessPolicy`                  | Vitest                                                           |
+| **Permissions**        | Table-driven matrix: actor × assignment × permission × resource → expected       | Vitest                                                           |
+| **Architecture**       | Layer and module boundaries, "Presence has no persistence adapter"               | dependency-cruiser                                               |
+| **Integration**        | Repositories, migrations, REST endpoints, realtime gateway with a real WebSocket | Vitest + Testcontainers (PostgreSQL)                             |
+| **Contract**           | Realtime messages round-trip through MessagePack + Zod; REST against OpenAPI     | Vitest; Postman CLI collections for the REST API (in `postman/`) |
+| **Component**          | UI components, accessibility checks                                              | Testing Library + axe                                            |
+| **Visual**             | Design-system components, world snapshots                                        | Storybook + visual regression (proposal)                         |
+| **E2E**                | Login → walk → talk → message → knock, in two browsers at once                   | Playwright (also drives Electron)                                |
+| **Load**               | N simulated clients walking and chatting on one floor                            | k6                                                               |
 
 ## Rules
 

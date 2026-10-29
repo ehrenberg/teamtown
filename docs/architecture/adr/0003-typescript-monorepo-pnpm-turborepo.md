@@ -18,10 +18,10 @@ Contributors should find everything in one place.
 
 ## Alternatives considered
 
-| Option | Why not |
-|--------|---------|
-| Nx | More opinionated, steeper learning curve |
-| Plain pnpm workspaces | No task caching or orchestration |
+| Option                  | Why not                                                                  |
+| ----------------------- | ------------------------------------------------------------------------ |
+| Nx                      | More opinionated, steeper learning curve                                 |
+| Plain pnpm workspaces   | No task caching or orchestration                                         |
 | Go / .NET / PHP backend | No type sharing with the frontend; PHP is weak for persistent WebSockets |
 
 ## Consequences

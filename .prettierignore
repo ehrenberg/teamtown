@@ -1,0 +1,10 @@
+pnpm-lock.yaml
+**/dist/
+**/.astro/
+**/.turbo/
+coverage/
+LICENSE
+CODE_OF_CONDUCT.md
+design/mockups/
+packages/ui/src/styles/tokens.css
+apps/website/src/content/docs/

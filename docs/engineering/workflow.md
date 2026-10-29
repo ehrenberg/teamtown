@@ -10,7 +10,7 @@ Decided: code on **GitHub** under the owner's personal account ([`ehrenberg/team
   The scope is the bounded context or package name.
 - Squash merge, so the PR title becomes the commit message.
 - **DCO sign-off:** every commit carries `Signed-off-by:` (`git commit -s`), per the
-  [Developer Certificate of Origin](https://developercertificate.org/). It is checked in CI *(decided)*.
+  [Developer Certificate of Origin](https://developercertificate.org/). It is checked in CI _(decided)_.
 
 ## Pull requests
 
@@ -30,11 +30,11 @@ Decided: code on **GitHub** under the owner's personal account ([`ehrenberg/team
 
 ## CI pipeline (GitHub Actions)
 
-| Trigger | Jobs |
-|---------|------|
-| Pull request | install (pnpm, cached) → lint + typecheck → unit + architecture tests → integration tests (Testcontainers) → build (Turborepo affected) → licence check |
+| Trigger        | Jobs                                                                                                                                                                                                                             |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Pull request   | install (pnpm, cached) → lint + typecheck → unit + architecture tests → integration tests (Testcontainers) → build (Turborepo affected) → licence check                                                                          |
 | Push to `main` | Everything above + E2E → container images to GHCR → deploy to the showcase VPS (proposal: via SSH action) → build the Astro + Starlight website (landing page + docs) and FTP-deploy it to `teamtown.bastianswelt.de` (ADR-0025) |
-| Tag `v*` | Release: container images, Electron builds (Windows, macOS, Linux; unsigned at first, ADR-0025) as GitHub Release |
+| Tag `v*`       | Release: container images, Electron builds (Windows, macOS, Linux; unsigned at first, ADR-0025) as GitHub Release                                                                                                                |
 
 ## Feature workflow
 

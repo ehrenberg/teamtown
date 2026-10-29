@@ -1,0 +1,25 @@
+/*
+ * Import after Tailwind in an app stylesheet:
+ *   @import "tailwindcss";
+ *   @import "@teamtown/ui/styles.css";
+ */
+@import './tokens.css';
+
+/* Let Tailwind find the utility classes used by the design-system components. */
+@source '../components';
+
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--color-action-focus-ring);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}

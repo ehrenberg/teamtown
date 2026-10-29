@@ -1,0 +1,31 @@
+{
+  "name": "@teamtown/server",
+  "version": "0.0.0",
+  "private": true,
+  "description": "TeamTown server: NestJS modular monolith (REST + realtime gateway).",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "scripts": {
+    "dev": "tsup --watch --onSuccess \"node --enable-source-maps dist/main.js\"",
+    "build": "tsup",
+    "start": "node --enable-source-maps dist/main.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@nestjs/common": "^12.3.2",
+    "@nestjs/core": "^12.3.2",
+    "@nestjs/platform-fastify": "^12.3.2",
+    "@teamtown/contracts": "workspace:*",
+    "@teamtown/kernel": "workspace:*",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@nestjs/testing": "^12.3.2",
+    "@swc/core": "^1.16.20",
+    "@teamtown/config": "workspace:*",
+    "tsup": "^9.0.0",
+    "unplugin-swc": "^2.0.0"
+  }
+}

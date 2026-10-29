@@ -18,5 +18,5 @@ ADR that supersedes the old one. Undecided topics are tracked in
 
 ## Consequences
 
-- Newcomers can understand *why* things are the way they are.
+- Newcomers can understand _why_ things are the way they are.
 - A PR that changes a decided architecture aspect must include a new ADR.

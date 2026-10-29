@@ -1,0 +1,74 @@
+/* GENERATED FILE: do not edit. Source: design/tokens/tokens.json. Run `pnpm tokens` to update. */
+@theme {
+  /* Primitive colours */
+  --color-espresso: #2B1F1A;
+  --color-terracotta-100: #F8DED3;
+  --color-terracotta-300: #E9967A;
+  --color-terracotta-400: #E27A52;
+  --color-terracotta-500: #D9653B;
+  --color-terracotta-700: #B54D2A;
+  --color-terracotta-900: #7A3018;
+  --color-sage-100: #E3EEE5;
+  --color-sage-500: #8FB59A;
+  --color-sage-600: #5F9470;
+  --color-sage-700: #4F7A5C;
+  --color-ocean-100: #D6E6EE;
+  --color-ocean-500: #2F6F8F;
+  --color-ocean-700: #22546C;
+  --color-ochre-100: #FAEBCB;
+  --color-ochre-500: #E8B04A;
+  --color-ochre-700: #9A6B12;
+  --color-cream: #FBF6EE;
+  --color-neutral-50: #FBF6EE;
+  --color-neutral-100: #F3ECE1;
+  --color-neutral-200: #E6DCCD;
+  --color-neutral-300: #CFC2B0;
+  --color-neutral-400: #A89A88;
+  --color-neutral-500: #857767;
+  --color-neutral-600: #66594C;
+  --color-neutral-700: #4A3F36;
+  --color-neutral-800: #352B24;
+  --color-neutral-900: #2B1F1A;
+  --color-white: #FFFFFF;
+  /* Semantic colours */
+  --color-surface-canvas: #FBF6EE;
+  --color-surface-raised: #FFFFFF;
+  --color-surface-sunken: #F3ECE1;
+  --color-surface-inverse: #2B1F1A;
+  --color-text-primary: #2B1F1A;
+  --color-text-secondary: #66594C;
+  --color-text-disabled: #A89A88;
+  --color-text-inverse: #FBF6EE;
+  --color-text-link: #2F6F8F;
+  --color-action-primary: #B54D2A;
+  --color-action-primary-hover: #7A3018;
+  --color-action-secondary: #F3ECE1;
+  --color-action-focus-ring: #B54D2A;
+  --color-border-subtle: #E6DCCD;
+  --color-border-strong: #CFC2B0;
+  --color-status-available: #5F9470;
+  --color-status-busy: #D9653B;
+  --color-status-focus: #2F6F8F;
+  --color-status-away: #E8B04A;
+  --color-status-offline: #A89A88;
+  /* Fonts */
+  --font-display: Outfit, system-ui, sans-serif;
+  --font-body: Inter, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  /* Font sizes */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-md: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.75rem;
+  --text-3xl: 2.25rem;
+  --text-4xl: 3rem;
+  /* Radii */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+  /* Shadows */
+  --shadow-raised: 0 1px 2px rgb(43 31 26 / 0.08), 0 8px 24px rgb(43 31 26 / 0.08);
+}

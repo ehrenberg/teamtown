@@ -1,0 +1,10 @@
+packages:
+  - apps/*
+  - packages/*
+
+# pnpm blocks dependency install scripts by default; allow only what needs them.
+allowBuilds:
+  '@swc/core': true
+  electron: true
+  esbuild: true
+  lefthook: true

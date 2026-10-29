@@ -1,0 +1,4 @@
+{
+  "extends": "@teamtown/config/tsconfig/base.json",
+  "include": ["src"]
+}

@@ -7,8 +7,8 @@ Open-source, self-hostable team communication in a soft low-poly isometric repli
 
 ---
 
-> 🚧 **Status: planning phase.** Architecture and design are being defined. No runnable code yet.
-> Start with the [documentation](docs/README.md).
+> 🚧 **Status: early development.** The foundation (M0) is in place; features follow milestone by milestone
+> ([roadmap](docs/product/roadmap.md)). Start with the [documentation](docs/README.md).
 
 ## What is TeamTown?
 
@@ -24,13 +24,24 @@ TeamTown replaces chat-and-call tools like Microsoft Teams with a living, isomet
 
 See the [interactive design mockup](design/mockups/app-shell.html) (open it in a browser).
 
+## Quick start
+
+Requirements: [pnpm](https://pnpm.io) 12 and Docker. Node.js 24 is downloaded by pnpm for this project automatically.
+
+```bash
+pnpm install       # dependencies + Git hooks
+pnpm stack:up      # Postgres, Keycloak, LiveKit, observability (see docker/README.md)
+pnpm dev           # server on :3000, web client on http://localhost:5173
+pnpm check         # everything CI checks
+```
+
 ## Tech stack (decided)
 
 TypeScript monorepo (pnpm, Turborepo) · NestJS modular monolith (DDD, hexagonal) · PostgreSQL + MikroORM ·
 Keycloak (OIDC) · WebSocket + MessagePack · LiveKit (audio/video) · React, React Three Fiber · Radix + Tailwind ·
 Electron · Caddy · Grafana observability stack · Docker Compose.
 
-Website: `teamtown.bastianswelt.de` · Demo: `demo.teamtown.bastianswelt.de` *(coming soon)*
+Website: `teamtown.bastianswelt.de` · Demo: `demo.teamtown.bastianswelt.de` _(coming soon)_
 
 Every decision is documented as an [Architecture Decision Record](docs/architecture/adr/README.md).
 

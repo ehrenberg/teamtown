@@ -18,11 +18,11 @@ Small companies and the showcase need simple local accounts. TeamTown should nev
 
 ## Alternatives considered
 
-| Option | Why not |
-|--------|---------|
-| Managed IdP (Auth0, Zitadel Cloud) | External dependency and per-user cost |
-| Entra ID only | Excludes non-Microsoft companies |
-| Custom authentication | Security risk; SSO would need to be rebuilt |
+| Option                             | Why not                                     |
+| ---------------------------------- | ------------------------------------------- |
+| Managed IdP (Auth0, Zitadel Cloud) | External dependency and per-user cost       |
+| Entra ID only                      | Excludes non-Microsoft companies            |
+| Custom authentication              | Security risk; SSO would need to be rebuilt |
 
 ## Consequences
 

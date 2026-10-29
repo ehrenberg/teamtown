@@ -18,13 +18,13 @@ designed instead of being bent around the hosting.
 
 Base domain: `teamtown.bastianswelt.de` (the owner still has to create it).
 
-| Hostname | Content | Hosted on |
-|----------|---------|-----------|
-| `teamtown.bastianswelt.de` | Landing page; documentation under `/docs` | Classic webhosting |
-| `demo.teamtown.bastianswelt.de` | TeamTown app: web client, REST API, WebSocket | netcup VPS (Caddy) |
-| `auth.teamtown.bastianswelt.de` | Keycloak | netcup VPS (Caddy) |
-| `rtc.teamtown.bastianswelt.de` | LiveKit signalling + TURN | netcup VPS |
-| `grafana.teamtown.bastianswelt.de` | Grafana (admin only) | netcup VPS (Caddy + login) |
+| Hostname                           | Content                                       | Hosted on                  |
+| ---------------------------------- | --------------------------------------------- | -------------------------- |
+| `teamtown.bastianswelt.de`         | Landing page; documentation under `/docs`     | Classic webhosting         |
+| `demo.teamtown.bastianswelt.de`    | TeamTown app: web client, REST API, WebSocket | netcup VPS (Caddy)         |
+| `auth.teamtown.bastianswelt.de`    | Keycloak                                      | netcup VPS (Caddy)         |
+| `rtc.teamtown.bastianswelt.de`     | LiveKit signalling + TURN                     | netcup VPS                 |
+| `grafana.teamtown.bastianswelt.de` | Grafana (admin only)                          | netcup VPS (Caddy + login) |
 
 ## Topology (showcase)
 
@@ -65,14 +65,14 @@ flowchart LR
 
 ## Compose services
 
-| Service | Purpose |
-|---------|---------|
-| `caddy` | Reverse proxy, automatic HTTPS |
-| `server` | NestJS server (REST, WebSocket gateway, outbox relay); serves the built web client |
-| `keycloak` | OIDC identity provider (pre-configured realm export) |
-| `livekit` | WebRTC SFU with built-in TURN |
-| `postgres` | Databases for TeamTown (one schema per module) and Keycloak |
-| `otel-collector`, `prometheus`, `loki`, `tempo`, `grafana` | Observability stack, always on (ADR-0019). Retention: logs and traces **7 days**, metrics **30 days** *(decided)* |
+| Service                                                    | Purpose                                                                                                           |
+| ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `caddy`                                                    | Reverse proxy, automatic HTTPS                                                                                    |
+| `server`                                                   | NestJS server (REST, WebSocket gateway, outbox relay); serves the built web client                                |
+| `keycloak`                                                 | OIDC identity provider (pre-configured realm export)                                                              |
+| `livekit`                                                  | WebRTC SFU with built-in TURN                                                                                     |
+| `postgres`                                                 | Databases for TeamTown (one schema per module) and Keycloak                                                       |
+| `otel-collector`, `prometheus`, `loki`, `tempo`, `grafana` | Observability stack, always on (ADR-0019). Retention: logs and traces **7 days**, metrics **30 days** _(decided)_ |
 
 Volumes: `postgres-data`, `files` (uploads, ADR-0017), `prometheus-data`, `loki-data`, `tempo-data`, `grafana-data`, `caddy-data`.
 Backups must cover the PostgreSQL dumps **and** the `files` volume.
@@ -81,10 +81,10 @@ Backups must cover the PostgreSQL dumps **and** the `files` volume.
 
 The always-on observability stack adds about 1.5–2 GB RAM.
 
-| Users online | VPS (estimate) |
-|--------------|----------------|
-| Showcase / < 50 | 6–8 vCPU, 12–16 GB RAM |
-| 50–500 | 8+ vCPU, 16–32 GB RAM; LiveKit possibly on its own host |
+| Users online    | VPS (estimate)                                          |
+| --------------- | ------------------------------------------------------- |
+| Showcase / < 50 | 6–8 vCPU, 12–16 GB RAM                                  |
+| 50–500          | 8+ vCPU, 16–32 GB RAM; LiveKit possibly on its own host |
 
 Audio/video bandwidth dominates the cost, because with an SFU every subscribed stream is routed through the server.
 The concrete netcup product is chosen by the owner when ordering. Minimum recommendation: 8 vCores / 16 GB RAM.

@@ -20,10 +20,10 @@ Maintainability is a top quality goal (ADR-0004). Module boundaries and test lev
 
 ## Alternatives considered
 
-| Option | Why not |
-|--------|---------|
-| eslint-plugin-boundaries | No dependency graphs |
-| Jest | Slower, weaker ESM support |
+| Option                   | Why not                    |
+| ------------------------ | -------------------------- |
+| eslint-plugin-boundaries | No dependency graphs       |
+| Jest                     | Slower, weaker ESM support |
 
 ## Consequences
 

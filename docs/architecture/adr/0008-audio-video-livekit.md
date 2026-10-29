@@ -17,11 +17,11 @@ The mapping of concepts to LiveKit rooms is described in [audio-video.md](../aud
 
 ## Alternatives considered
 
-| Option | Why not |
-|--------|---------|
-| mediasoup | Signalling, scaling and recording would all need to be built |
-| Managed providers (Daily, Agora, Dyte) | Vendor lock-in, per-minute cost, data residency |
-| Jitsi | Less flexible for fine-grained proximity audio |
+| Option                                 | Why not                                                      |
+| -------------------------------------- | ------------------------------------------------------------ |
+| mediasoup                              | Signalling, scaling and recording would all need to be built |
+| Managed providers (Daily, Agora, Dyte) | Vendor lock-in, per-minute cost, data residency              |
+| Jitsi                                  | Less flexible for fine-grained proximity audio               |
 
 ## Consequences
 

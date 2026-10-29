@@ -17,10 +17,10 @@ Presence, movement, knocks and live notifications need low-latency bidirectional
 
 ## Alternatives considered
 
-| Option | Why not |
-|--------|---------|
+| Option    | Why not                                      |
+| --------- | -------------------------------------------- |
 | Socket.IO | Protocol overhead, custom client requirement |
-| Colyseus | A separate framework paradigm next to NestJS |
+| Colyseus  | A separate framework paradigm next to NestJS |
 
 ## Consequences
 

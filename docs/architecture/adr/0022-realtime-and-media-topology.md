@@ -23,9 +23,9 @@ Details: [audio-video.md](../audio-video.md).
 
 ## Alternatives considered
 
-| Option | Why not |
-|--------|---------|
-| Separate gateway process | Needs inter-process communication (Redis) without a current need |
+| Option                                      | Why not                                                              |
+| ------------------------------------------- | -------------------------------------------------------------------- |
+| Separate gateway process                    | Needs inter-process communication (Redis) without a current need     |
 | One LiveKit room per proximity conversation | Frequent room switching causes audio gaps when people join and leave |
 
 ## Consequences

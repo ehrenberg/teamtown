@@ -13,7 +13,7 @@ These rules are binding. Rules marked **(proposal)** still need confirmation.
 - **Small units:** functions do one thing. More than ~30 lines or more than 3 parameters is a smell
   (use a parameter object).
 - **No magic values:** named constants or configuration.
-- **Comments explain *why*, not *what*.** If code needs a *what* comment, rename or extract.
+- **Comments explain _why_, not _what_.** If code needs a _what_ comment, rename or extract.
 - **No dead code, no commented-out code.** Git remembers.
 - **Immutability by default:** `readonly` properties, no mutation of function arguments.
 - **Prettier** formats, **ESLint** enforces. CI fails on warnings.

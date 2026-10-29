@@ -21,9 +21,9 @@ Details: [permissions.md](../permissions.md).
 
 ## Alternatives considered
 
-| Option | Why not |
-|--------|---------|
-| ReBAC (OpenFGA) | Additional service, harder to explain to admins |
+| Option            | Why not                                                  |
+| ----------------- | -------------------------------------------------------- |
+| ReBAC (OpenFGA)   | Additional service, harder to explain to admins          |
 | Global roles only | Too coarse for room hosts, channel moderators and guests |
 
 ## Consequences

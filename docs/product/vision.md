@@ -1,6 +1,6 @@
 # Product Vision
 
-> **TeamTown: Where teams live.** *(DE: Wo Teams zuhause sind.)*
+> **TeamTown: Where teams live.** _(DE: Wo Teams zuhause sind.)_
 > The office you can walk into from anywhere.
 > A self-hostable, open-source communication platform that replaces chat-and-call tools like
 > Microsoft Teams with a living, isometric 3D replica of your real office.
@@ -9,13 +9,13 @@
 
 Remote and hybrid teams lost something that chat and video tools never replaced:
 
-| What the office gave us                         | What Teams/Slack/Zoom give us                    |
-|-------------------------------------------------|--------------------------------------------------|
-| You *see* who is around and whether they're free | A status dot that is wrong half the time         |
+| What the office gave us                          | What Teams/Slack/Zoom give us                       |
+| ------------------------------------------------ | --------------------------------------------------- |
+| You _see_ who is around and whether they're free | A status dot that is wrong half the time            |
 | Spontaneous "got a minute?" at someone's desk    | Scheduling a 30-minute call for a 2-minute question |
-| Open door = come in, closed door = not now       | Every ping interrupts equally                    |
-| Meeting rooms you *walk into*                    | Links, lobbies, "can you hear me?"               |
-| Overhearing, serendipity, belonging              | Silence between meetings                         |
+| Open door = come in, closed door = not now       | Every ping interrupts equally                       |
+| Meeting rooms you _walk into_                    | Links, lobbies, "can you hear me?"                  |
+| Overhearing, serendipity, belonging              | Silence between meetings                            |
 
 ## The idea
 
@@ -48,13 +48,13 @@ asynchronous communication.** Both are first-class and connected (every room can
 
 ### Personas (sketches)
 
-| Persona | Context | Needs from TeamTown |
-|---------|---------|---------------------|
-| **Lena, Product Manager** | Remote 3 days/week | Quickly see who is free, drop in without scheduling, run stand-ups in "her" room |
-| **Murat, Developer** | Deep-focus work | A reliable focus mode, async channels, no distraction from the "game" aspect |
-| **Sabine, Office & IT Admin** | Runs the instance | Build the office once, manage roles, onboard people via SSO, meet privacy requirements |
-| **Jonas, Team Lead** | Hybrid team | Feel team presence, hold town halls, keep the team connected |
-| **Guest (customer/freelancer)** | External | Join a single meeting room via link without seeing internal channels |
+| Persona                         | Context            | Needs from TeamTown                                                                    |
+| ------------------------------- | ------------------ | -------------------------------------------------------------------------------------- |
+| **Lena, Product Manager**       | Remote 3 days/week | Quickly see who is free, drop in without scheduling, run stand-ups in "her" room       |
+| **Murat, Developer**            | Deep-focus work    | A reliable focus mode, async channels, no distraction from the "game" aspect           |
+| **Sabine, Office & IT Admin**   | Runs the instance  | Build the office once, manage roles, onboard people via SSO, meet privacy requirements |
+| **Jonas, Team Lead**            | Hybrid team        | Feel team presence, hold town halls, keep the team connected                           |
+| **Guest (customer/freelancer)** | External           | Join a single meeting room via link without seeing internal channels                   |
 
 ## What TeamTown is not
 

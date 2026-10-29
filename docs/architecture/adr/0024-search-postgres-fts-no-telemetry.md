@@ -17,9 +17,9 @@ Messages must be searchable. Self-hosted instances should not send data anywhere
 
 ## Alternatives considered
 
-| Option | Why not |
-|--------|---------|
-| Meilisearch | An additional service in the stack |
+| Option           | Why not                                    |
+| ---------------- | ------------------------------------------ |
+| Meilisearch      | An additional service in the stack         |
 | Opt-in telemetry | Not wanted; privacy promise stays absolute |
 
 ## Consequences

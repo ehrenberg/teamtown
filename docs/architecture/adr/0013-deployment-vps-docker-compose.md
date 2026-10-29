@@ -17,11 +17,11 @@ processes (Node.js, Keycloak, LiveKit), WebSockets and UDP ports, and classic ho
 
 ## Alternatives considered
 
-| Option | Why not |
-|--------|---------|
-| Two operating modes (full + PHP "lite") | Two backends to maintain |
+| Option                                                          | Why not                                       |
+| --------------------------------------------------------------- | --------------------------------------------- |
+| Two operating modes (full + PHP "lite")                         | Two backends to maintain                      |
 | Re-architecture for PHP hosting with external realtime/A/V SaaS | Vendor dependence; reverses earlier decisions |
-| Static frontend-only demo | No real product running |
+| Static frontend-only demo                                       | No real product running                       |
 
 ## Consequences
 

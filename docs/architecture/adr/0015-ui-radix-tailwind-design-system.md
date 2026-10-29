@@ -17,10 +17,10 @@ TeamTown needs a distinctive, accessible, business-ready UI matching its brand
 
 ## Alternatives considered
 
-| Option | Why not |
-|--------|---------|
-| shadcn/ui as is | Generic look without heavy customisation |
-| Mantine | Less control over the brand |
+| Option                          | Why not                                      |
+| ------------------------------- | -------------------------------------------- |
+| shadcn/ui as is                 | Generic look without heavy customisation     |
+| Mantine                         | Less control over the brand                  |
 | CSS Modules + custom components | Accessibility would need to be built by hand |
 
 ## Consequences

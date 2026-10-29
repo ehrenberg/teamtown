@@ -21,12 +21,12 @@ messages, roles). The UI must be localised in English and German (ADR-0016).
 
 ## Alternatives considered
 
-| Option | Why not |
-|--------|---------|
-| Redux Toolkit + RTK Query | More boilerplate |
-| Jotai | Atomic model less intuitive for many contributors |
-| Lingui / FormatJS | Smaller ecosystem / more verbose |
+| Option                    | Why not                                           |
+| ------------------------- | ------------------------------------------------- |
+| Redux Toolkit + RTK Query | More boilerplate                                  |
+| Jotai                     | Atomic model less intuitive for many contributors |
+| Lingui / FormatJS         | Smaller ecosystem / more verbose                  |
 
 ## Consequences
 
-- Clear rule: *server data → TanStack Query, live world → Zustand*. No duplicate sources of truth.
+- Clear rule: _server data → TanStack Query, live world → Zustand_. No duplicate sources of truth.

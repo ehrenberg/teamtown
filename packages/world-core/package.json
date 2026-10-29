@@ -1,0 +1,20 @@
+{
+  "name": "@teamtown/world-core",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Framework-free world logic: tile grid, walls, isometric projection, A* pathfinding. Shared by client and server.",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@teamtown/kernel": "workspace:*"
+  },
+  "devDependencies": {
+    "@teamtown/config": "workspace:*"
+  }
+}

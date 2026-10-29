@@ -4,6 +4,17 @@ Thanks for your interest! TeamTown is in its **planning phase**. The most valuab
 are feedback on the [docs](docs/README.md), especially the [open questions](docs/product/open-questions.md)
 and the [idea catalogue](docs/product/brainstorming.md).
 
+## Development setup
+
+```bash
+pnpm install     # pnpm 12; downloads Node 24 for this project and installs the Git hooks
+pnpm stack:up    # backing services in Docker
+pnpm dev         # server + web client
+pnpm check       # format, lint, types, architecture rules, tokens, tests, licences
+```
+
+Commit with `git commit -s`. The hooks format and lint your staged files and check the commit message.
+
 ## Before you code
 
 1. Read the [coding guidelines](docs/engineering/coding-guidelines.md), the

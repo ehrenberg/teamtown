@@ -1,0 +1,60 @@
+# Builds the static website (landing page + docs) and uploads it to the classic webhosting via FTPS (ADR-0025).
+# Required repository secrets: FTP_SERVER, FTP_USERNAME, FTP_PASSWORD, FTP_SERVER_DIR.
+# Without them the site is built but not deployed.
+name: Website
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - docs/**
+      - design/brand/**
+      - design/tokens/**
+      - apps/website/**
+      - packages/ui/**
+      - .github/workflows/website.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: website
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      FTP_SERVER: ${{ secrets.FTP_SERVER }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Chromium for build-time Mermaid rendering (website)
+        run: pnpm --filter @teamtown/website exec playwright install --with-deps chromium
+
+      - run: pnpm --filter @teamtown/website build
+
+      - name: Upload to teamtown.bastianswelt.de
+        if: env.FTP_SERVER != ''
+        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftps
+          local-dir: apps/website/dist/
+          server-dir: ${{ secrets.FTP_SERVER_DIR }}
+
+      - name: Deployment skipped
+        if: env.FTP_SERVER == ''
+        run: echo "::notice::FTP secrets are not configured; the website was built but not deployed."

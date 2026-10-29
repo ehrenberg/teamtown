@@ -1,0 +1,19 @@
+{
+  "app": {
+    "name": "TeamTown",
+    "tagline": "Wo Teams zuhause sind.",
+    "worldLabel": "Isometrisches Büro. Eine Listenansicht folgt."
+  },
+  "server": {
+    "checking": "Verbinde mit TeamTown…",
+    "online": "Server online · v{{version}}",
+    "offline": "Server nicht erreichbar. Starte ihn mit „pnpm dev“."
+  },
+  "status": {
+    "available": "Verfügbar",
+    "busy": "Im Meeting",
+    "focus": "Fokus",
+    "away": "Abwesend",
+    "offline": "Offline"
+  }
+}

@@ -18,10 +18,10 @@ TeamTown should be open source and serve as a public showcase project. An earlie
 
 ## Alternatives considered
 
-| Option | Why not |
-|--------|---------|
-| MIT / Apache-2.0 | Allow closed SaaS forks without giving back |
-| MPL-2.0 | Weaker protection for network use |
+| Option           | Why not                                                                     |
+| ---------------- | --------------------------------------------------------------------------- |
+| MIT / Apache-2.0 | Allow closed SaaS forks without giving back                                 |
+| MPL-2.0          | Weaker protection for network use                                           |
 | Multi-tenant OSS | Significant complexity (tenant isolation everywhere) without a current need |
 
 ## Consequences

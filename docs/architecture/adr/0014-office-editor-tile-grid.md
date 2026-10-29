@@ -6,7 +6,7 @@
 
 ## Context
 
-Companies should see a replica of their *real* office, and building it must be self-service for admins.
+Companies should see a replica of their _real_ office, and building it must be self-service for admins.
 
 ## Decision
 
@@ -17,11 +17,11 @@ Companies should see a replica of their *real* office, and building it must be s
 
 ## Alternatives considered
 
-| Option | Why not |
-|--------|---------|
+| Option                                   | Why not                                                 |
+| ---------------------------------------- | ------------------------------------------------------- |
 | CAD/DXF/image import with auto-detection | Complex and error-prone; may come later as an assistant |
-| External editor (Blender/files) | Not self-service |
-| Built by us as a service | Doesn't scale; unsuitable for open source |
+| External editor (Blender/files)          | Not self-service                                        |
+| Built by us as a service                 | Doesn't scale; unsuitable for open source               |
 
 ## Consequences
 

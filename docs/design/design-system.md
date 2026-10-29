@@ -40,19 +40,19 @@ dark theme (and later company theming) a token swap.
 - **Stage:** the world, or **list mode** (rooms as cards with occupants). Switch with one key (proposal: `L`).
 - **Media dock:** mic, camera, screen, emote, focus, leave conversation. It floats at the bottom centre.
 - **Context panel:** shows what you are "in" (the room wall of the current room, the conversation, a thread). Collapsible.
-- **Toasts:** knock requests, incoming calls with *Admit / Decline*.
+- **Toasts:** knock requests, incoming calls with _Admit / Decline_.
 
 ## 3. Core components (MVP, proposal)
 
-| Category | Components |
-|----------|------------|
+| Category   | Components                                                                                                                                                         |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Primitives | Button (primary, secondary, ghost, danger), IconButton, Input, Textarea, Select, Checkbox, Switch, Tooltip, Popover, Dialog, Menu, Tabs, Toast, Badge, Avatar (2D) |
-| Presence | StatusDot (colour + shape), PresencePill, PersonChip, RoomOccupancy |
-| Messaging | MessageList (virtualised), MessageItem, Composer (mentions, emoji, files), ThreadPanel, ReactionBar, ChannelHeader |
-| Meetings | MediaDock, VideoTile, ScreenShareTile, KnockToast, IncomingCallDialog, ConversationCard |
-| Navigation | CommandPalette, Rail, Sidebar sections, FloorSwitcher, Minimap |
-| Admin | RoleEditor (permission matrix), RoomPolicyForm, AuditLogTable, SetupWizard steps |
-| Editor | ToolPalette, CatalogueGrid, PropertiesPanel, PublishBar |
+| Presence   | StatusDot (colour + shape), PresencePill, PersonChip, RoomOccupancy                                                                                                |
+| Messaging  | MessageList (virtualised), MessageItem, Composer (mentions, emoji, files), ThreadPanel, ReactionBar, ChannelHeader                                                 |
+| Meetings   | MediaDock, VideoTile, ScreenShareTile, KnockToast, IncomingCallDialog, ConversationCard                                                                            |
+| Navigation | CommandPalette, Rail, Sidebar sections, FloorSwitcher, Minimap                                                                                                     |
+| Admin      | RoleEditor (permission matrix), RoomPolicyForm, AuditLogTable, SetupWizard steps                                                                                   |
+| Editor     | ToolPalette, CatalogueGrid, PropertiesPanel, PublishBar                                                                                                            |
 
 ## 4. Shape & spacing
 

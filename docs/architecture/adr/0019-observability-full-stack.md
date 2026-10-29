@@ -20,9 +20,9 @@ demonstrates. Realtime and media issues are hard to debug without traces and met
 
 ## Alternatives considered
 
-| Option | Why not |
-|--------|---------|
-| Logs only | Too little insight into realtime and media behaviour |
+| Option                       | Why not                                                           |
+| ---------------------------- | ----------------------------------------------------------------- |
+| Logs only                    | Too little insight into realtime and media behaviour              |
 | Stack as an optional profile | Rejected by the product owner in favour of always-on transparency |
 
 ## Consequences

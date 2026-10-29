@@ -15,8 +15,8 @@ What we decided, stated clearly and actively ("We use …").
 ## Alternatives considered
 
 | Option | Why not |
-|--------|---------|
-| … | … |
+| ------ | ------- |
+| …      | …       |
 
 ## Consequences
 

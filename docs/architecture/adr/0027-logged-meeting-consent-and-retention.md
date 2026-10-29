@@ -22,10 +22,10 @@ requires a clear legal basis and data minimisation.
 
 ## Alternatives considered
 
-| Option | Why not |
-|--------|---------|
+| Option                                            | Why not                                  |
+| ------------------------------------------------- | ---------------------------------------- |
 | Implicit consent by entering, with a visible sign | Legally weaker; consent not demonstrable |
-| Unlimited retention | Contradicts data minimisation |
+| Unlimited retention                               | Contradicts data minimisation            |
 
 ## Consequences
 

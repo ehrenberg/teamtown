@@ -5,7 +5,7 @@ office. Concrete values below are a **proposal** for the art pipeline.
 
 ## 1. Look in one sentence
 
-*An architect's model of your office on a sunny afternoon:* clean low-poly shapes, soft bevels,
+_An architect's model of your office on a sunny afternoon:_ clean low-poly shapes, soft bevels,
 warm materials, gentle daylight from the top left, terracotta and sage accents on cream.
 
 Reference moods: architectural models, Monument Valley (calmness, colour), Mini Motorways (clarity), and
@@ -20,18 +20,18 @@ Scandinavian office interiors.
 
 ## 3. Material palette (proposal)
 
-| Element | Colour | Notes |
-|---------|--------|-------|
-| Wooden floor | `#E9D3B4` | Default office floor |
-| Carpet (meeting rooms) | `#B9CDB9` (sage tint) | Signals "quiet room" |
-| Kitchen tiles | `#F3ECE1` + terracotta grout accents | Social space |
-| Walls | `#F3ECE1`, top edge `#FBF6EE` | Cut-away walls show a darker cap `#CFC2B0` |
-| Accent walls | `#D9653B` | Max. one per room |
-| Glass walls | ocean `#2F6F8F` at 25 % opacity | Meeting rooms; frosted when locked |
-| Plants | `#8FB59A` / `#6E9A7A` | Everywhere! Plants make it human |
-| Furniture wood | `#C69C72` | Desks, tables |
-| Furniture fabric | ocean, sage, ochre, terracotta | Chairs, sofas |
-| Lit objects | ochre `#E8B04A` | Lamps, screens on, windows |
+| Element                | Colour                               | Notes                                      |
+| ---------------------- | ------------------------------------ | ------------------------------------------ |
+| Wooden floor           | `#E9D3B4`                            | Default office floor                       |
+| Carpet (meeting rooms) | `#B9CDB9` (sage tint)                | Signals "quiet room"                       |
+| Kitchen tiles          | `#F3ECE1` + terracotta grout accents | Social space                               |
+| Walls                  | `#F3ECE1`, top edge `#FBF6EE`        | Cut-away walls show a darker cap `#CFC2B0` |
+| Accent walls           | `#D9653B`                            | Max. one per room                          |
+| Glass walls            | ocean `#2F6F8F` at 25 % opacity      | Meeting rooms; frosted when locked         |
+| Plants                 | `#8FB59A` / `#6E9A7A`                | Everywhere! Plants make it human           |
+| Furniture wood         | `#C69C72`                            | Desks, tables                              |
+| Furniture fabric       | ocean, sage, ochre, terracotta       | Chairs, sofas                              |
+| Lit objects            | ochre `#E8B04A`                      | Lamps, screens on, windows                 |
 
 All world colours live in one **palette texture** (a 16×16 swatch atlas), so every model shares one material.
 
@@ -48,14 +48,14 @@ All world colours live in one **palette texture** (a 16×16 swatch atlas), so ev
 
 ## 5. Technical budgets & conventions
 
-| Item | Budget |
-|------|--------|
-| Avatar | ≤ 1,500 triangles, 1 material (palette texture) |
-| Furniture item | ≤ 600 triangles (plants ≤ 400) |
-| Tile footprint | 0.5 m; furniture snaps to tiles; pivot at the footprint's bottom-left corner |
-| Format | glTF binary (`.glb`), Y-up, metres, Draco or meshopt compression |
-| Naming | `furn_desk_straight_160.glb`, `furn_chair_office_ocean.glb`, `avtr_hair_bun.glb`, `deco_plant_monstera.glb` |
-| Source files | `.blend` in this repository via **Git LFS** *(decided)*; exported `.glb` in `apps/web/public/assets` |
+| Item           | Budget                                                                                                      |
+| -------------- | ----------------------------------------------------------------------------------------------------------- |
+| Avatar         | ≤ 1,500 triangles, 1 material (palette texture)                                                             |
+| Furniture item | ≤ 600 triangles (plants ≤ 400)                                                                              |
+| Tile footprint | 0.5 m; furniture snaps to tiles; pivot at the footprint's bottom-left corner                                |
+| Format         | glTF binary (`.glb`), Y-up, metres, Draco or meshopt compression                                            |
+| Naming         | `furn_desk_straight_160.glb`, `furn_chair_office_ocean.glb`, `avtr_hair_bun.glb`, `deco_plant_monstera.glb` |
+| Source files   | `.blend` in this repository via **Git LFS** _(decided)_; exported `.glb` in `apps/web/public/assets`        |
 
 ## 6. MVP furniture catalogue (proposal, ~30 items)
 

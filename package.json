@@ -1,0 +1,54 @@
+{
+  "name": "teamtown",
+  "private": true,
+  "description": "TeamTown: Where teams live. Open-source isometric office for team communication.",
+  "license": "AGPL-3.0-only",
+  "repository": "github:ehrenberg/teamtown",
+  "type": "module",
+  "packageManager": "pnpm@12.16.1",
+  "devEngines": {
+    "runtime": {
+      "name": "node",
+      "version": "^24.11.0",
+      "onFail": "download"
+    }
+  },
+  "scripts": {
+    "dev": "turbo run dev --filter=@teamtown/server --filter=@teamtown/web",
+    "dev:desktop": "turbo run dev --filter=@teamtown/desktop",
+    "dev:website": "turbo run dev --filter=@teamtown/website",
+    "build": "turbo run build",
+    "typecheck": "turbo run typecheck",
+    "lint": "eslint . --max-warnings=0",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "arch": "depcruise apps packages --config .dependency-cruiser.cjs",
+    "check:licenses": "node scripts/check-licenses.mjs",
+    "check:dco": "node scripts/check-dco.mjs",
+    "tokens:check": "node packages/ui/scripts/generate-tokens.mjs --check",
+    "tokens": "node packages/ui/scripts/generate-tokens.mjs",
+    "stack:up": "docker compose -f docker/compose.dev.yml up -d",
+    "stack:down": "docker compose -f docker/compose.dev.yml down",
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm arch && pnpm tokens:check && pnpm test && pnpm check:licenses",
+    "prepare": "lefthook install"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^21.2.4",
+    "@commitlint/config-conventional": "^21.2.4",
+    "@eslint/js": "^9.39.5",
+    "@types/node": "^24.19.2",
+    "dependency-cruiser": "^18.7.0",
+    "eslint": "^9.39.5",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.13.0",
+    "lefthook": "^2.2.2",
+    "prettier": "^3.9.10",
+    "turbo": "^2.11.10",
+    "typescript": "6.0.3",
+    "typescript-eslint": "^8.72.1",
+    "vitest": "^5.0.5"
+  }
+}

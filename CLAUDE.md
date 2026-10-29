@@ -4,7 +4,8 @@ TeamTown is an open-source (AGPL-3.0), self-hostable communication platform that
 with a **soft low-poly isometric 3D replica of the real office**: avatars walk around, proximity audio,
 room meetings (open/knock/locked), channels and DMs with scoped roles.
 
-**Status: planning phase.** There is no application code yet. `docs/` is the source of truth.
+**Status: M0 Foundation done** (monorepo, tooling, CI, hello apps, dev stack). Feature work starts with M1.
+`docs/` is the source of truth for decisions.
 
 ## Golden rules
 
@@ -21,16 +22,16 @@ room meetings (open/knock/locked), channels and DMs with scoped roles.
 
 ## Where things are
 
-| Need | Location |
-|------|----------|
-| Docs index | `docs/README.md` |
-| Vision, ideas, MVP, roadmap | `docs/product/` |
-| Pending decisions | `docs/product/open-questions.md` |
-| Architecture, ADRs | `docs/architecture/`, `docs/architecture/adr/` |
-| Glossary (ubiquitous language) | `docs/architecture/domain-model.md` §1 |
-| Coding rules, structure, tests, workflow | `docs/engineering/` |
-| Brand, design system, world art | `docs/design/`, assets in `design/` |
-| Design tokens (single source) | `design/tokens/tokens.json` |
+| Need                                     | Location                                       |
+| ---------------------------------------- | ---------------------------------------------- |
+| Docs index                               | `docs/README.md`                               |
+| Vision, ideas, MVP, roadmap              | `docs/product/`                                |
+| Pending decisions                        | `docs/product/open-questions.md`               |
+| Architecture, ADRs                       | `docs/architecture/`, `docs/architecture/adr/` |
+| Glossary (ubiquitous language)           | `docs/architecture/domain-model.md` §1         |
+| Coding rules, structure, tests, workflow | `docs/engineering/`                            |
+| Brand, design system, world art          | `docs/design/`, assets in `design/`            |
+| Design tokens (single source)            | `design/tokens/tokens.json`                    |
 
 ## Decided stack (see ADRs)
 
@@ -47,7 +48,24 @@ room meetings (open/knock/locked), channels and DMs with scoped roles.
   The owner's PHP webhosting serves **static files only** (Astro + Starlight site at `teamtown.bastianswelt.de`).
 - **Project:** AGPL-3.0 · GitHub + Actions · DCO sign-off on every commit (`git commit -s`) · no telemetry · Git LFS for `.blend`/`.glb`
 
-## Architecture rules (target code layout)
+## Commands
+
+| Task                                                          | Command                                                                                      |
+| ------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| Install (also downloads Node 24 for this project)             | `pnpm install`                                                                               |
+| Backing services (Postgres, Keycloak, LiveKit, observability) | `pnpm stack:up` / `pnpm stack:down`                                                          |
+| Server + web client in dev mode                               | `pnpm dev` (web on :5173, API on :3000)                                                      |
+| Desktop shell / website                                       | `pnpm dev:desktop` / `pnpm dev:website`                                                      |
+| Everything CI checks                                          | `pnpm check`                                                                                 |
+| Single checks                                                 | `pnpm lint`, `pnpm typecheck`, `pnpm arch`, `pnpm test`, `pnpm build`, `pnpm check:licenses` |
+| Tests of one project                                          | `pnpm vitest run --project @teamtown/<name>`                                                 |
+| Regenerate Tailwind theme after editing tokens                | `pnpm tokens`                                                                                |
+
+Tooling facts (ADR-0028): pnpm 12, Node 24 via `devEngines`, TypeScript 6.0 (not 7), ESLint 9 (not 10),
+internal packages ship TS source, relative imports use the `.ts` extension, commits need `git commit -s`.
+pnpm only runs dependency install scripts listed under `allowBuilds` in `pnpm-workspace.yaml`.
+
+## Architecture rules (enforced by `pnpm arch`)
 
 ```
 apps/server/src/modules/<context>/{domain,application,infrastructure,interface}/ + public-api.ts

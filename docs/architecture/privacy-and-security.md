@@ -32,28 +32,28 @@ These principles must also be enforced in code review: a PR that persists presen
 
 ## 3. Security architecture
 
-| Topic | Approach |
-|-------|----------|
-| Authentication | OIDC authorization code flow + PKCE via Keycloak. TeamTown stores no passwords. Desktop: system browser login + `teamtown://` deep-link callback (ADR-0023). |
-| Session | Short-lived access tokens, refresh via Keycloak. WebSocket authenticated at handshake and re-validated on token refresh. |
-| Authorization | Every command and request is checked in the application layer via `AccessPolicy` ([permissions.md](permissions.md)). |
-| Media | LiveKit tokens are minted server-side per room with minimal grants. Track subscriptions are controlled by the server. |
-| Transport | TLS everywhere (reverse proxy). WebRTC is DTLS-SRTP encrypted. |
-| Input | Validate every REST and realtime payload with schemas (Zod) at the edge. Sanitise rendered Markdown. |
-| Files | Content-type sniffing, size limits, served from a separate path with `Content-Disposition` and a strict CSP |
-| Web security | Strict CSP, no inline scripts, SameSite cookies, CSRF protection for cookie-based flows |
-| Electron | `contextIsolation: true`, `nodeIntegration: false`, sandboxed renderer, minimal preload API, only our own origin allowed. Builds are unsigned at first (ADR-0025). Auto-update works on Windows and Linux; on macOS it requires signing, so users update manually until then. |
-| Dependencies | Renovate/Dependabot, `pnpm audit` in CI, lockfile committed |
-| Secrets | Only via environment variables or Docker secrets, never committed. `.env.example` documents them. |
-| Rate limits | On login, message posting, knocks and file uploads |
-| Disclosure | `SECURITY.md` with a private reporting channel |
+| Topic          | Approach                                                                                                                                                                                                                                                                      |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Authentication | OIDC authorization code flow + PKCE via Keycloak. TeamTown stores no passwords. Desktop: system browser login + `teamtown://` deep-link callback (ADR-0023).                                                                                                                  |
+| Session        | Short-lived access tokens, refresh via Keycloak. WebSocket authenticated at handshake and re-validated on token refresh.                                                                                                                                                      |
+| Authorization  | Every command and request is checked in the application layer via `AccessPolicy` ([permissions.md](permissions.md)).                                                                                                                                                          |
+| Media          | LiveKit tokens are minted server-side per room with minimal grants. Track subscriptions are controlled by the server.                                                                                                                                                         |
+| Transport      | TLS everywhere (reverse proxy). WebRTC is DTLS-SRTP encrypted.                                                                                                                                                                                                                |
+| Input          | Validate every REST and realtime payload with schemas (Zod) at the edge. Sanitise rendered Markdown.                                                                                                                                                                          |
+| Files          | Content-type sniffing, size limits, served from a separate path with `Content-Disposition` and a strict CSP                                                                                                                                                                   |
+| Web security   | Strict CSP, no inline scripts, SameSite cookies, CSRF protection for cookie-based flows                                                                                                                                                                                       |
+| Electron       | `contextIsolation: true`, `nodeIntegration: false`, sandboxed renderer, minimal preload API, only our own origin allowed. Builds are unsigned at first (ADR-0025). Auto-update works on Windows and Linux; on macOS it requires signing, so users update manually until then. |
+| Dependencies   | Renovate/Dependabot, `pnpm audit` in CI, lockfile committed                                                                                                                                                                                                                   |
+| Secrets        | Only via environment variables or Docker secrets, never committed. `.env.example` documents them.                                                                                                                                                                             |
+| Rate limits    | On login, message posting, knocks and file uploads                                                                                                                                                                                                                            |
+| Disclosure     | `SECURITY.md` with a private reporting channel                                                                                                                                                                                                                                |
 
 ## 4. Threat model highlights (to be expanded)
 
-| Threat | Mitigation |
-|--------|------------|
+| Threat                                              | Mitigation                                                                    |
+| --------------------------------------------------- | ----------------------------------------------------------------------------- |
 | Eavesdropping on a locked room by a modified client | Server-controlled LiveKit subscriptions; room calls in separate LiveKit rooms |
-| Walking through locked doors via forged movement | Server-authoritative paths and room entry checks |
-| Guest escalating to internal channels | Guest role scoped to explicit resources; private-by-default listing APIs |
-| Inferring presence history through the API | No historical presence endpoints exist |
-| XSS via messages | Markdown subset with a sanitiser, CSP |
+| Walking through locked doors via forged movement    | Server-authoritative paths and room entry checks                              |
+| Guest escalating to internal channels               | Guest role scoped to explicit resources; private-by-default listing APIs      |
+| Inferring presence history through the API          | No historical presence endpoints exist                                        |
+| XSS via messages                                    | Markdown subset with a sanitiser, CSP                                         |

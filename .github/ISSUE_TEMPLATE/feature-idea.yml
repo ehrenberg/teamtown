@@ -1,0 +1,30 @@
+name: Feature idea
+description: Suggest an idea for TeamTown.
+labels: [idea]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please check the [idea catalogue](https://teamtown.bastianswelt.de/docs/product/brainstorming/) first.
+        Ideas are discussed and decided before they are built.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What is hard or annoying today? Who is affected?
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: Idea
+      description: How could TeamTown solve it? How would it work without the 3D view (list mode, keyboard)?
+    validations:
+      required: true
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacy
+      options:
+        - label: The idea does not require storing movement or presence history (ADR-0012).
+          required: true

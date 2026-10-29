@@ -1,0 +1,99 @@
+---
+import '../styles/landing.css';
+import logo from '../assets/brand/logo-horizontal.svg';
+import { LEGAL_LINKS } from '../legal.ts';
+
+const GITHUB_URL = 'https://github.com/ehrenberg/teamtown';
+
+const features = [
+  { icon: '🚶', title: 'Walk over to talk', text: 'Proximity audio fades in as you approach a colleague. No links, no lobbies.' },
+  { icon: '🚪', title: 'Doors that mean something', text: 'Open, knock-to-enter or locked: availability you can see at a glance.' },
+  { icon: '💬', title: 'Channels & messages', text: 'Threads, mentions, files and room walls with scoped roles and rights.' },
+  { icon: '🛠️', title: 'Your real office', text: 'Rebuild your floor plan with the in-app tile editor, floor by floor.' },
+  { icon: '🔒', title: 'Privacy by design', text: 'Live presence, no movement history, no telemetry. Works-council friendly.' },
+  { icon: '♿', title: 'Spatial is optional', text: 'Everything also works in list mode, by keyboard and with screen readers.' },
+];
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="TeamTown: Where teams live. Open-source isometric office for team communication." />
+    <meta name="theme-color" content="#2B1F1A" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>TeamTown · Where teams live.</title>
+  </head>
+  <body class="bg-surface-canvas text-text-primary">
+    <header class="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
+      <img src={logo.src} alt="TeamTown" class="h-10 w-auto" />
+      <nav class="flex items-center gap-6 text-sm font-medium">
+        <a href="/docs/" class="hover:text-action-primary">Docs</a>
+        <a href={GITHUB_URL} class="hover:text-action-primary">GitHub</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="mx-auto grid max-w-6xl items-center gap-12 px-6 pt-12 pb-20 lg:grid-cols-[1fr_1.2fr]">
+        <div>
+          <p class="mb-4 inline-flex items-center gap-2 rounded-full bg-ochre-100 px-3 py-1 text-sm font-semibold text-ochre-700">
+            Open source · AGPL-3.0 · in development
+          </p>
+          <h1 class="font-display text-5xl leading-tight font-semibold tracking-tight lg:text-6xl">
+            Where teams <span class="text-terracotta-500">live.</span>
+          </h1>
+          <p class="mt-6 max-w-xl text-lg text-text-secondary">
+            TeamTown replaces chat-and-call tools with a living, isometric replica of your real office. Walk over to
+            talk, knock on doors, meet in rooms, and keep every conversation in channels with proper roles.
+          </p>
+          <div class="mt-8 flex flex-wrap gap-3">
+            <a href="/docs/" class="rounded-md bg-action-primary px-5 py-3 font-semibold text-white hover:bg-action-primary-hover">
+              Read the docs
+            </a>
+            <a href={GITHUB_URL} class="rounded-md bg-action-secondary px-5 py-3 font-semibold hover:bg-neutral-200">
+              View on GitHub
+            </a>
+            <span class="rounded-md border border-dashed border-border-strong px-5 py-3 font-semibold text-text-secondary">
+              Live demo: coming soon
+            </span>
+          </div>
+        </div>
+        <figure class="overflow-hidden rounded-lg border border-border-subtle bg-surface-raised shadow-raised">
+          <img src="/mockup.png" alt="Design mockup of TeamTown: an isometric office with rooms, avatars and a chat panel" />
+          <figcaption class="px-4 py-2 text-xs text-text-secondary">Design mockup, not final.</figcaption>
+        </figure>
+      </section>
+
+      <section class="bg-surface-raised py-20">
+        <div class="mx-auto max-w-6xl px-6">
+          <h2 class="font-display text-3xl font-semibold">The office, without the commute.</h2>
+          <div class="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {
+              features.map((feature) => (
+                <article class="rounded-lg border border-border-subtle bg-surface-canvas p-6">
+                  <div class="text-2xl" aria-hidden="true">{feature.icon}</div>
+                  <h3 class="mt-3 font-display text-lg font-semibold">{feature.title}</h3>
+                  <p class="mt-2 text-text-secondary">{feature.text}</p>
+                </article>
+              ))
+            }
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-10 text-sm text-text-secondary">
+      <span>TeamTown is free software under the GNU AGPL-3.0.</span>
+      <nav class="flex gap-6" aria-label="Legal">
+        <a href={GITHUB_URL} class="hover:text-action-primary">GitHub</a>
+        {
+          LEGAL_LINKS.map((link) => (
+            <a href={link.href} class="hover:text-action-primary">
+              {link.label}
+            </a>
+          ))
+        }
+      </nav>
+    </footer>
+  </body>
+</html>

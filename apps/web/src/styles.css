@@ -1,0 +1,22 @@
+@import 'tailwindcss';
+@import '@teamtown/ui/styles.css';
+@import '@fontsource-variable/inter';
+@import '@fontsource-variable/outfit';
+
+/* Fontsource registers the variable fonts under these family names. */
+@theme {
+  --font-display: 'Outfit Variable', Outfit, system-ui, sans-serif;
+  --font-body: 'Inter Variable', Inter, system-ui, sans-serif;
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    font-family: var(--font-body);
+  }
+}
