@@ -1,0 +1,679 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TeamTown: App Shell Mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* Values mirror design/tokens/tokens.json */
+  :root {
+    --espresso: #2B1F1A; --terracotta: #D9653B; --terracotta-700: #B54D2A; --terracotta-100: #F8DED3;
+    --sage: #8FB59A; --sage-600: #5F9470; --sage-700: #4F7A5C; --sage-100: #E3EEE5;
+    --ocean: #2F6F8F; --ocean-100: #D6E6EE; --ochre: #E8B04A; --ochre-100: #FAEBCB;
+    --cream: #FBF6EE; --n100: #F3ECE1; --n200: #E6DCCD; --n300: #CFC2B0; --n400: #A89A88; --n600: #66594C;
+    --white: #FFFFFF;
+    --radius-sm: 6px; --radius-md: 10px; --radius-lg: 16px;
+    --shadow: 0 1px 2px rgb(43 31 26 / .08), 0 8px 24px rgb(43 31 26 / .08);
+    --font-display: Outfit, system-ui, sans-serif; --font-body: Inter, system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body { font-family: var(--font-body); font-size: 14px; color: var(--espresso); background: var(--cream); }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  :focus-visible { outline: 2px solid var(--terracotta-700); outline-offset: 2px; }
+
+  .app { display: grid; height: 100vh; grid-template-columns: 64px 264px 1fr 344px; grid-template-rows: 56px 1fr; }
+
+  /* Top bar */
+  .topbar { grid-column: 1 / -1; display: flex; align-items: center; gap: 16px; padding: 0 16px;
+    background: var(--white); border-bottom: 1px solid var(--n200); }
+  .brand { display: flex; align-items: center; gap: 10px; font-family: var(--font-display); font-weight: 600; font-size: 20px; }
+  .brand .town { color: var(--terracotta); }
+  .brand svg { width: 34px; height: 34px; }
+  .org { color: var(--n600); font-size: 13px; padding-left: 14px; border-left: 1px solid var(--n200); }
+  .search { flex: 1; max-width: 520px; margin: 0 auto; display: flex; align-items: center; gap: 10px; padding: 8px 12px;
+    border: 1px solid var(--n200); border-radius: var(--radius-md); background: var(--cream); color: var(--n600); text-align: left; }
+  .search kbd { margin-left: auto; font-family: var(--font-body); font-size: 11px; padding: 2px 6px; border-radius: 4px;
+    background: var(--white); border: 1px solid var(--n200); }
+  .status-pill { display: flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px;
+    border: 1px solid var(--n200); background: var(--white); font-weight: 500; }
+  .me { width: 34px; height: 34px; border-radius: 50%; background: var(--terracotta-100); color: var(--terracotta-700);
+    display: grid; place-items: center; font-weight: 600; font-size: 13px; position: relative; }
+
+  /* Status dot: colour + shape (colour-blind safe) */
+  .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex: none; }
+  .dot.available { background: var(--sage-600); }
+  .dot.busy { background: var(--terracotta); position: relative; }
+  .dot.busy::after { content: ""; position: absolute; left: 2px; right: 2px; top: 4px; height: 2px; background: var(--white); border-radius: 1px; }
+  .dot.focus { background: var(--ocean); box-shadow: inset -3px -2px 0 0 var(--ocean-100); }
+  .dot.away { background: var(--ochre); position: relative; }
+  .dot.away::after { content: ""; position: absolute; left: 4px; top: 2px; width: 2px; height: 4px; background: var(--white); }
+  .dot.offline { border: 2px solid var(--n400); }
+
+  /* Rail */
+  .rail { background: var(--espresso); display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 0; }
+  .rail button { width: 44px; height: 44px; border: 0; border-radius: var(--radius-md); background: transparent; color: var(--n300);
+    display: grid; place-items: center; position: relative; }
+  .rail button[aria-current="page"] { background: rgb(217 101 59 / .18); color: var(--white); }
+  .rail button[aria-current="page"]::before { content: ""; position: absolute; left: -10px; top: 10px; bottom: 10px; width: 3px;
+    border-radius: 2px; background: var(--terracotta); }
+  .rail button:hover { color: var(--white); }
+  .rail .spacer { flex: 1; }
+  .rail svg { width: 22px; height: 22px; }
+  .badge { position: absolute; top: 6px; right: 6px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 999px;
+    background: var(--terracotta); color: var(--white); font-size: 10px; font-weight: 600; display: grid; place-items: center; }
+
+  /* Sidebar */
+  .sidebar { background: var(--n100); border-right: 1px solid var(--n200); overflow-y: auto; padding: 12px 10px; }
+  .section-title { font-family: var(--font-display); font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase;
+    color: var(--n600); padding: 12px 8px 6px; display: flex; justify-content: space-between; }
+  .item { display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-radius: var(--radius-sm); border: 0; width: 100%;
+    background: none; text-align: left; }
+  .item:hover { background: var(--n200); }
+  .item.active { background: var(--white); box-shadow: var(--shadow); }
+  .item .meta { margin-left: auto; color: var(--n600); font-size: 12px; display: flex; align-items: center; gap: 4px; }
+  .item .hash { color: var(--n600); width: 16px; text-align: center; font-weight: 600; }
+  .item.unread { font-weight: 600; }
+  .count { background: var(--terracotta-700); color: var(--white); border-radius: 999px; font-size: 11px; padding: 1px 7px; font-weight: 600; }
+  .faces { display: flex; }
+  .faces span { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--n100); margin-left: -6px; font-size: 9px;
+    display: grid; place-items: center; color: var(--white); font-weight: 600; }
+  .room-sub { display: block; font-size: 12px; color: var(--n600); font-weight: 400; }
+  .lock { color: var(--terracotta-700); }
+
+  /* Stage */
+  .stage { position: relative; overflow: hidden; background:
+      radial-gradient(ellipse at 50% 40%, #FFFDF8 0%, var(--cream) 55%, #F1E8DA 100%); }
+  canvas { display: block; width: 100%; height: 100%; cursor: pointer; }
+  .overlay { position: absolute; display: flex; gap: 8px; }
+  .tl { top: 16px; left: 16px; }
+  .tr { top: 16px; right: 16px; }
+  .chip { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: var(--radius-md); border: 1px solid var(--n200);
+    background: rgb(255 255 255 / .9); backdrop-filter: blur(6px); box-shadow: var(--shadow); font-weight: 500; }
+  .seg { display: flex; padding: 3px; border-radius: var(--radius-md); background: rgb(255 255 255 / .9); border: 1px solid var(--n200); box-shadow: var(--shadow); }
+  .seg button { border: 0; background: none; padding: 5px 12px; border-radius: 7px; font-weight: 500; color: var(--n600); }
+  .seg button[aria-pressed="true"] { background: var(--espresso); color: var(--cream); }
+
+  .toast { position: absolute; top: 70px; right: 16px; width: 300px; padding: 14px; border-radius: var(--radius-lg);
+    background: var(--white); box-shadow: var(--shadow); border: 1px solid var(--n200); animation: slide .4s ease-out; }
+  .toast header { display: flex; gap: 10px; align-items: center; }
+  .toast .ava { width: 36px; height: 36px; border-radius: 50%; background: var(--ocean); color: var(--white); display: grid; place-items: center; font-weight: 600;
+    box-shadow: 0 0 0 0 rgb(143 181 154 / .7); animation: pulse 1.6s infinite; }
+  .toast strong { font-family: var(--font-display); font-size: 15px; }
+  .toast p { margin: 2px 0 0; color: var(--n600); font-size: 13px; }
+  .toast .actions { display: flex; gap: 8px; margin-top: 12px; }
+  .btn { border: 0; border-radius: var(--radius-md); padding: 8px 14px; font-weight: 600; }
+  .btn.primary { background: var(--terracotta-700); color: var(--white); }
+  .btn.primary:hover { background: #7A3018; }
+  .btn.secondary { background: var(--n100); }
+  .btn.secondary:hover { background: var(--n200); }
+  @keyframes slide { from { transform: translateY(-8px); opacity: 0; } }
+  @keyframes pulse { 70% { box-shadow: 0 0 0 10px rgb(143 181 154 / 0); } 100% { box-shadow: 0 0 0 0 rgb(143 181 154 / 0); } }
+
+  .dock { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 6px;
+    padding: 8px; border-radius: 20px; background: var(--espresso); box-shadow: 0 12px 32px rgb(43 31 26 / .3); }
+  .dock .where { color: var(--cream); padding: 0 12px 0 8px; font-size: 13px; display: flex; flex-direction: column; line-height: 1.25; }
+  .dock .where small { color: var(--n400); }
+  .dock button { width: 44px; height: 44px; border: 0; border-radius: 14px; background: #3A2D26; color: var(--cream); display: grid; place-items: center; }
+  .dock button:hover { background: #4A3F36; }
+  .dock button.on { background: var(--sage-700); }
+  .dock button.leave { background: var(--terracotta-700); width: auto; padding: 0 14px; font-weight: 600; gap: 6px; display: flex; align-items: center; }
+  .dock svg { width: 20px; height: 20px; }
+  .dock .sep { width: 1px; height: 28px; background: #4A3F36; margin: 0 4px; }
+
+  .hint { position: absolute; bottom: 92px; left: 50%; transform: translateX(-50%); font-size: 12px; color: var(--n600);
+    background: rgb(255 255 255 / .8); padding: 4px 10px; border-radius: 999px; }
+
+  /* List mode */
+  .listview { position: absolute; inset: 0; padding: 72px 24px 110px; overflow: auto; display: none;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 16px; align-content: start; }
+  .listview.show { display: grid; }
+  .card { background: var(--white); border: 1px solid var(--n200); border-radius: var(--radius-lg); padding: 16px; box-shadow: var(--shadow); }
+  .card h3 { margin: 0; font-family: var(--font-display); font-size: 17px; display: flex; gap: 8px; align-items: center; }
+  .card .door { font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px; margin-left: auto; }
+  .door.open { background: var(--sage-100); color: var(--sage-700); }
+  .door.knock { background: var(--ochre-100); color: #9A6B12; }
+  .door.locked { background: var(--terracotta-100); color: var(--terracotta-700); }
+  .card ul { list-style: none; padding: 0; margin: 12px 0; display: grid; gap: 6px; }
+  .card li { display: flex; align-items: center; gap: 8px; }
+  .card .btn { width: 100%; }
+
+  /* Context panel */
+  .context { background: var(--white); border-left: 1px solid var(--n200); display: flex; flex-direction: column; min-height: 0; }
+  .context > header { padding: 14px 16px 0; }
+  .context h2 { margin: 0; font-family: var(--font-display); font-size: 20px; display: flex; align-items: center; gap: 8px; }
+  .context .sub { color: var(--n600); font-size: 13px; margin-top: 2px; }
+  .tabs { display: flex; gap: 4px; margin-top: 12px; border-bottom: 1px solid var(--n200); }
+  .tabs button { border: 0; background: none; padding: 8px 10px; color: var(--n600); font-weight: 500; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+  .tabs button[aria-selected="true"] { color: var(--espresso); border-color: var(--terracotta); }
+  .convo { margin: 14px 16px 4px; padding: 12px; border-radius: var(--radius-md); background: var(--sage-100); }
+  .convo .row { display: flex; align-items: center; gap: 8px; }
+  .convo .row strong { font-family: var(--font-display); }
+  .convo .people { display: flex; gap: 10px; margin-top: 10px; }
+  .person { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 12px; }
+  .person .pic { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; color: var(--white); font-weight: 600; }
+  .person .pic.speaking { box-shadow: 0 0 0 3px var(--sage-100), 0 0 0 5px var(--sage-600); }
+  .messages { flex: 1; overflow-y: auto; padding: 8px 16px; display: flex; flex-direction: column; gap: 14px; }
+  .msg { display: flex; gap: 10px; }
+  .msg .pic { width: 34px; height: 34px; border-radius: 10px; flex: none; display: grid; place-items: center; color: var(--white); font-weight: 600; font-size: 13px; }
+  .msg .name { font-weight: 600; }
+  .msg time { color: var(--n400); font-size: 12px; margin-left: 6px; }
+  .msg p { margin: 2px 0 0; line-height: 1.45; }
+  .reactions { display: flex; gap: 6px; margin-top: 6px; }
+  .reactions span { font-size: 12px; padding: 2px 8px; border-radius: 999px; background: var(--n100); border: 1px solid var(--n200); }
+  .reactions span.mine { background: var(--terracotta-100); border-color: var(--terracotta-100); }
+  .system { font-size: 12px; color: var(--n600); text-align: center; }
+  .mention { color: var(--ocean); background: var(--ocean-100); padding: 0 3px; border-radius: 4px; font-weight: 500; }
+  .composer { margin: 8px 16px 16px; border: 1px solid var(--n300); border-radius: var(--radius-md); padding: 10px 12px; color: var(--n400);
+    display: flex; align-items: center; gap: 8px; }
+  .composer .send { margin-left: auto; width: 30px; height: 30px; border-radius: 8px; background: var(--terracotta-700); color: var(--white); display: grid; place-items: center; }
+
+  .ribbon { position: fixed; bottom: 10px; left: 74px; font-size: 11px; color: var(--n600); background: var(--ochre-100);
+    padding: 3px 8px; border-radius: 6px; z-index: 10; }
+
+  @media (max-width: 1200px) { .app { grid-template-columns: 64px 220px 1fr; } .context { display: none; } }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ===== Top bar ===== -->
+  <header class="topbar">
+    <div class="brand" aria-label="TeamTown">
+      <svg viewBox="0 0 100 100" aria-hidden="true">
+        <polygon points="20,43.3 50,60.6 50,92.6 20,75.3" fill="#5A4A3F"/>
+        <polygon points="50,60.6 80,43.3 80,75.3 50,92.6" fill="#3A2D26"/>
+        <polygon points="50,26 80,43.3 50,60.6 20,43.3" fill="#D9653B"/>
+        <polygon points="50,29.8 73.4,43.3 50,56.8 26.6,43.3" fill="#E27A52"/>
+        <polygon points="30.8,62.98 39.2,67.83 39.2,86.39 30.8,81.54" fill="#E8B04A"/>
+        <polygon points="30.8,62.98 24.9,66.38 24.9,84.94 30.8,81.54" fill="#B54D2A"/>
+        <polygon points="55.4,64.52 62.6,60.37 62.6,69.33 55.4,73.48" fill="#E8B04A"/>
+        <polygon points="67.4,57.59 74.6,53.44 74.6,62.4 67.4,66.55" fill="#E8B04A" opacity=".6"/>
+        <circle cx="50" cy="13" r="6.5" fill="#8FB59A"/>
+      </svg>
+      <span>Team<span class="town">Town</span></span>
+    </div>
+    <div class="org">Acme GmbH · Hamburg HQ</div>
+    <button class="search" type="button">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      Search, go to a person or room, call…
+      <kbd>Ctrl K</kbd>
+    </button>
+    <button class="status-pill" type="button"><span class="dot available"></span>Available
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+    </button>
+    <div class="me" title="You">BE</div>
+  </header>
+
+  <!-- ===== Rail ===== -->
+  <nav class="rail" aria-label="Main">
+    <button aria-current="page" title="Office">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M12 3 21 8 12 13 3 8Z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>
+    </button>
+    <button title="Channels">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M5 9h14M5 15h14M10 4 8 20M16 4l-2 16"/></svg>
+      <span class="badge">3</span>
+    </button>
+    <button title="Direct messages">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M4 5h16v11H9l-5 4Z"/></svg>
+    </button>
+    <button title="Notifications (pigeonhole)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M4 13h4l2 3h4l2-3h4"/><path d="M4 13 7 5h10l3 8v6H4Z"/></svg>
+    </button>
+    <div class="spacer"></div>
+    <button title="Office editor">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="m4 20 4-1 11-11-3-3L5 16Z"/><path d="m14 7 3 3"/></svg>
+    </button>
+    <button title="Admin">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg>
+    </button>
+  </nav>
+
+  <!-- ===== Sidebar ===== -->
+  <aside class="sidebar" aria-label="Rooms, channels and people">
+    <div class="section-title"><span>Rooms · Floor 2</span><span>5</span></div>
+    <button class="item active"><span>🍵</span><span>Kitchen<span class="room-sub">Conversation · 3 people</span></span>
+      <span class="meta"><span class="faces"><span style="background:#2F6F8F">L</span><span style="background:#B54D2A">J</span><span style="background:#5F9470">A</span></span></span></button>
+    <button class="item"><span class="lock">🔒</span><span>Elbe<span class="room-sub">Locked · private meeting</span></span><span class="meta">3</span></button>
+    <button class="item"><span>🚪</span><span>Alster<span class="room-sub">Open · Sprint review</span></span><span class="meta">2</span></button>
+    <button class="item"><span>💻</span><span>Open space<span class="room-sub">3 people</span></span><span class="meta">3</span></button>
+    <button class="item"><span>🛋️</span><span>Lounge<span class="room-sub">1 person</span></span><span class="meta">1</span></button>
+
+    <div class="section-title"><span>Channels</span><span>+</span></div>
+    <button class="item"><span class="hash">#</span>general</button>
+    <button class="item unread"><span class="hash">#</span>product<span class="meta"><span class="count">3</span></span></button>
+    <button class="item"><span class="hash">#</span>dev-team</button>
+    <button class="item"><span class="hash">🔒</span>leadership</button>
+    <button class="item"><span class="hash">📢</span>announcements</button>
+
+    <div class="section-title"><span>Direct</span><span>+</span></div>
+    <button class="item"><span class="dot available"></span>Lena Hoffmann</button>
+    <button class="item unread"><span class="dot focus"></span>Murat Yılmaz<span class="meta"><span class="count">1</span></span></button>
+    <button class="item"><span class="dot busy"></span>Sabine Keller</button>
+    <button class="item"><span class="dot away"></span>Chris Brandt</button>
+    <button class="item"><span class="dot offline"></span>Tom Richter</button>
+  </aside>
+
+  <!-- ===== Stage ===== -->
+  <main class="stage" aria-label="Office floor 2">
+    <canvas id="world" aria-label="Isometric office. Use list mode for a text view."></canvas>
+
+    <section class="listview" id="listview" aria-label="Rooms (list mode)">
+      <article class="card"><h3>🍵 Kitchen <span class="door open">Open</span></h3>
+        <ul><li><span class="dot available"></span>Lena Hoffmann</li><li><span class="dot available"></span>Jonas Weber</li><li><span class="dot available"></span>Aylin Demir</li></ul>
+        <button class="btn primary">Join conversation</button></article>
+      <article class="card"><h3>🔒 Elbe <span class="door locked">Locked</span></h3>
+        <ul><li>3 people in a private meeting</li></ul>
+        <button class="btn secondary" disabled>Locked</button></article>
+      <article class="card"><h3>🚪 Alster <span class="door open">Open</span></h3>
+        <ul><li><span class="dot busy"></span>Nina Albers</li><li><span class="dot busy"></span>Paul Schmidt</li></ul>
+        <button class="btn primary">Walk in</button></article>
+      <article class="card"><h3>💻 Open space <span class="door open">Open</span></h3>
+        <ul><li><span class="dot busy"></span>Elena Vogt</li><li><span class="dot focus"></span>Murat Yılmaz</li><li><span class="dot available"></span>Ben Krüger</li></ul>
+        <button class="btn primary">Go there</button></article>
+      <article class="card"><h3>🛋️ Lounge <span class="door open">Open</span></h3>
+        <ul><li><span class="dot away"></span>Chris Brandt</li></ul>
+        <button class="btn primary">Go there</button></article>
+    </section>
+
+    <div class="overlay tl">
+      <button class="chip">🏢 Floor 2 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></button>
+      <div class="seg" role="group" aria-label="View">
+        <button aria-pressed="true" id="btn-world">World</button>
+        <button aria-pressed="false" id="btn-list">List</button>
+      </div>
+    </div>
+
+    <div class="toast" role="alert">
+      <header>
+        <div class="ava">JW</div>
+        <div><strong>Jonas Weber is calling</strong><p>Direct call · "Got a minute for the release plan?"</p></div>
+      </header>
+      <div class="actions"><button class="btn primary">Accept</button><button class="btn secondary">Not now</button></div>
+    </div>
+
+    <div class="hint" id="hint">Click anywhere on the floor to walk there</div>
+
+    <div class="dock" role="toolbar" aria-label="Media controls">
+      <div class="where"><span>Kitchen</span><small>Conversation · 3 nearby</small></div>
+      <button class="on" title="Microphone on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+      <button title="Camera off"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="7" width="12" height="10" rx="2"/><path d="m15 11 6-3v8l-6-3M3 3l18 18"/></svg></button>
+      <button title="Share screen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg></button>
+      <button title="Emote"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5a4.5 4.5 0 0 0 7 0M9 9.5h.01M15 9.5h.01"/></svg></button>
+      <button title="Focus mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 15v-3a8 8 0 0 1 16 0v3"/><rect x="3" y="14" width="4" height="6" rx="1.5"/><rect x="17" y="14" width="4" height="6" rx="1.5"/></svg></button>
+      <span class="sep"></span>
+      <button class="leave" title="Leave conversation"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10"/></svg>Leave</button>
+    </div>
+  </main>
+
+  <!-- ===== Context panel ===== -->
+  <aside class="context" aria-label="Kitchen">
+    <header>
+      <h2>🍵 Kitchen</h2>
+      <div class="sub">Open room · Room wall is visible to all members</div>
+      <div class="tabs" role="tablist">
+        <button role="tab" aria-selected="true">Room wall</button>
+        <button role="tab" aria-selected="false">People (3)</button>
+        <button role="tab" aria-selected="false">Files</button>
+      </div>
+    </header>
+    <div class="convo">
+      <div class="row"><span>🔊</span><strong>Conversation nearby</strong><span style="margin-left:auto;font-size:12px;color:var(--sage-700);font-weight:600">Open bubble</span></div>
+      <div class="people">
+        <div class="person"><div class="pic speaking" style="background:#2F6F8F">LH</div>Lena</div>
+        <div class="person"><div class="pic" style="background:#B54D2A">JW</div>Jonas</div>
+        <div class="person"><div class="pic" style="background:#5F9470">AD</div>Aylin</div>
+        <div class="person"><div class="pic" style="background:var(--n300);color:var(--espresso)">+</div>You</div>
+      </div>
+    </div>
+    <div class="messages">
+      <div class="msg"><div class="pic" style="background:#B54D2A">JW</div><div><span class="name">Jonas Weber</span><time>09:12</time>
+        <p>Cake in the kitchen at 3 pm 🎂: <span class="mention">@Lena</span>'s birthday!</p>
+        <div class="reactions"><span class="mine">🎉 7</span><span>🍰 4</span></div></div></div>
+      <div class="msg"><div class="pic" style="background:#2F6F8F">LH</div><div><span class="name">Lena Hoffmann</span><time>09:20</time>
+        <p>Aww, thank you! Drop by whenever, the door is open 😊</p></div></div>
+      <div class="system">Today · 15:02 · A conversation started here</div>
+      <div class="msg"><div class="pic" style="background:#5F9470">AD</div><div><span class="name">Aylin Demir</span><time>15:04</time>
+        <p>Pinned the slides from yesterday's offsite here 📎 <u>offsite-recap.pdf</u></p></div></div>
+    </div>
+    <div class="composer">Message the kitchen wall…<span class="send">➤</span></div>
+  </aside>
+</div>
+<div class="ribbon">Design mockup · not final · data is fictional</div>
+
+<script>
+/* ------------------------------------------------------------------
+ * Minimal isometric renderer for the mockup only.
+ * The real client uses Three.js / R3F (ADR-0006); this canvas sketch
+ * just communicates layout, look and interaction ideas.
+ * ------------------------------------------------------------------ */
+const TW = 56, TH = 28, ZH = 30;        // tile width/height in px, px per height unit
+const W = 22, H = 16;                   // grid size in tiles
+const PAL = {
+  espresso: '#2B1F1A', terracotta: '#D9653B', terra7: '#B54D2A', sage: '#8FB59A', sage6: '#5F9470',
+  ocean: '#2F6F8F', ochre: '#E8B04A', cream: '#FBF6EE', n100: '#F3ECE1', n200: '#E6DCCD', n300: '#CFC2B0',
+  wood: '#C69C72', glass: '#9CC3D3', frost: '#EEF2F1',
+};
+const STATUS = { available: PAL.sage6, busy: PAL.terracotta, focus: PAL.ocean, away: PAL.ochre };
+
+const canvas = document.getElementById('world');
+const ctx = canvas.getContext('2d');
+let view = { scale: 1, ox: 0, oy: 0 };
+
+const P = (x, y, z = 0) => [(x - y) * TW / 2, (x + y) * TH / 2 - z * ZH];
+
+function shade(hex, f) {
+  const n = parseInt(hex.slice(1), 16);
+  const c = [n >> 16, (n >> 8) & 255, n & 255].map(v => Math.max(0, Math.min(255, Math.round(v * f))));
+  return `rgb(${c.join(',')})`;
+}
+
+function poly(points, fill, stroke = 'rgba(43,31,26,0.07)') {
+  ctx.beginPath();
+  points.forEach(([a, b], i) => (i ? ctx.lineTo(a, b) : ctx.moveTo(a, b)));
+  ctx.closePath();
+  ctx.fillStyle = fill; ctx.fill();
+  if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 1; ctx.stroke(); }
+}
+
+/** Draws an axis-aligned box; light from top-left: top lightest, left lit, right in shade. */
+function box(x, y, w, d, z, h, color, alpha = 1) {
+  ctx.globalAlpha = alpha;
+  poly([P(x, y + d, z + h), P(x + w, y + d, z + h), P(x + w, y + d, z), P(x, y + d, z)], shade(color, 0.92));
+  poly([P(x + w, y, z + h), P(x + w, y + d, z + h), P(x + w, y + d, z), P(x + w, y, z)], shade(color, 0.8));
+  poly([P(x, y, z + h), P(x + w, y, z + h), P(x + w, y + d, z + h), P(x, y + d, z + h)], color);
+  ctx.globalAlpha = 1;
+}
+
+/* ---------- Floor ---------- */
+function floorColor(x, y) {
+  if (x >= 12 && y < 7) return x < 18 ? '#BFD0BD' : '#C9D8C6';            // meeting room carpets
+  if (x >= 12) return (x + y) % 2 ? '#F3ECE1' : '#ECE2D3';                // kitchen tiles
+  if (y >= 10) return '#E8D8C2';                                          // lounge
+  return ((x + y * 3) % 5 === 0) ? '#E2C9A6' : (y % 2 ? '#E9D3B4' : '#E6CEAD'); // wooden planks
+}
+
+function drawFloor() {
+  box(0, 0, W, H, -0.45, 0.45, '#D9C3A5');                                // building slab
+  for (let x = 0; x < W; x++) for (let y = 0; y < H; y++)
+    poly([P(x, y), P(x + 1, y), P(x + 1, y + 1), P(x, y + 1)], floorColor(x, y), 'rgba(43,31,26,0.05)');
+  poly([P(1.5, 11), P(7, 11), P(7, 14.6), P(1.5, 14.6)], '#E9B9A2', null);  // lounge rug
+  poly([P(1.8, 11.3), P(6.7, 11.3), P(6.7, 14.3), P(1.8, 14.3)], '#F0CDBA', null);
+}
+
+/* ---------- Scene objects (depth-sorted) ---------- */
+const statics = [];
+const add = (key, draw) => statics.push({ key, draw });
+
+function wallY(y, x0, x1, { h = 2.6, color = PAL.n100, alpha = 1, skip = [], windows = false, accent = [] } = {}) {
+  for (let x = x0; x < x1; x++) {
+    if (skip.includes(x)) continue;
+    add(x + y + 0.5, () => {
+      box(x, y - 0.07, 1, 0.14, 0, h, accent.includes(x) ? PAL.terracotta : color, alpha);
+      if (windows && x % 2 === 1 && !accent.includes(x))
+        poly([P(x + 0.15, y + 0.07, 0.9), P(x + 0.85, y + 0.07, 0.9), P(x + 0.85, y + 0.07, 2.2), P(x + 0.15, y + 0.07, 2.2)], '#CFE1E8');
+    });
+  }
+}
+function wallX(x, y0, y1, { h = 2.6, color = PAL.n100, alpha = 1, skip = [], windows = false } = {}) {
+  for (let y = y0; y < y1; y++) {
+    if (skip.includes(y)) continue;
+    add(x + y + 0.5, () => {
+      box(x - 0.07, y, 0.14, 1, 0, h, color, alpha);
+      if (windows && y % 2 === 1)
+        poly([P(x + 0.07, y + 0.15, 0.9), P(x + 0.07, y + 0.85, 0.9), P(x + 0.07, y + 0.85, 2.2), P(x + 0.07, y + 0.15, 2.2)], '#C3D8E0');
+    });
+  }
+}
+function desk(x, y, monitorBack) {
+  add(x + y + 1.5, () => {
+    box(x, y, 2, 1, 0, 0.62, PAL.wood);
+    const my = monitorBack ? y + 0.15 : y + 0.75;
+    box(x + 0.7, my, 0.6, 0.1, 0.62, 0.42, '#3A2D26');
+    poly([P(x + 0.75, my + 0.1, 0.68), P(x + 1.25, my + 0.1, 0.68), P(x + 1.25, my + 0.1, 1.0), P(x + 0.75, my + 0.1, 1.0)], monitorBack ? '#9EC3D2' : '#3A2D26', null);
+  });
+}
+const chair = (x, y, c = PAL.ocean) => add(x + y + 0.4, () => { box(x, y, 0.55, 0.55, 0.3, 0.12, c); box(x, y, 0.55, 0.1, 0.42, 0.45, c); });
+const plant = (x, y) => add(x + y + 0.8, () => {
+  box(x + 0.15, y + 0.15, 0.5, 0.5, 0, 0.4, PAL.terracotta);
+  box(x + 0.05, y + 0.05, 0.7, 0.7, 0.4, 0.55, PAL.sage);
+  box(x + 0.2, y + 0.2, 0.4, 0.4, 0.95, 0.4, '#A7C7AF');
+});
+
+function buildScene() {
+  // Outer walls (back), with windows and a terracotta accent wall
+  wallY(0, 0, 12, { windows: true, accent: [4, 5] });
+  wallY(0, 12, 22, { windows: false });
+  wallX(0, 0, 16, { windows: true });
+  // Elbe: locked, frosted glass
+  wallX(12, 0, 7, { h: 1.9, color: PAL.frost, alpha: 0.82, skip: [3] });
+  add(12 + 3 + 0.5, () => box(11.95, 3, 0.1, 1, 0, 1.9, PAL.terra7));       // closed door
+  wallY(7, 12, 18, { h: 1.9, color: PAL.frost, alpha: 0.82 });
+  wallX(18, 0, 7, { h: 1.9, color: PAL.frost, alpha: 0.82 });
+  // Alster: open, clear glass, door gap at x=19
+  wallY(7, 18, 22, { h: 1.9, color: PAL.glass, alpha: 0.35, skip: [19] });
+  // Screen share on Alster back wall
+  add(19 + 0.6, () => {
+    box(18.6, 0.08, 2.6, 0.08, 0.7, 1.4, '#3A2D26');
+    poly([P(18.7, 0.17, 0.8), P(21.1, 0.17, 0.8), P(21.1, 0.17, 2.0), P(18.7, 0.17, 2.0)], '#FBF6EE', null);
+    poly([P(18.9, 0.17, 1.65), P(20.2, 0.17, 1.65), P(20.2, 0.17, 1.8), P(18.9, 0.17, 1.8)], PAL.terracotta, null);
+    poly([P(18.9, 0.17, 1.0), P(19.5, 0.17, 1.0), P(19.5, 0.17, 1.45), P(18.9, 0.17, 1.45)], PAL.sage, null);
+    poly([P(19.6, 0.17, 1.0), P(20.2, 0.17, 1.0), P(20.2, 0.17, 1.3), P(19.6, 0.17, 1.3)], PAL.ochre, null);
+    poly([P(20.3, 0.17, 1.0), P(20.9, 0.17, 1.0), P(20.9, 0.17, 1.55), P(20.3, 0.17, 1.55)], PAL.ocean, null);
+  });
+
+  // Open space desks
+  [[1, 2, true], [3, 2, true], [7, 2, true], [9, 2, true], [1, 3, false], [3, 3, false], [7, 3, false], [9, 3, false],
+   [1, 5.6, true], [3, 5.6, true], [7, 5.6, true], [9, 5.6, true]].forEach(([x, y, b]) => desk(x, y, b));
+  [[1.7, 1.2], [3.7, 1.2, PAL.sage], [7.7, 1.2], [9.7, 1.2, PAL.ochre], [1.7, 4.2], [3.7, 4.2, PAL.terracotta], [7.7, 4.2, PAL.sage], [9.7, 4.2],
+   [1.7, 4.9], [3.7, 4.9], [7.7, 4.9, PAL.ochre], [9.7, 4.9]].forEach(([x, y, c]) => chair(x, y, c));
+
+  // Elbe & Alster furniture
+  add(13.5 + 2.5 + 2.3, () => box(13.5, 2.4, 3, 1.6, 0, 0.7, PAL.wood));
+  add(19 + 2.8 + 1.6, () => box(18.9, 2.8, 2, 1.2, 0, 0.7, PAL.wood));
+
+  // Lounge: shelves, sofa, armchair, phone booth
+  [0, 1, 2, 3, 4, 8, 9, 10].forEach(x => add(x + 10 + 0.5, () => box(x + 0.05, 9.6, 0.9, 0.5, 0, 1.0, PAL.wood)));
+  add(2 + 12 + 1.5, () => { box(1.8, 11.6, 3, 1, 0, 0.45, PAL.ocean); box(1.8, 11.6, 3, 0.3, 0.45, 0.5, PAL.ocean); });
+  add(5.4 + 13 + 1, () => { box(5.4, 12.8, 1, 1, 0, 0.45, PAL.ochre); box(5.4, 12.8, 0.3, 1, 0.45, 0.45, PAL.ochre); });
+  add(3 + 13.4 + 0.6, () => box(2.8, 13.2, 1.2, 0.7, 0, 0.35, PAL.wood));
+  add(9 + 12 + 1.4, () => { box(9, 12, 1.4, 1.4, 0, 2.1, PAL.glass, 0.4); box(9, 12, 1.4, 1.4, 2.1, 0.12, '#3A2D26'); });
+
+  // Kitchen
+  add(12.6 + 7.2 + 2.4, () => { box(12.6, 7.2, 4.2, 0.8, 0, 0.9, PAL.terracotta); box(12.6, 7.2, 4.2, 0.8, 0.9, 0.08, PAL.n100); });
+  add(13.1 + 7.3 + 0.5, () => box(13.1, 7.3, 0.5, 0.45, 0.98, 0.45, '#3A2D26'));
+  add(17.2 + 7.2 + 1, () => box(17.2, 7.2, 0.9, 0.8, 0, 2.0, PAL.n100));
+  add(15.5 + 10.7 + 0.8, () => { box(15.75, 10.95, 0.3, 0.3, 0, 1.0, '#3A2D26'); box(15.4, 10.6, 1, 1, 1.0, 0.08, PAL.wood); });
+  add(18.5 + 12.5 + 1.6, () => box(18.5, 12.3, 2.2, 1.2, 0, 0.75, PAL.wood));
+  [[18.7, 11.5], [19.8, 11.5], [18.7, 13.7], [19.8, 13.7]].forEach(([x, y]) => chair(x, y, PAL.sage));
+
+  // Plants everywhere: plants make it human
+  [[0.2, 0.2], [11, 0.3], [0.3, 8.6], [21, 8.2], [12.3, 14.8], [20.9, 14.8], [7.6, 14.6], [16.8, 0.3]].forEach(([x, y]) => plant(x, y));
+}
+
+/* ---------- People ---------- */
+const people = [
+  { name: 'Lena', x: 15.0, y: 10.4, status: 'available', top: PAL.ocean, skin: '#E0AC8A', hair: '#5A3A28', speaking: true },
+  { name: 'Jonas', x: 16.9, y: 11.0, status: 'available', top: PAL.terra7, skin: '#F1C7A5', hair: '#C9A15A' },
+  { name: 'Aylin', x: 15.6, y: 12.2, status: 'available', top: PAL.sage6, skin: '#B97D58', hair: '#2B1F1A' },
+  { name: 'Murat', x: 9.95, y: 1.35, status: 'focus', top: '#4A3F36', skin: '#C68B63', hair: '#2B1F1A', seated: true, headphones: true },
+  { name: 'Elena', x: 1.95, y: 1.35, status: 'busy', top: PAL.ochre, skin: '#F3D0B5', hair: '#8A4B2A', seated: true },
+  { name: 'Ben', x: 3.95, y: 4.45, status: 'available', top: PAL.ocean, skin: '#8D5A3B', hair: '#2B1F1A', seated: true },
+  { name: 'Nina', x: 19.4, y: 2.3, status: 'busy', top: PAL.terracotta, skin: '#EBBE9C', hair: '#3A2D26' },
+  { name: 'Paul', x: 20.6, y: 4.5, status: 'busy', top: PAL.ocean, skin: '#D9A07E', hair: '#7A5A3A' },
+  { name: 'Chris', x: 5.9, y: 13.3, status: 'away', top: PAL.sage6, skin: '#F0C4A0', hair: '#C9A15A', seated: true },
+  // Inside locked Elbe: shown only as frosted silhouettes
+  { x: 14.2, y: 2.0, silhouette: true }, { x: 16.2, y: 2.1, silhouette: true }, { x: 15.2, y: 4.6, silhouette: true },
+];
+const me = { name: 'You', x: 4.5, y: 7.5, status: 'available', top: PAL.terracotta, skin: '#E8B796', hair: '#4A3F36', me: true, path: [] };
+people.push(me);
+
+const loop = [[4.5, 7.5], [11.5, 7.5], [13.6, 9.2], [14.2, 11.6]];
+let loopIndex = 0, pauseUntil = 0;
+const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function drawAvatar(a, t) {
+  const [sx, sy] = P(a.x, a.y);
+  if (a.silhouette) {
+    ctx.globalAlpha = 0.35;
+    ctx.fillStyle = '#7F8C8D';
+    ctx.beginPath(); ctx.ellipse(sx, sy - 22, 8, 16, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(sx, sy - 44, 7, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 1;
+    return;
+  }
+  const bob = a.walking ? Math.abs(Math.sin(t * 9)) * 2.5 : Math.sin(t * 2 + a.x) * 0.6;
+  // Shadow + status ring on the floor
+  ctx.beginPath(); ctx.ellipse(sx, sy, 13, 6.5, 0, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(43,31,26,0.16)'; ctx.fill();
+  ctx.strokeStyle = STATUS[a.status]; ctx.lineWidth = 2; ctx.stroke();
+
+  const base = sy - 3 - bob - (a.seated ? 10 : 0);
+  if (!a.seated) {   // legs
+    poly([[sx - 6, base - 13], [sx, base - 12], [sx, base], [sx - 5, base - 1]], '#4A3F36', null);
+    poly([[sx, base - 12], [sx + 6, base - 13], [sx + 5, base - 1], [sx, base]], '#3A2D26', null);
+  }
+  const ty = base - 12;   // faceted torso: lit left half, shaded right half
+  poly([[sx - 9, ty - 15], [sx, ty - 18], [sx, ty + 1], [sx - 7, ty - 1]], a.top, null);
+  poly([[sx, ty - 18], [sx + 9, ty - 15], [sx + 7, ty - 1], [sx, ty + 1]], shade(a.top, 0.78), null);
+  const hy = ty - 26, r = 8;  // faceted head
+  poly([[sx, hy - r], [sx - r * 0.87, hy - r / 2], [sx - r * 0.87, hy + r / 2], [sx, hy + r]], a.skin, null);
+  poly([[sx, hy - r], [sx + r * 0.87, hy - r / 2], [sx + r * 0.87, hy + r / 2], [sx, hy + r]], shade(a.skin, 0.85), null);
+  poly([[sx, hy - r - 2], [sx + r * 0.95, hy - r / 2 - 1], [sx + r * 0.9, hy - 1], [sx, hy - 4], [sx - r * 0.9, hy - 1], [sx - r * 0.95, hy - r / 2 - 1]], a.hair, null);
+  ctx.fillStyle = PAL.espresso;
+  ctx.fillRect(sx - 4, hy + 1, 1.6, 1.6); ctx.fillRect(sx + 2.4, hy + 1, 1.6, 1.6);
+  if (a.headphones) {
+    ctx.strokeStyle = PAL.ocean; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.arc(sx, hy, r + 1.5, Math.PI * 1.05, Math.PI * 1.95); ctx.stroke();
+    ctx.fillStyle = PAL.ocean; ctx.fillRect(sx - r - 3, hy - 1, 4, 6); ctx.fillRect(sx + r - 1, hy - 1, 4, 6);
+  }
+  if (a.speaking) {
+    const pulse = 0.5 + 0.5 * Math.sin(t * 6);
+    ctx.strokeStyle = `rgba(143,181,154,${0.4 + 0.5 * pulse})`; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.arc(sx, hy, r + 5 + pulse * 2, 0, Math.PI * 2); ctx.stroke();
+  }
+  a.labelAt = [sx, hy - r - 10];
+}
+
+function drawLabel([x, y], text, { dot, bg = 'rgba(255,255,255,0.94)', fg = PAL.espresso, bold = false } = {}) {
+  ctx.font = `${bold ? 600 : 500} 11px Inter, system-ui, sans-serif`;
+  const w = ctx.measureText(text).width + (dot ? 26 : 16), h = 20;
+  ctx.fillStyle = bg; ctx.strokeStyle = 'rgba(43,31,26,0.1)';
+  ctx.beginPath(); ctx.roundRect(x - w / 2, y - h, w, h, 10); ctx.fill(); ctx.stroke();
+  if (dot) { ctx.fillStyle = dot; ctx.beginPath(); ctx.arc(x - w / 2 + 11, y - h / 2, 4, 0, Math.PI * 2); ctx.fill(); }
+  ctx.fillStyle = fg; ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
+  ctx.fillText(text, x - w / 2 + (dot ? 19 : 8), y - h / 2 + 0.5);
+}
+
+function drawRoomLabel(x, y, title, sub, color) {
+  const [sx, sy] = P(x, y);
+  ctx.textAlign = 'center';
+  ctx.font = '600 15px Outfit, system-ui, sans-serif';
+  ctx.fillStyle = color; ctx.globalAlpha = 0.85;
+  ctx.fillText(title, sx, sy);
+  ctx.font = '500 11px Inter, system-ui, sans-serif'; ctx.fillStyle = PAL.espresso; ctx.globalAlpha = 0.55;
+  ctx.fillText(sub, sx, sy + 16);
+  ctx.globalAlpha = 1;
+}
+
+/* ---------- Movement (mockup: straight lines, the real app uses A* on the tile grid) ---------- */
+function updateMe(t, dt) {
+  if (reducedMotion) return;
+  if (!me.path.length) {
+    if (t < pauseUntil) { me.walking = false; return; }
+    loopIndex = (loopIndex + 1) % loop.length;
+    me.path = [loop[loopIndex]];
+    if (loopIndex === loop.length - 1) pauseUntil = t + 4;
+    if (loopIndex === 0) { me.x = loop[0][0]; me.y = loop[0][1]; }
+  }
+  const [tx, ty] = me.path[0];
+  const dx = tx - me.x, dy = ty - me.y, dist = Math.hypot(dx, dy), step = 3.2 * dt;
+  me.walking = true;
+  if (dist <= step) { me.x = tx; me.y = ty; me.path.shift(); if (!me.path.length) pauseUntil = Math.max(pauseUntil, t + 1.2); }
+  else { me.x += dx / dist * step; me.y += dy / dist * step; }
+}
+
+function drawPath() {
+  if (!me.path.length) return;
+  const pts = [[me.x, me.y], ...me.path].map(([x, y]) => P(x, y));
+  ctx.setLineDash([4, 6]); ctx.strokeStyle = PAL.terra7; ctx.lineWidth = 2; ctx.globalAlpha = 0.6;
+  ctx.beginPath(); pts.forEach(([a, b], i) => (i ? ctx.lineTo(a, b) : ctx.moveTo(a, b))); ctx.stroke();
+  ctx.setLineDash([]); ctx.globalAlpha = 1;
+  const [ex, ey] = me.path[me.path.length - 1];
+  poly([P(ex - 0.35, ey), P(ex, ey - 0.35), P(ex + 0.35, ey), P(ex, ey + 0.35)], 'rgba(217,101,59,0.35)', PAL.terra7);
+}
+
+function drawConversationBubble(t) {
+  const [cx, cy] = P(15.8, 11.2), r = 2.3 + Math.sin(t * 1.5) * 0.04;
+  ctx.beginPath(); ctx.ellipse(cx, cy, r * TW * 0.707, r * TH * 0.707, 0, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(143,181,154,0.18)'; ctx.fill();
+  ctx.setLineDash([6, 6]); ctx.strokeStyle = 'rgba(95,148,112,0.8)'; ctx.lineWidth = 1.5; ctx.stroke(); ctx.setLineDash([]);
+}
+
+/* ---------- Frame ---------- */
+function resize() {
+  const dpr = window.devicePixelRatio || 1, rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr; canvas.height = rect.height * dpr;
+  const contentW = (W + H) * TW / 2 + 40, contentH = (W + H) * TH / 2 + 2.6 * ZH + 60;
+  const s = Math.min(rect.width / contentW, (rect.height - 90) / contentH);
+  view = { scale: s * dpr, dpr,
+    ox: rect.width / 2 * dpr - ((W - H) * TW / 4) * s * dpr,
+    oy: (rect.height - 90) / 2 * dpr - ((W + H) * TH / 4 - 2.6 * ZH / 2) * s * dpr };
+}
+
+let last = performance.now();
+function frame(now) {
+  const t = now / 1000, dt = Math.min(0.05, (now - last) / 1000); last = now;
+  updateMe(t, dt);
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.setTransform(view.scale, 0, 0, view.scale, view.ox, view.oy);
+
+  drawFloor();
+  drawConversationBubble(t);
+  drawPath();
+
+  const objects = statics.concat(people.map(a => ({ key: a.x + a.y + 0.05, draw: () => drawAvatar(a, t) })));
+  objects.sort((a, b) => a.key - b.key).forEach(o => o.draw());
+
+  // Overlay pass: labels are never hidden behind geometry
+  drawRoomLabel(5.5, 8.3, 'Open space', '3 people', PAL.espresso);
+  drawRoomLabel(15, 5.6, 'Elbe', 'Private meeting', PAL.terra7);
+  drawRoomLabel(20, 5.9, 'Alster', 'Sprint review', PAL.ocean);
+  drawRoomLabel(19.2, 9.4, 'Kitchen', 'Conversation', PAL.sage6);
+  drawRoomLabel(4, 15.2, 'Lounge', '1 person', PAL.espresso);
+  drawLabel((([x, y]) => [x, y - 50])(P(15.2, 3.2, 1.9)), 'Locked · 3 people', { dot: PAL.terracotta, bold: true });
+  drawLabel((([x, y]) => [x, y - 4])(P(19.5, 7.6, 0)), 'Open door', { dot: PAL.sage6 });
+  people.filter(a => !a.silhouette && a.labelAt).forEach(a =>
+    drawLabel(a.labelAt, a.name, a.me ? { dot: STATUS[a.status], bg: PAL.espresso, fg: PAL.cream, bold: true } : { dot: STATUS[a.status] }));
+
+  requestAnimationFrame(frame);
+}
+
+canvas.addEventListener('click', e => {
+  const rect = canvas.getBoundingClientRect();
+  const px = ((e.clientX - rect.left) * view.dpr - view.ox) / view.scale;
+  const py = ((e.clientY - rect.top) * view.dpr - view.oy) / view.scale;
+  const x = (px / (TW / 2) + py / (TH / 2)) / 2, y = (py / (TH / 2) - px / (TW / 2)) / 2;
+  if (x < 0.3 || y < 0.3 || x > W - 0.3 || y > H - 0.3) return;
+  me.path = [[x, y]]; pauseUntil = performance.now() / 1000 + 6;
+  document.getElementById('hint').textContent = 'Walking… (the real app uses pathfinding on the tile grid)';
+});
+
+const listBtn = document.getElementById('btn-list'), worldBtn = document.getElementById('btn-world');
+listBtn.onclick = () => { document.getElementById('listview').classList.add('show'); canvas.style.visibility = 'hidden';
+  listBtn.setAttribute('aria-pressed', 'true'); worldBtn.setAttribute('aria-pressed', 'false'); document.getElementById('hint').style.display = 'none'; };
+worldBtn.onclick = () => { document.getElementById('listview').classList.remove('show'); canvas.style.visibility = 'visible';
+  worldBtn.setAttribute('aria-pressed', 'true'); listBtn.setAttribute('aria-pressed', 'false'); document.getElementById('hint').style.display = ''; };
+
+buildScene();
+resize();
+addEventListener('resize', resize);
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

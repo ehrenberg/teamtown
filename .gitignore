@@ -1,0 +1,27 @@
+# Dependencies & builds
+node_modules/
+dist/
+out/
+build/
+.turbo/
+coverage/
+*.tsbuildinfo
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/workspace.xml
+.idea/shelf/
+.vscode/*
+!.vscode/extensions.json
+
+# Claude Code local settings
+.claude/settings.local.json
