@@ -16,6 +16,7 @@ Use these terms consistently in code, UI, docs and conversations. Code identifie
 | **Tile**           | One cell of the floor grid; the unit for walking, placing and pathfinding                                | `TileCoord {x, y}`                         |
 | **Room**           | A named area of a floor with its own policy (door mode, capacity, audio isolation)                       | `Room`                                     |
 | **Door mode**      | A room's access mode: `open`, `knock` or `locked`                                                        | `DoorMode`                                 |
+| **Spawn point**    | A tile where people appear when they enter a floor                                                       | `spawnPoints[]` in `FloorPlan`             |
 | **Desk**           | A furniture item that can be assigned to a person; their spawn point                                     | `Desk`                                     |
 | **Avatar**         | A person's figure in the world                                                                           | `Avatar`                                   |
 | **Presence**       | A person's live state: where they are, status, visibility. **Never persisted.**                          | `PresenceState`                            |

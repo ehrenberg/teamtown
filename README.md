@@ -53,4 +53,6 @@ condensed rulebook).
 
 ## License
 
-[GNU Affero General Public License v3.0](LICENSE). If you run a modified TeamTown as a network service, you must make your changes available.
+- **Code:** [GNU Affero General Public License v3.0](LICENSE). If you run a modified TeamTown as a network service, you must make your changes available.
+- **Artwork and 3D assets** (`design/`, avatar and furniture models): [CC BY-SA 4.0](LICENSE-ASSETS).
+- **Name and logo:** see the [trademark policy](TRADEMARKS.md).

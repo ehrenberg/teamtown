@@ -30,6 +30,7 @@ export default defineConfig({
         { label: 'Architecture', items: [{ autogenerate: { directory: 'docs/architecture' } }] },
         { label: 'Engineering', items: [{ autogenerate: { directory: 'docs/engineering' } }] },
         { label: 'Design', items: [{ autogenerate: { directory: 'docs/design' } }] },
+        { label: 'Features', items: [{ autogenerate: { directory: 'docs/features' } }] },
       ],
     }),
   ],
