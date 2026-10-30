@@ -31,22 +31,24 @@ helps, without being on camera by default.
 
 ## Acceptance criteria
 
-- [ ] Given two people in a conversation, when one switches the camera on, then the other sees the video above
+- [x] Given two people in a conversation, when one switches the camera on, then the other sees the video above
       their avatar within 1 s, and someone on the floor outside the conversation receives no video but sees the
-      camera icon.
-- [ ] Given a person with the camera on, when they leave the conversation or call, then the camera goes off; in
+      camera icon. _(e2e `camera.spec.ts` without the 1 s budget; only members of a LiveKit room receive any of
+      its tracks, as tested for audio against a real LiveKit server.)_
+- [x] Given a person with the camera on, when they leave the conversation or call, then the camera goes off; in
       the next conversation it is off until switched on again.
-- [ ] Given a room call or direct call with two cameras on, then the grid panel shows both pictures with names, and
-      it can be collapsed and opened again.
-- [ ] Given a video bubble, when the speaker walks from 2 to 6 tiles away, then the bubble shrinks and fades.
-- [ ] Given a modified client that publishes a camera track in a room it doesn't belong to, then it is removed as
+- [x] Given a room call or direct call with two cameras on, then the grid panel shows both pictures with names, and
+      it can be collapsed and opened again. _(e2e with one camera.)_
+- [x] Given a video bubble, when the speaker walks from 2 to 6 tiles away, then the bubble shrinks and fades.
+      _(Unit test of the size rule.)_
+- [x] Given a modified client that publishes a camera track in a room it doesn't belong to, then it is removed as
       for audio (existing reconciliation).
 - [ ] Given the camera permission is denied, then the button shows "No camera" and the person stays in the call
-      with audio.
-- [ ] Non-spatial path: the camera works in room calls and direct calls through the grid panel, by keyboard.
-- [ ] Accessibility: the camera button has `aria-pressed`; videos have the person's name as label; the grid toggle
+      with audio. _(Implemented; not yet checked, neither automatically nor by hand.)_
+- [x] Non-spatial path: the camera works in room calls and direct calls through the grid panel, by keyboard.
+- [x] Accessibility: the camera button has `aria-pressed`; videos have the person's name as label; the grid toggle
       has `aria-expanded`.
-- [ ] i18n: all new strings in EN and DE.
+- [x] i18n: all new strings in EN and DE.
 
 ## Permissions
 
@@ -82,6 +84,10 @@ their camera on. No new permissions.
   camera icon in the name label for people with the camera on.
 - Grid panel at the top of the world view for room calls and direct calls: tiles with name and muted icon,
   collapse toggle.
+
+## Not yet covered by automated tests
+
+- The 1 s budget (M6), a denied camera permission, and a grid with several cameras.
 
 ## Open questions
 
