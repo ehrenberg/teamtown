@@ -10,6 +10,8 @@ const speaking = (page: Page, name: string) =>
   peopleList(page).getByRole('listitem').filter({ hasText: name }).filter({ hasText: 'speaking' });
 
 test('people knock on a meeting room, get let in and talk in its room call', async () => {
+  // Two software-rendered browsers walking across the floor and joining LiveKit take a while.
+  test.setTimeout(240_000);
   const browsers = [await browserWithVoice(220), await browserWithVoice(330)] as const;
   const anna = (await signIn(browsers[0], 'demo', 'demo')).page;
   const ben = (await signIn(browsers[1], 'demo2', 'demo2')).page;
@@ -26,7 +28,7 @@ test('people knock on a meeting room, get let in and talk in its room call', asy
   await notice.getByRole('button', { name: 'Knock' }).click();
   await expect(roomsList(ben)).toContainText('You knocked on Elbe. Waiting for an answer…');
 
-  await anna.getByRole('button', { name: 'Let Second Demo in' }).click();
+  await anna.getByRole('button', { name: 'Let Second Demo in', exact: true }).click();
   await expect(roomsList(ben)).toContainText('You may come in. Walking in…');
   await expect(roomRow(ben, 'Elbe')).toContainText('(you)', { timeout: WALK_TIMEOUT_MS });
 

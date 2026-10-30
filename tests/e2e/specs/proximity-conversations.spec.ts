@@ -10,6 +10,8 @@ const speaking = (page: Page, name: string) =>
   peopleList(page).getByRole('listitem').filter({ hasText: name }).filter({ hasText: 'speaking' });
 
 test('people next to each other talk, can make it private, and find each other again', async () => {
+  // Two software-rendered browsers joining LiveKit take a while.
+  test.setTimeout(240_000);
   // Neighbouring spawn points: both start in one conversation.
   const browsers = [await browserWithVoice(220), await browserWithVoice(330)] as const;
   const annaSession = await signIn(browsers[0], 'demo', 'demo');

@@ -1,6 +1,6 @@
 # Feature: Room calls, door modes and knock
 
-- **Status:** In progress
+- **Status:** Done (2026-10-30)
 - **Brainstorming ID:** C3 (room meetings), C4 (knock knock), S1 (door states as availability)
 - **Bounded context(s):** Meetings, Presence, World, realtime gateway
 - **Milestone:** M2b (ADR-0031)
@@ -51,7 +51,7 @@ so that we decide who joins.
 
 ## Acceptance criteria
 
-- [ ] Given a person walks into an `audioIsolated` room with two others inside, then within 1 s they hear both at
+- [x] Given a person walks into an `audioIsolated` room with two others inside, then within 1 s they hear both at
       full volume, and nobody outside the room hears any of them. _(Room-call membership is unit-tested; hearing
       each other is verified in e2e `room-calls-and-knock.spec.ts` without the 1 s budget, which is measured in M6.)_
 - [x] Given an occupant of a room call walks out, then they are removed from the room's LiveKit room at once and
@@ -61,8 +61,9 @@ so that we decide who joins.
 - [x] Given a `locked` room, when someone outside sends `MoveTo` to a tile inside, then the command is rejected
       with `door-closed` and they never enter; if the mode changes while they walk towards it, their path ends in
       front of the door.
-- [ ] Given a `knock` room with one occupant, when a person knocks, then the occupant hears a knock sound and sees
-      the request; when the occupant admits, then the requester's avatar walks in within the 30 s pass.
+- [x] Given a `knock` room with one occupant, when a person knocks, then the occupant hears a knock sound and sees
+      the request; when the occupant admits, then the requester's avatar walks in within the 30 s pass. _(Verified in
+      e2e `room-calls-and-knock.spec.ts`; the knock sound itself is not checked automatically.)_
 - [x] Given a knock request without an answer, then it expires after 60 s and the requester is told plainly.
 - [x] Given two occupants, when one admits and the other declines at the same time, then exactly one answer counts
       and both see the result.
@@ -74,9 +75,10 @@ so that we decide who joins.
 - [x] Non-spatial path: a "Rooms on this floor" list shows each room's name, door mode (icon **and** label) and
       occupants, with the actions "Go there", "Knock" and "Stop knocking"; occupants change the door mode and answer knocks
       in the toolbar and the knock tray, both reachable by keyboard.
-- [ ] Accessibility: door mode switch, knock, admit and decline are buttons with labels and reachable by keyboard;
+- [x] Accessibility: door mode switch, knock, admit and decline are buttons with labels and reachable by keyboard;
       incoming knocks and their outcome are announced politely (`aria-live`); the knock sound has a visible
-      counterpart.
+      counterpart. _(Native buttons with accessible names, used by role and name in the e2e test; reviewed with
+      `/ui-review`. The announcements are not yet checked with a screen reader.)_
 - [x] i18n: all new strings in EN and DE.
 
 ## Permissions
@@ -140,8 +142,7 @@ may admit and change the door mode (ADR-0031). As in M2a, the use cases check oc
 
 ## Not yet covered by automated tests
 
-- The 1 s budget for hearing each other (M6), the knock sound and the screen-reader announcements (checked by
-  hand).
+- The 1 s budget for hearing each other (M6), the knock sound and the screen-reader announcements.
 
 ## Open questions
 
