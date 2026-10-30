@@ -27,6 +27,30 @@ export interface ScreenShareChanged {
   readonly recipients: readonly string[];
 }
 
+/** To everyone on the floor: whether a room's meeting is logged (never its title or participants). */
+export interface MeetingLogChanged {
+  readonly type: 'MeetingLogChanged';
+  readonly floorId: string;
+  readonly roomId: string;
+  readonly active: boolean;
+}
+
+/** To the people concerned: the logged meeting they are in, or `null` once it ended. */
+export interface MeetingLogDetails {
+  readonly type: 'MeetingLogDetails';
+  readonly roomId: string;
+  readonly details: { readonly meetingId: string; readonly title: string; readonly hostId: string } | null;
+  readonly recipients: readonly string[];
+}
+
+/** To people inside a logged room who haven't consented yet (ADR-0027). */
+export interface MeetingLogConsentRequested {
+  readonly type: 'MeetingLogConsentRequested';
+  readonly roomId: string;
+  readonly title: string;
+  readonly recipients: readonly string[];
+}
+
 export interface RoomCallAccessGranted {
   readonly type: 'RoomCallAccessGranted';
   readonly personId: string;
@@ -59,7 +83,10 @@ export type MeetingsEvent =
   | DirectCallEvent
   | DirectCallAccessGranted
   | CameraChanged
-  | ScreenShareChanged;
+  | ScreenShareChanged
+  | MeetingLogChanged
+  | MeetingLogDetails
+  | MeetingLogConsentRequested;
 export type MeetingsEventListener = (event: MeetingsEvent) => void;
 
 export class MeetingsEventStream {

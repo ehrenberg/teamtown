@@ -1,5 +1,6 @@
 import type { Clock } from '@teamtown/kernel';
 import type { DirectCalls } from '../domain/direct-calls.ts';
+import type { ActiveMeetingLogs } from './active-meeting-logs.ts';
 import type { ConversationEvent } from '../domain/floor-conversations.ts';
 import type { RoomCallChanged } from '../domain/room-calls.ts';
 import type { ConversationMedia } from './conversation-media.ts';
@@ -19,6 +20,7 @@ export class UpdateConversations {
     private readonly events: MeetingsEventStream,
     private readonly clock: Clock,
     private readonly calls: DirectCalls,
+    private readonly logs: ActiveMeetingLogs,
   ) {}
 
   async execute(): Promise<void> {
@@ -39,7 +41,9 @@ export class UpdateConversations {
       const occupants = new Map(
         floor.acoustics.isolatedRoomIds.map((roomId) => [
           roomId,
-          this.presence.occupantsOf(floorId, roomId).filter((personId) => !this.calls.isInCall(personId)),
+          this.presence
+            .occupantsOf(floorId, roomId)
+            .filter((personId) => !this.calls.isInCall(personId) && this.logs.mayBeInCall(floorId, roomId, personId)),
         ]),
       );
       roomCallChanges.push(...floor.roomCalls.update(occupants));

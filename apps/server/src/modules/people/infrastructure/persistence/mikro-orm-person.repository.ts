@@ -18,6 +18,19 @@ export class MikroOrmPersonRepository implements PersonRepository {
       : null;
   }
 
+  async findByIds(ids: readonly string[]): Promise<Person[]> {
+    if (ids.length === 0) return [];
+    const records = await this.orm.em.fork().find(PersonRecord, { id: { $in: [...ids] } });
+    return records.map((record) =>
+      Person.rehydrate({
+        id: record.id as PersonId,
+        oidcSubject: record.oidcSubject,
+        displayName: record.displayName,
+        avatarColor: record.avatarColor,
+      }),
+    );
+  }
+
   async save(person: Person): Promise<void> {
     const em = this.orm.em.fork();
     const record = await em.findOne(PersonRecord, { id: person.id });

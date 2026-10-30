@@ -140,6 +140,24 @@ describe('FloorInstance rooms', () => {
     expect(floor.moveTo('lena', tile(4, 2), LATER + 10_000).ok).toBe(true);
   });
 
+  it('lets nobody into a room with a logged meeting without consent, not even through an open door', () => {
+    const floor = withBenInTheMeetingRoom();
+    floor.setDoorMode('ben', 'meeting', 'open', LATER);
+    floor.setConsentRequired('meeting', true, LATER);
+
+    expect(floor.moveTo('lena', tile(4, 1), LATER)).toEqual({ ok: false, error: 'consent-required' });
+    expect(unwrap(floor.admit('lena', 'meeting', LATER))?.path.at(-1)).toEqual(tile(3, 1));
+  });
+
+  it('walks someone out of a room to a free tile outside', () => {
+    const floor = withBenInTheMeetingRoom();
+
+    floor.walkOut('ben', 'meeting', LATER);
+
+    expect(floor.roomOf('ben', LATER + 10_000)).not.toBe('meeting');
+    expect(floor.walkOut('lena', 'meeting', LATER)).toEqual({ ok: true, value: null });
+  });
+
   it('resets the door mode when the room empties', () => {
     const floor = withBenInTheMeetingRoom();
     floor.setDoorMode('ben', 'meeting', 'locked', LATER);

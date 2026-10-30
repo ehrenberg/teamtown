@@ -10,6 +10,7 @@ import { MoveTo } from './application/move-to.ts';
 import { FLOOR_SOURCE, type FloorSource } from './application/ports/floor-source.port.ts';
 import { PresenceEventStream } from './application/presence-event-stream.ts';
 import { PresenceQueries } from './application/presence-queries.ts';
+import { SetRoomConsentRequired, WalkOutOfRoom } from './application/room-consent.ts';
 import { SetDoorMode } from './application/set-door-mode.ts';
 import { UpdateRooms } from './application/update-rooms.ts';
 import { RoomTicker } from './infrastructure/room-ticker.ts';
@@ -61,6 +62,18 @@ import { WorldFloorSource } from './infrastructure/world-floor-source.ts';
         new UpdateRooms(registry, events, clock),
       inject: [FloorRegistry, PresenceEventStream, CLOCK],
     },
+    {
+      provide: SetRoomConsentRequired,
+      useFactory: (registry: FloorRegistry, events: PresenceEventStream, clock: Clock) =>
+        new SetRoomConsentRequired(registry, events, clock),
+      inject: [FloorRegistry, PresenceEventStream, CLOCK],
+    },
+    {
+      provide: WalkOutOfRoom,
+      useFactory: (registry: FloorRegistry, events: PresenceEventStream, clock: Clock) =>
+        new WalkOutOfRoom(registry, events, clock),
+      inject: [FloorRegistry, PresenceEventStream, CLOCK],
+    },
     { provide: RoomTicker, useFactory: (update: UpdateRooms) => new RoomTicker(update), inject: [UpdateRooms] },
     {
       provide: PresenceQueries,
@@ -68,6 +81,16 @@ import { WorldFloorSource } from './infrastructure/world-floor-source.ts';
       inject: [FloorRegistry, CLOCK],
     },
   ],
-  exports: [JoinFloor, MoveTo, LeavePresence, SetDoorMode, AdmitToRoom, PresenceEventStream, PresenceQueries],
+  exports: [
+    JoinFloor,
+    MoveTo,
+    LeavePresence,
+    SetDoorMode,
+    AdmitToRoom,
+    SetRoomConsentRequired,
+    WalkOutOfRoom,
+    PresenceEventStream,
+    PresenceQueries,
+  ],
 })
 export class PresenceModule {}

@@ -6,7 +6,9 @@ import { ScreenShares } from '../domain/screen-shares.ts';
 import { CallMembership } from './call-membership.ts';
 import { ConversationRegistry } from './conversation-registry.ts';
 import { MeetingsEventStream, type MeetingsEvent } from './meetings-event-stream.ts';
-import { StartScreenShare, StopScreenShare, SyncScreenShares } from './screen-share-use-cases.ts';
+import { StartScreenShare } from './start-screen-share.ts';
+import { StopScreenShare } from './stop-screen-share.ts';
+import { SyncScreenShares } from './sync-screen-shares.ts';
 
 async function setup() {
   const registry = new ConversationRegistry(

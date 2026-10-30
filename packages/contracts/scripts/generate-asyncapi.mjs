@@ -42,6 +42,9 @@ const summaries = {
   SetCamera: 'Switches the own camera on (only inside a conversation or call) or off.',
   StartScreenShare: 'Shares the own screen in a room call or direct call; takes over from the previous sharer.',
   StopScreenShare: 'Stops sharing the own screen.',
+  StartMeetingLog: 'Starts a logged meeting in the own room call; the sender becomes its host.',
+  EndMeetingLog: 'The host ends the logged meeting; the call goes on unlogged.',
+  AnswerMeetingLog: 'Joins (consents to) or declines a logged meeting, from inside the room or before walking in.',
   Authenticated: 'The connection is authenticated.',
   Pong: 'Answer to Ping with the server time.',
   FloorSnapshot:
@@ -70,6 +73,9 @@ const summaries = {
   OnlinePeople: 'Everyone who is online, with their floor. Sent only to the requester.',
   CameraChanged: 'Someone switched their camera on or off. Sent to everyone on the floor; no picture.',
   ScreenShareChanged: 'Who shares the screen in the own call now. Sent to the call and the previous sharer.',
+  MeetingLogChanged: 'A room started or stopped being logged. Sent to everyone on the floor; no title.',
+  MeetingLogDetails: 'The logged meeting one is in, or null once it ended. Sent to its participants.',
+  MeetingLogConsentRequested: 'Asks someone inside a logged room for consent. Sent only to them.',
   Ack: 'The command with this correlation ID succeeded.',
   Nack: 'The command failed. Codes are stable and translated in the client.',
 };

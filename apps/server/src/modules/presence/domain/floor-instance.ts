@@ -45,7 +45,7 @@ export type PresenceEvent =
       readonly doorMode: DoorMode;
     };
 
-export type MoveError = 'not-on-floor' | 'unreachable' | 'door-closed';
+export type MoveError = 'not-on-floor' | 'unreachable' | 'door-closed' | 'consent-required';
 export type AdmitError = 'not-on-floor' | 'room-not-found' | 'unreachable';
 
 export interface FloorRooms {
@@ -126,12 +126,9 @@ export class FloorInstance {
       return ok(null);
     }
     const targetRoom = this.rooms.roomMap.roomAt(target);
-    if (
-      targetRoom !== null &&
-      targetRoom !== this.rooms.roomMap.roomAt(from) &&
-      !this.#doors.mayEnter(personId, targetRoom, now)
-    ) {
-      return err('door-closed');
+    if (targetRoom !== null && targetRoom !== this.rooms.roomMap.roomAt(from)) {
+      const blocked = this.#doors.entryBlockedBy(personId, targetRoom, now);
+      if (blocked) return err(blocked);
     }
     const guard = this.#entryGuard(personId, now);
     let path = findPath(this.grid, from, target, guard);
@@ -167,6 +164,34 @@ export class FloorInstance {
       .sort((a, b) => distance(from, a) - distance(from, b))[0];
     if (!target) return err('unreachable');
 
+    const moved = this.moveTo(personId, target, now);
+    return moved.ok ? moved : err('unreachable');
+  }
+
+  /** While a meeting in the room is logged, only people who consented walk in (ADR-0027). */
+  setConsentRequired(roomId: string, required: boolean, now: number): void {
+    this.#doors.setConsentRequired(roomId, required);
+    if (required) this.#stopAtClosedDoors(now);
+  }
+
+  /** Walks the person out of the room to the nearest free tile outside, e.g. after declining a logged meeting. */
+  walkOut(personId: string, roomId: string, now: number): Result<Movement | null, AdmitError> {
+    const avatar = this.#avatars.get(personId);
+    if (!avatar) return err('not-on-floor');
+    const from = this.#currentTile(avatar, now);
+    if (this.rooms.roomMap.roomAt(from) !== roomId) return ok(null);
+
+    const taken = new Set(
+      this.snapshot(now)
+        .filter((other) => other.occupant.personId !== personId)
+        .map((other) => tileKey(other.movement?.path.at(-1) ?? other.tile)),
+    );
+    const target = [...reachableTiles(this.grid, from, this.#entryGuard(personId, now))]
+      .filter((key) => !taken.has(key))
+      .map(fromKey)
+      .filter((coord) => this.rooms.roomMap.roomAt(coord) !== roomId)
+      .sort((a, b) => distance(from, a) - distance(from, b))[0];
+    if (!target) return err('unreachable');
     const moved = this.moveTo(personId, target, now);
     return moved.ok ? moved : err('unreachable');
   }

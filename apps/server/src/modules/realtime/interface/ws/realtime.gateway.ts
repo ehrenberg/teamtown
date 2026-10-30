@@ -10,6 +10,9 @@ import { ResolvePerson } from '../../../people/public-api.ts';
 import {
   AnswerCall,
   AnswerKnock,
+  AnswerMeetingLog,
+  EndMeetingLog,
+  StartMeetingLog,
   CancelKnock,
   ConversationQueries,
   InviteToCall,
@@ -97,6 +100,9 @@ export class RealtimeGateway implements OnApplicationBootstrap, OnApplicationShu
     @Inject(SetCamera) private readonly setCamera: SetCamera,
     @Inject(StartScreenShare) private readonly startScreenShare: StartScreenShare,
     @Inject(StopScreenShare) private readonly stopScreenShare: StopScreenShare,
+    @Inject(StartMeetingLog) private readonly startMeetingLog: StartMeetingLog,
+    @Inject(EndMeetingLog) private readonly endMeetingLog: EndMeetingLog,
+    @Inject(AnswerMeetingLog) private readonly answerMeetingLog: AnswerMeetingLog,
   ) {}
 
   onApplicationBootstrap(): void {
@@ -169,6 +175,9 @@ export class RealtimeGateway implements OnApplicationBootstrap, OnApplicationShu
       setCamera: this.setCamera,
       startScreenShare: this.startScreenShare,
       stopScreenShare: this.stopScreenShare,
+      startMeetingLog: this.startMeetingLog,
+      endMeetingLog: this.endMeetingLog,
+      answerMeetingLog: this.answerMeetingLog,
     });
     this.#sessions.add(session);
     this.#telemetry.connectionOpened();
@@ -265,6 +274,27 @@ export class RealtimeGateway implements OnApplicationBootstrap, OnApplicationShu
             t: 'CallInvitationAnswered',
             p: { callId: event.callId, personId: event.personId, outcome: event.outcome },
           }),
+        );
+        return;
+      case 'MeetingLogChanged':
+        this.#sendToFloor(
+          event.floorId,
+          encodeMessage({
+            t: 'MeetingLogChanged',
+            p: { floorId: event.floorId, roomId: event.roomId, active: event.active },
+          }),
+        );
+        return;
+      case 'MeetingLogDetails':
+        this.#sendToPeople(
+          event.recipients,
+          encodeMessage({ t: 'MeetingLogDetails', p: { roomId: event.roomId, details: event.details } }),
+        );
+        return;
+      case 'MeetingLogConsentRequested':
+        this.#sendToPeople(
+          event.recipients,
+          encodeMessage({ t: 'MeetingLogConsentRequested', p: { roomId: event.roomId, title: event.title } }),
         );
         return;
       case 'ScreenShareChanged':

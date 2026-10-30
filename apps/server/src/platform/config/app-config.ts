@@ -28,6 +28,8 @@ const AppConfigSchema = z
     LIVEKIT_API_URL: z.url({ protocol: /^https?$/ }).optional(),
     LIVEKIT_API_KEY: z.string().min(1).optional(),
     LIVEKIT_API_SECRET: z.string().min(1).optional(),
+    /** Days a logged meeting is kept (ADR-0027); an admin setting from M4 on. */
+    MEETING_LOG_RETENTION_DAYS: z.coerce.number().int().min(1).max(3650).default(90),
   })
   .refine(
     (config) =>

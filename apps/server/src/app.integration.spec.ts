@@ -7,6 +7,7 @@ import {
   FloorPlan,
   HealthResponse,
   MeResponse,
+  MeetingLogListResponse,
   REALTIME_PATH,
   REALTIME_SUBPROTOCOL,
   type ClientCommand,
@@ -26,6 +27,7 @@ import type { TokenVerifier } from './modules/identity/public-api.ts';
 const people: Record<string, { subject: string; displayName: string }> = {
   'token-lena': { subject: 'sub-lena', displayName: 'Lena Hoffmann' },
   'token-ben': { subject: 'sub-ben', displayName: 'Ben Krüger' },
+  'token-mia': { subject: 'sub-mia', displayName: 'Mia Schulz' },
 };
 
 const fakeVerifier: TokenVerifier = {
@@ -108,6 +110,7 @@ describe('TeamTown server (integration)', () => {
         OIDC_ISSUER: 'http://issuer.invalid/realms/test',
         OIDC_AUDIENCE: 'teamtown-api',
         LOG_LEVEL: 'info',
+        MEETING_LOG_RETENTION_DAYS: 90,
       },
       { tokenVerifier: fakeVerifier },
     );
@@ -124,6 +127,8 @@ describe('TeamTown server (integration)', () => {
 
   const get = (path: string, token?: string) =>
     fetch(`${baseUrl}${path}`, { headers: token ? { authorization: `Bearer ${token}` } : {} });
+  const remove = (path: string, token: string) =>
+    fetch(`${baseUrl}${path}`, { method: 'DELETE', headers: { authorization: `Bearer ${token}` } });
 
   async function connect(token: string): Promise<TestClient> {
     const client = new TestClient(realtimeUrl);
@@ -210,5 +215,48 @@ describe('TeamTown server (integration)', () => {
       lena.close();
       ben.close();
     });
+
+    it('logs a meeting only with consent, keeps others out and shows the log to its participants', async () => {
+      const lena = await connect('token-lena');
+      const ben = await connect('token-ben');
+      const mia = await connect('token-mia');
+      for (const client of [lena, ben, mia]) await client.command({ t: 'JoinFloor', p: { floorId: 'ground-floor' } });
+
+      // Both walk into the empty meeting room Elbe and end up in its room call.
+      await lena.command({ t: 'MoveTo', p: { target: { x: 32, y: 9 } } });
+      await ben.command({ t: 'MoveTo', p: { target: { x: 33, y: 9 } } });
+      await lena.waitFor(
+        (event) => event.t === 'RoomCallChanged' && event.p.roomCall.participants.length === 2,
+        20_000,
+      );
+
+      expect(await lena.command({ t: 'StartMeetingLog', p: { title: 'Sprint review' } })).toMatchObject({ t: 'Ack' });
+      await mia.waitFor((event) => event.t === 'MeetingLogChanged' && event.p.active);
+      const asked = await ben.waitFor((event) => event.t === 'MeetingLogConsentRequested');
+      expect(asked).toMatchObject({ p: { roomId: 'elbe', title: 'Sprint review' } });
+      expect(await ben.command({ t: 'AnswerMeetingLog', p: { roomId: 'elbe', join: true } })).toMatchObject({
+        t: 'Ack',
+      });
+
+      // Nobody walks in without consenting, whatever the door says.
+      expect(await mia.command({ t: 'MoveTo', p: { target: { x: 34, y: 9 } } })).toMatchObject({
+        t: 'Nack',
+        p: { code: 'consent-required' },
+      });
+
+      const logs = MeetingLogListResponse.parse(await (await get('/meeting-logs', 'token-ben')).json());
+      expect(logs.logs).toHaveLength(1);
+      expect(logs.logs[0]?.title).toBe('Sprint review');
+      expect(logs.logs[0]?.participants.map((p) => p.displayName)).toEqual(['Lena Hoffmann', 'Ben Krüger']);
+      const meetingId = logs.logs[0]?.meetingId ?? '';
+      expect(MeetingLogListResponse.parse(await (await get('/meeting-logs', 'token-mia')).json()).logs).toEqual([]);
+
+      expect((await remove(`/meeting-logs/${meetingId}`, 'token-mia')).status).toBe(404);
+      expect((await remove(`/meeting-logs/${meetingId}`, 'token-ben')).status).toBe(403);
+      expect((await remove(`/meeting-logs/${meetingId}`, 'token-lena')).status).toBe(204);
+      expect(MeetingLogListResponse.parse(await (await get('/meeting-logs', 'token-ben')).json()).logs).toEqual([]);
+
+      for (const client of [lena, ben, mia]) client.close();
+    }, 60_000);
   });
 });

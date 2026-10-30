@@ -47,7 +47,13 @@ function setup() {
     knock: new KnockOnRoom(presence, knocks, events, clock),
     answer: new AnswerKnock(
       presence,
-      { admit: (personId, floorId, roomId) => admitted.push(`${personId}@${floorId}/${roomId}`) },
+      {
+        admit: (personId, floorId, roomId) => {
+          admitted.push(`${personId}@${floorId}/${roomId}`);
+        },
+        requireConsent: () => undefined,
+        walkOut: () => undefined,
+      },
       knocks,
       events,
     ),

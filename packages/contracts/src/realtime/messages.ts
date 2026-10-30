@@ -37,12 +37,19 @@ import {
   KnockAnsweredEvent,
   KnockOnRoomCommand,
   KnockRequestedEvent,
+  AnswerMeetingLogCommand,
+  EndMeetingLogCommand,
   LiveDoorModeSchema,
+  MeetingLogChangedEvent,
+  MeetingLogConsentRequestedEvent,
+  MeetingLogDetailsEvent,
+  StartMeetingLogCommand,
   RequestRoomCallTokenCommand,
   RoomCallAccessGrantedEvent,
   RoomCallChangedEvent,
   RoomCallSchema,
   SetDoorModeCommand,
+  RoomId,
 } from './rooms.ts';
 
 /**
@@ -110,6 +117,9 @@ export const ClientCommand = z.discriminatedUnion('t', [
   SetCameraCommand,
   StartScreenShareCommand,
   StopScreenShareCommand,
+  StartMeetingLogCommand,
+  EndMeetingLogCommand,
+  AnswerMeetingLogCommand,
 ]);
 export type ClientCommand = z.infer<typeof ClientCommand>;
 
@@ -158,6 +168,8 @@ export const FloorSnapshotEvent = z.object({
     onCall: z.array(PersonId),
     /** People on this floor whose camera is on (the picture only reaches their call). */
     cameraOn: z.array(PersonId),
+    /** Rooms whose meeting is logged right now (ADR-0026). */
+    loggedRooms: z.array(RoomId),
   }),
 });
 
@@ -213,6 +225,12 @@ export const NackCode = z.enum([
   'call-full',
   /** Screen sharing is for room calls and direct calls only. */
   'screen-share-not-here',
+  /** The room's meeting is logged: walking in needs consent first (ADR-0027). */
+  'consent-required',
+  'no-room-call',
+  'meeting-log-active',
+  'not-meeting-host',
+  'invalid-title',
   /** Audio is not configured on this server (no LiveKit). */
   'media-unavailable',
   'invalid-message',
@@ -249,6 +267,9 @@ export const ServerEvent = z.discriminatedUnion('t', [
   OnlinePeopleEvent,
   CameraChangedEvent,
   ScreenShareChangedEvent,
+  MeetingLogChangedEvent,
+  MeetingLogDetailsEvent,
+  MeetingLogConsentRequestedEvent,
   AckEvent,
   NackEvent,
 ]);

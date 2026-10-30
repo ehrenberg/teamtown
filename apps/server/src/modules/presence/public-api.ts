@@ -5,6 +5,7 @@ export { LeavePresence } from './application/leave-presence.ts';
 export { MoveTo } from './application/move-to.ts';
 export { PresenceEventStream, type PresenceEventListener } from './application/presence-event-stream.ts';
 export { PresenceQueries, type LiveDoorMode, type LivePosition } from './application/presence-queries.ts';
+export { SetRoomConsentRequired, WalkOutOfRoom } from './application/room-consent.ts';
 export { SetDoorMode, type SetDoorModeError } from './application/set-door-mode.ts';
 export type { AdmitError, AvatarState, MoveError, Occupant, PresenceEvent } from './domain/floor-instance.ts';
 export type { DoorMode } from './domain/room-doors.ts';

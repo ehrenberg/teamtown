@@ -13,6 +13,7 @@ import { RequestRoomCallToken } from './request-room-call-token.ts';
 import { SetConversationLock } from './set-conversation-lock.ts';
 import { UpdateConversations } from './update-conversations.ts';
 import { DirectCalls } from '../domain/direct-calls.ts';
+import { ActiveMeetingLogs } from './active-meeting-logs.ts';
 
 const NOW = new Date('2026-10-30T12:00:00Z');
 
@@ -80,7 +81,8 @@ function setup({ withMedia = true } = {}) {
   const media = new ConversationMedia(withMedia ? gateway : null, events);
   const clock: Clock = { now: () => NOW };
   const calls = new DirectCalls(() => 'call-1');
-  const update = new UpdateConversations(presence, registry, media, events, clock, calls);
+  const logs = new ActiveMeetingLogs();
+  const update = new UpdateConversations(presence, registry, media, events, clock, calls, logs);
   return {
     positions,
     gateway,

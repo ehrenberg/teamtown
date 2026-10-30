@@ -85,3 +85,45 @@ export const RoomCallAccessGrantedEvent = z.object({
   t: z.literal('RoomCallAccessGranted'),
   p: z.object({ roomId: RoomId, url: z.string().min(1), token: z.string().min(1).max(8192) }),
 });
+
+/** Start a logged meeting in the room call one is in (ADR-0026); one becomes its host. */
+export const StartMeetingLogCommand = z.object({
+  t: z.literal('StartMeetingLog'),
+  id: CorrelationId.optional(),
+  p: z.object({ title: z.string().min(1).max(120) }),
+});
+
+/** Only the host ends the log; the call goes on unlogged. */
+export const EndMeetingLogCommand = z.object({
+  t: z.literal('EndMeetingLog'),
+  id: CorrelationId.optional(),
+  p: z.object({}),
+});
+
+/** Join (consent) or decline a logged meeting, from inside the room or before walking in (ADR-0027). */
+export const AnswerMeetingLogCommand = z.object({
+  t: z.literal('AnswerMeetingLog'),
+  id: CorrelationId.optional(),
+  p: z.object({ roomId: RoomId, join: z.boolean() }),
+});
+
+/** Sent to everyone on the floor: whether a room's meeting is logged (no title, no participants). */
+export const MeetingLogChangedEvent = z.object({
+  t: z.literal('MeetingLogChanged'),
+  p: z.object({ floorId: FloorId, roomId: RoomId, active: z.boolean() }),
+});
+
+/** Sent to the people in the logged meeting: its details, or `null` once it ended. */
+export const MeetingLogDetailsEvent = z.object({
+  t: z.literal('MeetingLogDetails'),
+  p: z.object({
+    roomId: RoomId,
+    details: z.object({ meetingId: z.string().min(1).max(64), title: z.string(), hostId: PersonId }).nullable(),
+  }),
+});
+
+/** Sent to someone inside a logged room who hasn't consented yet. */
+export const MeetingLogConsentRequestedEvent = z.object({
+  t: z.literal('MeetingLogConsentRequested'),
+  p: z.object({ roomId: RoomId, title: z.string() }),
+});

@@ -1,4 +1,4 @@
-import type { AdmitToRoom, PresenceQueries } from '../../presence/public-api.ts';
+import type { AdmitToRoom, PresenceQueries, SetRoomConsentRequired, WalkOutOfRoom } from '../../presence/public-api.ts';
 import type { DoorMode, LivePresence } from '../application/ports/live-presence.port.ts';
 import type { RoomAdmission } from '../application/ports/room-admission.port.ts';
 
@@ -6,6 +6,8 @@ export class PresenceLivePositions implements LivePresence, RoomAdmission {
   constructor(
     private readonly presence: PresenceQueries,
     private readonly admitToRoom: AdmitToRoom,
+    private readonly consent: SetRoomConsentRequired,
+    private readonly walkOutOfRoom: WalkOutOfRoom,
   ) {}
 
   occupiedFloorIds(): string[] {
@@ -35,5 +37,13 @@ export class PresenceLivePositions implements LivePresence, RoomAdmission {
   admit(personId: string, floorId: string, roomId: string): void {
     // The requester may have left in the meantime; then there is nobody to walk in.
     this.admitToRoom.execute({ personId, floorId, roomId });
+  }
+
+  requireConsent(floorId: string, roomId: string, required: boolean): void {
+    this.consent.execute({ floorId, roomId, required });
+  }
+
+  walkOut(personId: string, floorId: string, roomId: string): void {
+    this.walkOutOfRoom.execute({ personId, floorId, roomId });
   }
 }

@@ -1,4 +1,5 @@
 import type { Cameras } from '../domain/cameras.ts';
+import type { ActiveMeetingLogs } from './active-meeting-logs.ts';
 import type { DirectCalls } from '../domain/direct-calls.ts';
 import type { Conversation } from '../domain/floor-conversations.ts';
 import type { RoomCall } from '../domain/room-calls.ts';
@@ -9,6 +10,7 @@ export class ConversationQueries {
     private readonly registry: ConversationRegistry,
     private readonly calls: DirectCalls,
     private readonly cameras: Cameras,
+    private readonly logs: ActiveMeetingLogs,
   ) {}
 
   onFloor(floorId: string): Conversation[] {
@@ -23,6 +25,10 @@ export class ConversationQueries {
   /** Others may see that someone's camera is on, but only people in the same call see the picture. */
   isCameraOn(personId: string): boolean {
     return this.cameras.isOn(personId);
+  }
+
+  loggedRoomsOn(floorId: string): string[] {
+    return this.logs.loggedRoomsOn(floorId);
   }
 
   roomCallsOn(floorId: string): RoomCall[] {

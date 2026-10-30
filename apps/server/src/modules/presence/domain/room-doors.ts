@@ -28,6 +28,7 @@ export class RoomDoors {
   readonly #roomOfPerson = new Map<string, string>();
   readonly #passes = new Map<string, { readonly roomId: string; readonly until: number }>();
   readonly #graces = new Map<string, number>();
+  readonly #consentRequired = new Set<string>();
 
   constructor(settings: readonly RoomSettings[]) {
     this.#settings = new Map(settings.map((room) => [room.roomId, room]));
@@ -68,11 +69,23 @@ export class RoomDoors {
     this.#passes.set(personId, { roomId, until: now + ENTRY_PASS_MS });
   }
 
+  /** While a meeting in the room is logged, nobody enters without consenting first (ADR-0027). */
+  setConsentRequired(roomId: string, required: boolean): void {
+    if (required) this.#consentRequired.add(roomId);
+    else this.#consentRequired.delete(roomId);
+  }
+
   mayEnter(personId: string, roomId: string, now: number): boolean {
-    if (this.modeOf(roomId) === 'open' || this.occupantsOf(roomId).length === 0) return true;
+    return this.entryBlockedBy(personId, roomId, now) === null;
+  }
+
+  /** Why the person may not walk into the room right now, or `null` if they may. */
+  entryBlockedBy(personId: string, roomId: string, now: number): 'consent-required' | 'door-closed' | null {
     const pass = this.#passes.get(personId);
-    if (pass?.roomId === roomId && pass.until >= now) return true;
-    return (this.#graces.get(graceKey(personId, roomId)) ?? -Infinity) >= now;
+    const hasPass = pass?.roomId === roomId && pass.until >= now;
+    if (this.#consentRequired.has(roomId)) return hasPass ? null : 'consent-required';
+    if (this.modeOf(roomId) === 'open' || this.occupantsOf(roomId).length === 0 || hasPass) return null;
+    return (this.#graces.get(graceKey(personId, roomId)) ?? -Infinity) >= now ? null : 'door-closed';
   }
 
   /**

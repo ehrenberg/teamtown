@@ -13,6 +13,9 @@ import type { ResolvePerson } from '../../../people/public-api.ts';
 import type {
   AnswerCall,
   AnswerKnock,
+  AnswerMeetingLog,
+  EndMeetingLog,
+  StartMeetingLog,
   CancelKnock,
   ConversationQueries,
   InviteToCall,
@@ -55,6 +58,9 @@ export interface SessionDependencies {
   readonly setCamera: SetCamera;
   readonly startScreenShare: StartScreenShare;
   readonly stopScreenShare: StopScreenShare;
+  readonly startMeetingLog: StartMeetingLog;
+  readonly endMeetingLog: EndMeetingLog;
+  readonly answerMeetingLog: AnswerMeetingLog;
 }
 
 /** Disconnect if the socket's send buffer grows beyond this (slow or stuck client). */
@@ -171,6 +177,7 @@ export class RealtimeSession {
             onCall: snapshot.value
               .map((avatar) => avatar.occupant.personId)
               .filter((personId) => this.deps.conversations.isInCall(personId)),
+            loggedRooms: this.deps.conversations.loggedRoomsOn(command.p.floorId),
             cameraOn: snapshot.value
               .map((avatar) => avatar.occupant.personId)
               .filter((personId) => this.deps.conversations.isCameraOn(personId)),
@@ -284,6 +291,24 @@ export class RealtimeSession {
         if (!this.occupant) return 'not-authenticated';
         this.deps.stopScreenShare.execute({ personId: this.occupant.personId });
         return undefined;
+      }
+      case 'StartMeetingLog': {
+        if (!this.occupant) return 'not-authenticated';
+        const result = await this.deps.startMeetingLog.execute({
+          personId: this.occupant.personId,
+          title: command.p.title,
+        });
+        return result.ok ? undefined : result.error;
+      }
+      case 'EndMeetingLog': {
+        if (!this.occupant) return 'not-authenticated';
+        const result = await this.deps.endMeetingLog.execute({ personId: this.occupant.personId });
+        return result.ok ? undefined : result.error;
+      }
+      case 'AnswerMeetingLog': {
+        if (!this.occupant) return 'not-authenticated';
+        const result = await this.deps.answerMeetingLog.execute({ personId: this.occupant.personId, ...command.p });
+        return result.ok ? undefined : result.error;
       }
       case 'ListOnlinePeople': {
         if (!this.occupant) return 'not-authenticated';

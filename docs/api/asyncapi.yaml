@@ -577,6 +577,81 @@ channels:
           required:
             - t
             - p
+      StartMeetingLog:
+        name: StartMeetingLog
+        title: StartMeetingLog
+        summary: Starts a logged meeting in the own room call; the sender becomes its host.
+        payload:
+          type: object
+          properties:
+            t:
+              type: string
+              const: StartMeetingLog
+            id:
+              type: string
+              minLength: 1
+              maxLength: 64
+            p:
+              type: object
+              properties:
+                title:
+                  type: string
+                  minLength: 1
+                  maxLength: 120
+              required:
+                - title
+          required:
+            - t
+            - p
+      EndMeetingLog:
+        name: EndMeetingLog
+        title: EndMeetingLog
+        summary: The host ends the logged meeting; the call goes on unlogged.
+        payload:
+          type: object
+          properties:
+            t:
+              type: string
+              const: EndMeetingLog
+            id:
+              type: string
+              minLength: 1
+              maxLength: 64
+            p:
+              type: object
+              properties: {}
+          required:
+            - t
+            - p
+      AnswerMeetingLog:
+        name: AnswerMeetingLog
+        title: AnswerMeetingLog
+        summary: Joins (consents to) or declines a logged meeting, from inside the room or before walking in.
+        payload:
+          type: object
+          properties:
+            t:
+              type: string
+              const: AnswerMeetingLog
+            id:
+              type: string
+              minLength: 1
+              maxLength: 64
+            p:
+              type: object
+              properties:
+                roomId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                join:
+                  type: boolean
+              required:
+                - roomId
+                - join
+          required:
+            - t
+            - p
       Authenticated:
         name: Authenticated
         title: Authenticated
@@ -802,6 +877,12 @@ channels:
                     type: string
                     format: uuid
                     pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                loggedRooms:
+                  type: array
+                  items:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
               required:
                 - floorId
                 - avatars
@@ -810,6 +891,7 @@ channels:
                 - roomCalls
                 - onCall
                 - cameraOn
+                - loggedRooms
               additionalProperties: false
           required:
             - t
@@ -1656,6 +1738,110 @@ channels:
             - t
             - p
           additionalProperties: false
+      MeetingLogChanged:
+        name: MeetingLogChanged
+        title: MeetingLogChanged
+        summary: A room started or stopped being logged. Sent to everyone on the floor; no title.
+        payload:
+          type: object
+          properties:
+            t:
+              type: string
+              const: MeetingLogChanged
+            p:
+              type: object
+              properties:
+                floorId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                roomId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                active:
+                  type: boolean
+              required:
+                - floorId
+                - roomId
+                - active
+              additionalProperties: false
+          required:
+            - t
+            - p
+          additionalProperties: false
+      MeetingLogDetails:
+        name: MeetingLogDetails
+        title: MeetingLogDetails
+        summary: The logged meeting one is in, or null once it ended. Sent to its participants.
+        payload:
+          type: object
+          properties:
+            t:
+              type: string
+              const: MeetingLogDetails
+            p:
+              type: object
+              properties:
+                roomId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                details:
+                  anyOf:
+                    - type: object
+                      properties:
+                        meetingId:
+                          type: string
+                          minLength: 1
+                          maxLength: 64
+                        title:
+                          type: string
+                        hostId:
+                          type: string
+                          format: uuid
+                          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                      required:
+                        - meetingId
+                        - title
+                        - hostId
+                      additionalProperties: false
+                    - type: "null"
+              required:
+                - roomId
+                - details
+              additionalProperties: false
+          required:
+            - t
+            - p
+          additionalProperties: false
+      MeetingLogConsentRequested:
+        name: MeetingLogConsentRequested
+        title: MeetingLogConsentRequested
+        summary: Asks someone inside a logged room for consent. Sent only to them.
+        payload:
+          type: object
+          properties:
+            t:
+              type: string
+              const: MeetingLogConsentRequested
+            p:
+              type: object
+              properties:
+                roomId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                title:
+                  type: string
+              required:
+                - roomId
+                - title
+              additionalProperties: false
+          required:
+            - t
+            - p
+          additionalProperties: false
       Ack:
         name: Ack
         title: Ack
@@ -1724,6 +1910,11 @@ channels:
                     - not-in-call
                     - call-full
                     - screen-share-not-here
+                    - consent-required
+                    - no-room-call
+                    - meeting-log-active
+                    - not-meeting-host
+                    - invalid-title
                     - media-unavailable
                     - invalid-message
                     - internal-error
@@ -1763,6 +1954,9 @@ operations:
       - $ref: "#/channels/realtime/messages/SetCamera"
       - $ref: "#/channels/realtime/messages/StartScreenShare"
       - $ref: "#/channels/realtime/messages/StopScreenShare"
+      - $ref: "#/channels/realtime/messages/StartMeetingLog"
+      - $ref: "#/channels/realtime/messages/EndMeetingLog"
+      - $ref: "#/channels/realtime/messages/AnswerMeetingLog"
   sendEvents:
     action: send
     channel:
@@ -1792,5 +1986,8 @@ operations:
       - $ref: "#/channels/realtime/messages/OnlinePeople"
       - $ref: "#/channels/realtime/messages/CameraChanged"
       - $ref: "#/channels/realtime/messages/ScreenShareChanged"
+      - $ref: "#/channels/realtime/messages/MeetingLogChanged"
+      - $ref: "#/channels/realtime/messages/MeetingLogDetails"
+      - $ref: "#/channels/realtime/messages/MeetingLogConsentRequested"
       - $ref: "#/channels/realtime/messages/Ack"
       - $ref: "#/channels/realtime/messages/Nack"

@@ -2,8 +2,9 @@ import { Logger, type OnApplicationBootstrap, type OnApplicationShutdown } from 
 import type { ExpireKnocks } from '../application/expire-knocks.ts';
 import type { UpdateDirectCalls } from '../application/update-direct-calls.ts';
 import type { ReconcileMediaRooms } from '../application/reconcile-media-rooms.ts';
-import type { SyncScreenShares } from '../application/screen-share-use-cases.ts';
+import type { SyncScreenShares } from '../application/sync-screen-shares.ts';
 import type { SyncCameras } from '../application/sync-cameras.ts';
+import type { UpdateMeetingLogs } from '../application/update-meeting-logs.ts';
 import type { UpdateConversations } from '../application/update-conversations.ts';
 
 export const CONVERSATION_TICK_MS = 200;
@@ -37,6 +38,7 @@ export class ProximityTicker implements OnApplicationBootstrap, OnApplicationShu
     private readonly updateCalls: UpdateDirectCalls,
     private readonly syncCameras: SyncCameras,
     private readonly syncScreenShares: SyncScreenShares,
+    private readonly updateLogs: UpdateMeetingLogs,
   ) {}
 
   onApplicationBootstrap(): void {
@@ -52,6 +54,7 @@ export class ProximityTicker implements OnApplicationBootstrap, OnApplicationShu
         this.syncScreenShares.execute();
         return Promise.resolve();
       }),
+      every(CONVERSATION_TICK_MS, 'Updating meeting logs', () => this.updateLogs.execute()),
       every(RECONCILE_INTERVAL_MS, 'Reconciling media rooms', () => this.reconcile.execute()),
     ];
   }

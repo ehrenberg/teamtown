@@ -26,8 +26,8 @@ export class AppModule {
         ConfigModule.forRoot(config),
         LoggingModule.forRoot(config),
         DatabaseModule.forRoot(config, {
-          entities: [...PeopleModule.entities, ...WorldModule.entities],
-          migrations: [...PeopleModule.migrations, ...WorldModule.migrations],
+          entities: [...PeopleModule.entities, ...WorldModule.entities, ...MeetingsModule.entities],
+          migrations: [...PeopleModule.migrations, ...WorldModule.migrations, ...MeetingsModule.migrations],
         }),
         HealthModule,
         IdentityModule.forRoot(overrides),
