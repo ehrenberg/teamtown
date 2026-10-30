@@ -18,9 +18,17 @@ export interface CallAudioCallbacks {
   /** The media connection dropped although the call goes on; ask for a fresh token. */
   readonly onConnectionLost: (callId: CallId) => void;
   readonly onMicrophoneFailed: () => void;
+  /** Remote camera tracks of the current call, by person. */
+  readonly onVideos: (videos: ReadonlyMap<string, MediaStreamTrack>) => void;
+  /** One's own camera track while it is on. */
+  readonly onLocalVideo: (track: MediaStreamTrack | null) => void;
+  readonly onCameraFailed: () => void;
 }
 
-/** Switching rooms is make-before-break, so a merge or split doesn't cut off the voices. */
+/**
+ * Audio and video of the call one is in. Switching rooms is make-before-break, so a merge or split doesn't cut off
+ * the voices. The camera follows `setCameraOn`; switching it off for every new call is up to the caller.
+ */
 export class CallAudio {
   #current: { readonly callId: CallId; readonly room: Room } | null = null;
   /** The call whose room is being joined right now; a second token for it must not open a second room. */
@@ -28,6 +36,8 @@ export class CallAudio {
   /** Bumped by `leave()`, so a join that finishes afterwards is dropped. */
   #generation = 0;
   #microphoneOn: boolean;
+  #cameraOn = false;
+  readonly #videos = new Map<string, MediaStreamTrack>();
   readonly #mixer: SpatialMixer;
 
   constructor(
@@ -71,12 +81,17 @@ export class CallAudio {
     const previous = this.#current;
     this.#current = { callId: access.callId, room };
     this.#mixer.clear();
+    this.#videos.clear();
+    this.callbacks.onLocalVideo(null);
     for (const participant of room.remoteParticipants.values()) this.#addVoices(participant);
+    this.#reportVideos();
     this.callbacks.onSpeaking(room.activeSpeakers.map((speaker) => speaker.identity));
     this.#reportMuted();
     // … but keep the old room until one's own voice is on air in the new one (make-before-break).
     if (this.#microphoneOn) await this.#enableMicrophone(room);
     this.#reportMuted();
+    // The camera may have been switched on while the room was still connecting.
+    if (this.#cameraOn) await this.setCameraOn(true);
     await previous?.room.disconnect();
   }
 
@@ -88,10 +103,24 @@ export class CallAudio {
     const current = this.#current;
     if (!current || (callId && current.callId !== callId)) return;
     this.#current = null;
-    this.#mixer.clear();
-    this.callbacks.onSpeaking([]);
+    this.#clearMedia();
     this.callbacks.onMuted([]);
     await current.room.disconnect();
+  }
+
+  async setCameraOn(on: boolean): Promise<void> {
+    this.#cameraOn = on;
+    const room = this.#current?.room;
+    if (!room) return;
+    try {
+      await room.localParticipant.setCameraEnabled(on);
+    } catch {
+      if (this.#current?.room !== room || room.state !== ConnectionState.Connected) return;
+      this.#cameraOn = false;
+      this.callbacks.onCameraFailed();
+    }
+    const track = room.localParticipant.getTrackPublication(Track.Source.Camera)?.track;
+    this.callbacks.onLocalVideo(this.#cameraOn && track ? track.mediaStreamTrack : null);
   }
 
   async setMicrophoneOn(on: boolean): Promise<void> {
@@ -123,13 +152,22 @@ export class CallAudio {
   #wire(room: Room, callId: CallId): void {
     const isCurrent = () => this.#current?.room === room;
     room.on(RoomEvent.TrackSubscribed, (track: RemoteTrack, _publication, participant: RemoteParticipant) => {
-      if (isCurrent() && track.kind === Track.Kind.Audio) this.#mixer.add(participant.identity, track.mediaStreamTrack);
+      if (!isCurrent()) return;
+      if (track.kind === Track.Kind.Audio) this.#mixer.add(participant.identity, track.mediaStreamTrack);
+      if (track.source === Track.Source.Camera) {
+        this.#videos.set(participant.identity, track.mediaStreamTrack);
+        this.#reportVideos();
+      }
     });
     room.on(RoomEvent.TrackUnsubscribed, (track: RemoteTrack, _publication, participant: RemoteParticipant) => {
-      if (isCurrent() && track.kind === Track.Kind.Audio) this.#mixer.remove(participant.identity);
+      if (!isCurrent()) return;
+      if (track.kind === Track.Kind.Audio) this.#mixer.remove(participant.identity);
+      if (track.source === Track.Source.Camera && this.#videos.delete(participant.identity)) this.#reportVideos();
     });
     room.on(RoomEvent.ParticipantDisconnected, (participant: RemoteParticipant) => {
-      if (isCurrent()) this.#mixer.remove(participant.identity);
+      if (!isCurrent()) return;
+      this.#mixer.remove(participant.identity);
+      if (this.#videos.delete(participant.identity)) this.#reportVideos();
     });
     room.on(RoomEvent.ActiveSpeakersChanged, (speakers: Participant[]) => {
       if (isCurrent()) this.callbacks.onSpeaking(speakers.map((speaker) => speaker.identity));
@@ -151,8 +189,7 @@ export class CallAudio {
     room.on(RoomEvent.Disconnected, (reason?: DisconnectReason) => {
       if (!isCurrent()) return;
       this.#current = null;
-      this.#mixer.clear();
-      this.callbacks.onSpeaking([]);
+      this.#clearMedia();
       // Removed by the server (left the conversation or room) or replaced by another connection of ours is expected;
       // anything else is a lost connection.
       const expected = [
@@ -169,6 +206,20 @@ export class CallAudio {
   #addVoices(participant: RemoteParticipant): void {
     const track = participant.getTrackPublication(Track.Source.Microphone)?.track;
     if (track) this.#mixer.add(participant.identity, track.mediaStreamTrack);
+    const camera = participant.getTrackPublication(Track.Source.Camera)?.track;
+    if (camera) this.#videos.set(participant.identity, camera.mediaStreamTrack);
+  }
+
+  #reportVideos(): void {
+    this.callbacks.onVideos(new Map(this.#videos));
+  }
+
+  #clearMedia(): void {
+    this.#mixer.clear();
+    this.#videos.clear();
+    this.callbacks.onSpeaking([]);
+    this.callbacks.onLocalVideo(null);
+    this.#reportVideos();
   }
 
   #reportMuted(): void {

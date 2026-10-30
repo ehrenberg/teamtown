@@ -2,6 +2,8 @@ import { create } from 'zustand';
 
 /** `unavailable`: no permission or no device; the person can still listen. */
 export type MicrophoneState = 'on' | 'off' | 'unavailable';
+/** Off by default and again in every new call (ADR-0031); `unavailable`: no permission or no camera. */
+export type CameraState = 'on' | 'off' | 'unavailable';
 
 const MICROPHONE_DEFAULT_KEY = 'teamtown.microphone-default';
 
@@ -16,6 +18,16 @@ interface MediaState {
   readonly microphone: MicrophoneState;
   readonly speaking: readonly string[];
   readonly muted: readonly string[];
+  readonly camera: CameraState;
+  /** Remote camera tracks of the current call. Live media only, never stored anywhere. */
+  readonly videos: ReadonlyMap<string, MediaStreamTrack>;
+  readonly localVideo: MediaStreamTrack | null;
+  /** People on the current floor whose camera is on (no picture unless they are in one's call). */
+  readonly cameraOn: readonly string[];
+  readonly setCamera: (camera: CameraState) => void;
+  readonly setVideos: (videos: ReadonlyMap<string, MediaStreamTrack>) => void;
+  readonly setLocalVideo: (track: MediaStreamTrack | null) => void;
+  readonly setCameraOn: (personIds: readonly string[]) => void;
   readonly finishAudioCheck: (microphone: MicrophoneState) => void;
   readonly setMicrophone: (microphone: MicrophoneState) => void;
   readonly setSpeaking: (personIds: readonly string[]) => void;
@@ -27,6 +39,22 @@ export const useMediaStore = create<MediaState>()((set) => ({
   microphone: microphoneDefault(),
   speaking: [],
   muted: [],
+  camera: 'off',
+  videos: new Map(),
+  localVideo: null,
+  cameraOn: [],
+  setCamera: (camera) => {
+    set({ camera });
+  },
+  setVideos: (videos) => {
+    set({ videos });
+  },
+  setLocalVideo: (localVideo) => {
+    set({ localVideo });
+  },
+  setCameraOn: (cameraOn) => {
+    set({ cameraOn });
+  },
   finishAudioCheck: (microphone) => {
     set({ audioCheckDone: true, microphone });
   },

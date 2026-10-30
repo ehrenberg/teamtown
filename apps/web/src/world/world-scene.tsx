@@ -15,6 +15,7 @@ import { TilePicker } from './tile-picker.tsx';
 import { AvatarLabels } from './labels/avatar-labels.tsx';
 import { LabelProjector } from './labels/label-projector.tsx';
 import { DoorLeaves, DoorSigns } from './doors/doors.tsx';
+import { VideoBubbleProjector, VideoBubbles } from './video/video-bubbles.tsx';
 import type { DoorMode } from '../stores/room-store.ts';
 
 /**
@@ -26,12 +27,15 @@ export function WorldScene({
   label,
   onTileSelected,
   doorModeLabels,
+  videoLabelOf,
 }: {
   readonly plan: FloorPlan;
   readonly label: string;
   readonly onTileSelected: (tile: TileCoord) => void;
   /** Translated door mode names for the door signs. */
   readonly doorModeLabels: Record<DoorMode, string>;
+  /** Accessible label of a video bubble, given the person's name. */
+  readonly videoLabelOf: (name: string) => string;
 }) {
   const [width, depth] = gridToWorld(plan.width, plan.height);
   const spawn = plan.spawnPoints[0] ?? { x: plan.width / 2, y: plan.height / 2 };
@@ -78,9 +82,11 @@ export function WorldScene({
         </Suspense>
         <CameraRig fallbackTarget={fallbackTarget} />
         <LabelProjector />
+        <VideoBubbleProjector />
       </Canvas>
       <DoorSigns plan={plan} labels={doorModeLabels} />
       <AvatarLabels />
+      <VideoBubbles labelOf={videoLabelOf} />
     </div>
   );
 }

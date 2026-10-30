@@ -134,5 +134,16 @@
     "ended": "The call ended.",
     "full": "A call can have up to 8 people.",
     "failed": "The call could not be started. Please try again."
+  },
+  "video": {
+    "cameraOn": "Camera on",
+    "cameraOff": "Camera off",
+    "cameraUnavailable": "No camera",
+    "cameraIsOn": "Camera on",
+    "you": "You",
+    "of": "Video of {{name}}",
+    "grid": "Video",
+    "show": "Show video",
+    "hide": "Hide video"
   }
 }

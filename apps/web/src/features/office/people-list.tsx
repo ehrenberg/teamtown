@@ -1,6 +1,6 @@
 import type { AvatarState, ConversationContract } from '@teamtown/contracts';
 import { StatusDot } from '@teamtown/ui';
-import { Lock, MicOff, Phone, Volume2 } from 'lucide-react';
+import { Lock, MicOff, Phone, Video, Volume2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useCallStore } from '../../stores/call-store.ts';
 import { conversationOf, useConversationStore } from '../../stores/conversation-store.ts';
@@ -90,6 +90,7 @@ function PersonRow({
   const speaking = useMediaStore((state) => state.speaking.includes(person.personId));
   const muted = useMediaStore((state) => state.muted.includes(person.personId));
   const inACall = useCallStore((state) => state.onCall.includes(person.personId));
+  const cameraOn = useMediaStore((state) => state.cameraOn.includes(person.personId));
 
   return (
     <li className="group flex items-center gap-2.5 rounded-sm px-2 py-1.5 text-sm hover:bg-neutral-200">
@@ -110,6 +111,9 @@ function PersonRow({
       {speaking && <Volume2 aria-hidden="true" className="size-3.5 shrink-0 text-text-secondary" />}
       {muted && (
         <MicOff role="img" aria-label={t('conversation.muted')} className="size-3.5 shrink-0 text-text-secondary" />
+      )}
+      {cameraOn && (
+        <Video role="img" aria-label={t('video.cameraIsOn')} className="size-3.5 shrink-0 text-text-secondary" />
       )}
       {inACall && <Phone role="img" aria-label={t('call.inACall')} className="size-3.5 shrink-0 text-text-secondary" />}
       {!isMe && !inACall && (

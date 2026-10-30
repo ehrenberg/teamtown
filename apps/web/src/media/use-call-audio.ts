@@ -45,8 +45,8 @@ function currentCall(): { readonly callId: CallId; readonly participants: readon
   return roomId ? { callId: roomCallId(roomId), participants: roomCalls[roomId] ?? [] } : null;
 }
 
-export function useCallAudio(realtime: RealtimeClient): void {
-  const microphone = useMediaStore((state) => state.microphone);
+/** The call one is in right now: a direct call first, then a proximity conversation, then a room call. */
+export function useMyCallId(): CallId | null {
   const myPersonId = usePresenceStore((state) => state.myPersonId);
   const myConversationId = useConversationStore(
     (state) => conversationOf(state.conversations, myPersonId)?.conversationId ?? null,
@@ -55,13 +55,15 @@ export function useCallAudio(realtime: RealtimeClient): void {
   const myDirectCallId = useCallStore((state) =>
     roleIn(state.call, myPersonId) === 'participant' ? (state.call?.callId ?? null) : null,
   );
-  const myCallId = myDirectCallId
-    ? directCallId(myDirectCallId)
-    : myConversationId
-      ? conversationCallId(myConversationId)
-      : myRoomCallId
-        ? roomCallId(myRoomCallId)
-        : null;
+  if (myDirectCallId) return directCallId(myDirectCallId);
+  if (myConversationId) return conversationCallId(myConversationId);
+  return myRoomCallId ? roomCallId(myRoomCallId) : null;
+}
+
+export function useCallAudio(realtime: RealtimeClient): void {
+  const microphone = useMediaStore((state) => state.microphone);
+  const camera = useMediaStore((state) => state.camera);
+  const myCallId = useMyCallId();
 
   const [audio] = useState(() => {
     const media = useMediaStore.getState();
@@ -75,6 +77,16 @@ export function useCallAudio(realtime: RealtimeClient): void {
       onConnectionLost: (callId) => void realtime.requestCallToken(callId),
       onMicrophoneFailed: () => {
         useMediaStore.getState().setMicrophone('unavailable');
+      },
+      onVideos: (videos) => {
+        useMediaStore.getState().setVideos(videos);
+      },
+      onLocalVideo: (track) => {
+        useMediaStore.getState().setLocalVideo(track);
+      },
+      onCameraFailed: () => {
+        useMediaStore.getState().setCamera('unavailable');
+        void realtime.setCamera(false);
       },
     });
   });
@@ -104,6 +116,16 @@ export function useCallAudio(realtime: RealtimeClient): void {
   useEffect(() => {
     void audio.setMicrophoneOn(microphone === 'on');
   }, [audio, microphone]);
+
+  // The camera is opt-in per call: every new call (or none) starts with it off.
+  useEffect(() => {
+    const { camera, setCamera } = useMediaStore.getState();
+    if (camera === 'on') setCamera('off');
+  }, [myCallId]);
+
+  useEffect(() => {
+    void audio.setCameraOn(camera === 'on');
+  }, [audio, camera]);
 
   useEffect(() => {
     const timer = setInterval(() => {

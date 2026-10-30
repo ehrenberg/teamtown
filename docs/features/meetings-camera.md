@@ -1,6 +1,6 @@
 # Feature: Camera
 
-- **Status:** Ready
+- **Status:** Done (2026-10-30)
 - **Brainstorming ID:** — (camera on/off is part of the MVP A/V scope, `mvp-scope.md`)
 - **Bounded context(s):** Meetings, realtime gateway
 - **Milestone:** M2c, part 2 of 3 (direct call → camera → screen share; ADR-0031)

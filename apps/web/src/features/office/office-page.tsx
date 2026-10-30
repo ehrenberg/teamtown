@@ -12,6 +12,7 @@ import { usePresenceStore } from '../../stores/presence-store.ts';
 import { Phone } from 'lucide-react';
 import { useCallStore } from '../../stores/call-store.ts';
 import { CallAnnouncer, CallPanel, CallSomeoneDialog, IncomingCallDialog } from './calls.tsx';
+import { CameraToggle, VideoGrid } from './video.tsx';
 import { ConnectionBadge } from './connection-badge.tsx';
 import { ConversationAnnouncer } from './conversation-announcer.tsx';
 import { ConversationLockToggle, MicrophoneToggle } from './conversation-controls.tsx';
@@ -75,6 +76,8 @@ export function OfficePage() {
     () => ({ open: t('room.mode_open'), knock: t('room.mode_knock'), locked: t('room.mode_locked') }),
     [t],
   );
+
+  const videoLabelOf = useCallback((name: string) => t('video.of', { name }), [t]);
 
   useEffect(() => {
     if (floorId && connection === 'online') void realtime.joinFloor(floorId);
@@ -145,6 +148,7 @@ export function OfficePage() {
           </Button>
           <ConversationLockToggle />
           <MicrophoneToggle />
+          <CameraToggle />
           <ConnectionBadge />
           {me.data && (
             <span
@@ -188,11 +192,13 @@ export function OfficePage() {
               label={t('app.worldLabel')}
               onTileSelected={walkTo}
               doorModeLabels={doorModeLabels}
+              videoLabelOf={videoLabelOf}
             />
           </Suspense>
         ) : (
           <p className="p-8 text-text-secondary">{t('office.loading')}</p>
         )}
+        <VideoGrid />
         {closedDoorRoom && (
           <DoorNotice
             room={closedDoorRoom}

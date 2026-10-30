@@ -10,6 +10,7 @@ import {
 import type { TileCoord } from '@teamtown/world-core';
 import { useCallStore } from '../stores/call-store.ts';
 import { useConversationStore } from '../stores/conversation-store.ts';
+import { useMediaStore } from '../stores/media-store.ts';
 import { usePresenceStore } from '../stores/presence-store.ts';
 import { useRoomStore, type DoorMode } from '../stores/room-store.ts';
 import type { ServerClock } from '../shared/server-clock.ts';
@@ -132,6 +133,10 @@ export class RealtimeClient {
     return this.#command({ t: 'LeaveCall', p: { callId } });
   }
 
+  setCamera(on: boolean): Promise<CommandResult> {
+    return this.#command({ t: 'SetCamera', p: { on } });
+  }
+
   /** The answer arrives as `OnlinePeople` in the call store. */
   listOnlinePeople(): Promise<CommandResult> {
     return this.#command({ t: 'ListOnlinePeople', p: {} });
@@ -213,6 +218,7 @@ export class RealtimeClient {
         useConversationStore.getState().applySnapshot(event.p.floorId, event.p.conversations);
         useRoomStore.getState().applySnapshot(event.p.floorId, event.p.doorModes, event.p.roomCalls);
         useCallStore.getState().applySnapshot(event.p.floorId, event.p.onCall);
+        useMediaStore.getState().setCameraOn(event.p.cameraOn);
         return;
       case 'ConversationFormed':
       case 'ConversationChanged':
@@ -235,6 +241,13 @@ export class RealtimeClient {
       case 'OnlinePeople':
         useCallStore.getState().applyEvent(event);
         return;
+      case 'CameraChanged': {
+        const media = useMediaStore.getState();
+        if (event.p.floorId !== usePresenceStore.getState().floorId) return;
+        const others = media.cameraOn.filter((id) => id !== event.p.personId);
+        media.setCameraOn(event.p.on ? [...others, event.p.personId] : others);
+        return;
+      }
       case 'DirectCallAccessGranted':
         this.#grantAccess({ ...event.p, callId: directCallId(event.p.callId) });
         return;

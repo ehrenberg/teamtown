@@ -134,5 +134,16 @@
     "ended": "Der Anruf ist beendet.",
     "full": "Ein Anruf hat höchstens 8 Personen.",
     "failed": "Der Anruf konnte nicht starten. Versuch es bitte noch mal."
+  },
+  "video": {
+    "cameraOn": "Kamera an",
+    "cameraOff": "Kamera aus",
+    "cameraUnavailable": "Keine Kamera",
+    "cameraIsOn": "Kamera an",
+    "you": "Du",
+    "of": "Video von {{name}}",
+    "grid": "Video",
+    "show": "Video zeigen",
+    "hide": "Video ausblenden"
   }
 }

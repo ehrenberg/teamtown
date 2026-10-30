@@ -1,4 +1,4 @@
-import { Lock, MicOff, Phone } from 'lucide-react';
+import { Lock, MicOff, Phone, Video } from 'lucide-react';
 import { useCallStore } from '../../stores/call-store.ts';
 import { conversationOf, useConversationStore } from '../../stores/conversation-store.ts';
 import { useMediaStore } from '../../stores/media-store.ts';
@@ -16,6 +16,7 @@ export function AvatarLabels() {
   const speaking = useMediaStore((state) => state.speaking);
   const muted = useMediaStore((state) => state.muted);
   const onCall = useCallStore((state) => state.onCall);
+  const cameraOn = useMediaStore((state) => state.cameraOn);
 
   return (
     <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -46,6 +47,7 @@ export function AvatarLabels() {
             {avatar.displayName}
             {isMuted && <MicOff className="size-3" />}
             {onCall.includes(avatar.personId) && <Phone className="size-3" />}
+            {cameraOn.includes(avatar.personId) && <Video className="size-3" />}
           </span>
         );
       })}
