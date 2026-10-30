@@ -1,0 +1,11 @@
+# Pre-provisioned dashboards (ADR-0019). Edit the JSON files in docker/observability/dashboards/.
+apiVersion: 1
+
+providers:
+  - name: TeamTown
+    folder: TeamTown
+    type: file
+    disableDeletion: true
+    allowUiUpdates: false
+    options:
+      path: /var/lib/grafana/dashboards/teamtown

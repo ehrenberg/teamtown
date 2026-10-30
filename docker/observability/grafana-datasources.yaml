@@ -6,6 +6,9 @@ datasources:
     uid: prometheus
     url: http://prometheus:9090
     isDefault: true
+    jsonData:
+      # Metrics arrive via OTLP push every 15 s (apps/server/src/instrumentation.ts), not by scraping.
+      timeInterval: 15s
   - name: Loki
     type: loki
     uid: loki

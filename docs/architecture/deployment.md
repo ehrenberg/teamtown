@@ -75,6 +75,10 @@ flowchart LR
 | `otel-collector`, `prometheus`, `loki`, `tempo`, `grafana` | Observability stack, always on (ADR-0019). Retention: logs and traces **7 days**, metrics **30 days** _(decided)_ |
 
 Volumes: `postgres-data`, `files` (uploads, ADR-0017), `prometheus-data`, `loki-data`, `tempo-data`, `grafana-data`, `caddy-data`.
+
+The `server` image is built from `apps/server/Dockerfile` (build context: repository root). It runs as the
+unprivileged `node` user, has a health check on `/api/health` and starts the OpenTelemetry bootstrap with
+`node --import ./dist/instrumentation.js` (ADR-0030). Serving the web client bundle from the server is part of M6.
 Backups must cover the PostgreSQL dumps **and** the `files` volume.
 
 ## Sizing (estimate, to be verified by load test)

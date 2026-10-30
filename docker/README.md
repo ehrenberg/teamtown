@@ -14,6 +14,12 @@
 | OTLP (collector)          | `localhost:4317` (gRPC), `localhost:4318` (HTTP)    |                                    |
 
 Retention follows the decisions in `docs/architecture/deployment.md`: logs and traces 7 days, metrics 30 days.
+
+Grafana comes with two provisioned dashboards in the folder **TeamTown** (`observability/dashboards/`):
+**TeamTown · Server** (HTTP by route, database client, warnings and errors from Loki) and
+**TeamTown · Realtime** (WebSocket connections, commands by type and outcome, handling time).
+They are read-only in the UI; change the JSON files instead. Dashboards for LiveKit (M2) and the PostgreSQL
+server itself (needs an exporter) follow later.
 The OpenTelemetry collector drops presence and message attributes as a privacy safety net (ADR-0012, ADR-0019).
 
 The production Compose setup (Caddy, hostnames, secrets) is part of milestone M6.

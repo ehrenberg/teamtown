@@ -1,7 +1,7 @@
 import { MeterProvider, MetricReader } from '@opentelemetry/sdk-metrics';
 import { InMemorySpanExporter, SimpleSpanProcessor, TracerProvider } from '@opentelemetry/sdk-trace';
 import { describe, expect, it } from 'vitest';
-import { RealtimeTelemetry } from './realtime-telemetry.ts';
+import { COMMAND_DURATION_BUCKETS, RealtimeTelemetry } from './realtime-telemetry.ts';
 
 /** Collects metrics on demand. */
 class TestMetricReader extends MetricReader {
@@ -59,6 +59,15 @@ describe('RealtimeTelemetry', () => {
         value: 1,
       }),
     ]);
+  });
+
+  it('records handling time in second-based buckets, so fast commands are not lumped into one bucket', async () => {
+    const { telemetry, metric } = setup();
+    await telemetry.observeCommand('Ping', () => Promise.resolve('ok'));
+
+    const duration = await metric('teamtown.realtime.command.duration');
+    const point = duration?.dataPoints[0]?.value as { buckets: { boundaries: number[] } } | undefined;
+    expect(point?.buckets.boundaries).toEqual(COMMAND_DURATION_BUCKETS);
   });
 
   it('tracks open connections as an instance-wide total', async () => {

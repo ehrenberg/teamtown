@@ -8,6 +8,12 @@ export type CommandOutcome = 'ok' | NackCode;
 const UNTRACED_COMMANDS = new Set<string>(['Ping']);
 
 /**
+ * Histogram buckets in seconds (1 ms to 2.5 s). The SDK's defaults (0, 5, 10, 25, ...) are meant for
+ * milliseconds and would put every command into the first bucket.
+ */
+export const COMMAND_DURATION_BUCKETS = [0.001, 0.0025, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5];
+
+/**
  * Metrics and spans of the realtime gateway (ADR-0019). Attributes are limited to the command type and its
  * outcome: never person IDs, floors, positions or targets (ADR-0012). Metrics are instance-wide aggregates.
  */
@@ -30,6 +36,7 @@ export class RealtimeTelemetry {
     this.#duration = meter.createHistogram('teamtown.realtime.command.duration', {
       description: 'Time to handle a client command',
       unit: 's',
+      advice: { explicitBucketBoundaries: COMMAND_DURATION_BUCKETS },
     });
   }
 

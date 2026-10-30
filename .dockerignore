@@ -1,0 +1,16 @@
+# Keep the build context small and free of local state and secrets.
+**/node_modules
+**/dist
+**/.turbo
+**/coverage
+**/test-results
+**/playwright-report
+.git
+.env
+.env.*
+!.env.example
+apps/*/.env.development
+apps/website/src/content/docs
+apps/website/.astro
+design/**/*.blend
+*.log

@@ -20,6 +20,7 @@ import { register } from 'import-in-the-middle/register-hooks.mjs';
 import { PrivacyLogRecordProcessor, PrivacySpanProcessor } from './platform/telemetry/telemetry-privacy.ts';
 
 const HEALTH_PATH = '/api/health';
+const METRIC_EXPORT_INTERVAL_MS = 15_000;
 
 if (process.env.OTEL_EXPORTER_OTLP_ENDPOINT) {
   // ESM support: lets the instrumentations patch modules loaded with `import` (synchronous hooks, Node >= 24.11).
@@ -35,7 +36,13 @@ if (process.env.OTEL_EXPORTER_OTLP_ENDPOINT) {
       new PrivacyLogRecordProcessor(),
       new BatchLogRecordProcessor({ exporter: new OTLPLogExporter() }),
     ],
-    metricReaders: [new PeriodicExportingMetricReader({ exporter: new OTLPMetricExporter() })],
+    // Every 15 s, matching the Prometheus scrape interval Grafana assumes for rate() windows.
+    metricReaders: [
+      new PeriodicExportingMetricReader({
+        exporter: new OTLPMetricExporter(),
+        exportIntervalMillis: METRIC_EXPORT_INTERVAL_MS,
+      }),
+    ],
     instrumentations: [
       new HttpInstrumentation({
         // Liveness probes would drown the traces.
