@@ -24,6 +24,7 @@
     "@teamtown/world-core": "workspace:*",
     "i18next": "^26.5.11",
     "livekit-client": "^2.23.0",
+    "lucide-react": "^1.64.0",
     "oidc-client-ts": "^3.5.0",
     "react": "19.3.1",
     "react-dom": "19.3.1",

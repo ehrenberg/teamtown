@@ -34,5 +34,38 @@
     "focus": "Focus",
     "away": "Away",
     "offline": "Offline"
+  },
+  "audioCheck": {
+    "title": "Quick sound check",
+    "intro": "Others hear you as soon as you walk up to them. Let's make sure your microphone and speakers work.",
+    "allowMicrophone": "Allow microphone",
+    "level": "Microphone level",
+    "speakNow": "Say something: the bar should move.",
+    "denied": "We couldn't access your microphone. You can still listen and switch it on later.",
+    "testSpeakers": "Play test sound",
+    "enter": "Enter the office",
+    "withoutMicrophone": "Join without microphone"
+  },
+  "media": {
+    "microphoneOn": "Mic on",
+    "microphoneOff": "Mic off",
+    "microphoneUnavailable": "No mic",
+    "microphoneShortcut": "Switch the microphone on or off (M)"
+  },
+  "conversation": {
+    "title": "Conversation",
+    "yours": "Your conversation",
+    "group": "Conversation",
+    "groupLocked": "Private conversation",
+    "lock": "Make private",
+    "unlock": "Open up",
+    "nowLocked": "Your conversation is now private. Nobody new can join.",
+    "nowUnlocked": "Your conversation is open again.",
+    "talkingWith": "You're talking with {{names}}.",
+    "left": "You left the conversation.",
+    "speaking": "speaking",
+    "muted": "Microphone off",
+    "talkTo": "Talk to",
+    "talkToPerson": "Talk to {{name}}"
   }
 }

@@ -28,3 +28,9 @@ export const isoCameraDirection = (): WorldPoint => ({
   y: Math.sin(ISO_CAMERA_PITCH_RADIANS),
   z: Math.cos(ISO_CAMERA_PITCH_RADIANS) * Math.cos(ISO_CAMERA_YAW_RADIANS),
 });
+
+/**
+ * Horizontal screen offset (in tiles, positive = right) of a point that lies (dx, dy) grid tiles away. The camera
+ * looks from +x/+z towards -x/-z, so screen-right runs along (1, -1) on the grid. Used for stereo panning.
+ */
+export const isoScreenOffsetX = (dx: number, dy: number): number => (dx - dy) / Math.SQRT2;

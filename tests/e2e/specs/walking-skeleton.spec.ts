@@ -1,59 +1,10 @@
-import { expect, test, type Browser, type Page } from '@playwright/test';
-import { decodeClientCommand, decodeServerEvent } from '@teamtown/contracts';
+import { expect, test } from '@playwright/test';
+import { framesOf, nameLabel, peopleList, signIn } from './support/session.ts';
+
+/** Feature spec: docs/features/m1-walking-skeleton.md. */
 
 /** Acceptance criterion: others see a movement within 150 ms on a local network. */
 const MOVEMENT_LATENCY_BUDGET_MS = 150;
-
-/**
- * A realtime message seen on a page's WebSocket, with the time the test runner observed it.
- * Playwright reports frames of both browsers with a few ms of jitter, so tiny (even negative)
- * latencies are measurement noise; the 150 ms budget is far above it.
- */
-interface RealtimeFrame {
-  readonly direction: 'sent' | 'received';
-  readonly type: string;
-  readonly at: number;
-}
-
-interface Session {
-  readonly page: Page;
-  readonly frames: RealtimeFrame[];
-}
-
-const asBytes = (payload: string | Buffer): Uint8Array =>
-  typeof payload === 'string' ? new TextEncoder().encode(payload) : new Uint8Array(payload);
-
-/** Feature spec: docs/features/m1-walking-skeleton.md. Uses the demo users of docker/keycloak. */
-async function signIn(browser: Browser, username: string, password: string): Promise<Session> {
-  const context = await browser.newContext();
-  const page = await context.newPage();
-  const frames: RealtimeFrame[] = [];
-  page.on('websocket', (socket) => {
-    socket.on('framesent', ({ payload }) => {
-      const command = decodeClientCommand(asBytes(payload));
-      if (command.ok) frames.push({ direction: 'sent', type: command.value.t, at: Date.now() });
-    });
-    socket.on('framereceived', ({ payload }) => {
-      const event = decodeServerEvent(asBytes(payload));
-      if (event.ok) frames.push({ direction: 'received', type: event.value.t, at: Date.now() });
-    });
-  });
-  await page.goto('/');
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await page.locator('#username').fill(username);
-  await page.locator('#password').fill(password);
-  await page.locator('#kc-login').click();
-  await expect(page.getByRole('status').filter({ hasText: 'Live' })).toBeVisible();
-  return { page, frames };
-}
-
-const framesOf = (session: Session, direction: RealtimeFrame['direction'], type: string, since: number) =>
-  session.frames.filter((frame) => frame.direction === direction && frame.type === type && frame.at >= since);
-
-const peopleList = (page: Page) => page.getByRole('region', { name: 'People on this floor' });
-
-/** The floating name label of an avatar inside the 3D view (rendered as HTML overlay). */
-const nameLabel = (page: Page, name: string) => page.locator('main span', { hasText: name }).first();
 
 test('two people see each other walk, switch floors and leave', async ({ browser }) => {
   const annaSession = await signIn(browser, 'demo', 'demo');

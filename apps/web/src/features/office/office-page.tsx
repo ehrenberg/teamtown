@@ -1,15 +1,20 @@
 import { Button } from '@teamtown/ui';
-import { buildFloorGrid } from '@teamtown/world-core';
+import { buildFloorGrid, tileAt } from '@teamtown/world-core';
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import logoMark from '../../../../../design/brand/logo-mark.svg';
 import { useFloorPlan, useFloors, useMe } from '../../api/queries.ts';
 import { useAuthClient } from '../../app/auth-context.tsx';
+import { useConversationAudio } from '../../media/use-conversation-audio.ts';
 import { useRealtime } from '../../realtime/realtime-context.tsx';
+import { serverClock } from '../../shared/server-clock.ts';
 import { usePresenceStore } from '../../stores/presence-store.ts';
 import { ConnectionBadge } from './connection-badge.tsx';
+import { ConversationAnnouncer } from './conversation-announcer.tsx';
+import { ConversationLockToggle, MicrophoneToggle } from './conversation-controls.tsx';
 import { FloorSwitcher } from './floor-switcher.tsx';
 import { PeopleList } from './people-list.tsx';
+import { talkToTarget } from './talk-to.ts';
 import { useKeyboardWalking } from './use-keyboard-walking.ts';
 
 // Three.js is large; the UI shell renders first and the world loads in a separate chunk.
@@ -37,7 +42,29 @@ export function OfficePage() {
   }, [floorId, connection, realtime]);
 
   useKeyboardWalking(grid, realtime);
+  useConversationAudio(realtime);
   const walkTo = useCallback((tile: { x: number; y: number }) => void realtime.moveTo(tile), [realtime]);
+  const talkTo = useCallback(
+    (personId: string) => {
+      const { avatars, myPersonId } = usePresenceStore.getState();
+      const now = serverClock.now();
+      const tileOf = (id: string) => {
+        const avatar = avatars[id];
+        if (!avatar) return null;
+        return avatar.movement ? tileAt(avatar.movement, now) : avatar.tile;
+      };
+      const me = myPersonId ? tileOf(myPersonId) : null;
+      const them = tileOf(personId);
+      if (!grid || !me || !them) return;
+      const occupied = Object.keys(avatars)
+        .filter((id) => id !== myPersonId)
+        .map(tileOf)
+        .filter((tile) => tile !== null);
+      const target = talkToTarget(grid, me, them, occupied);
+      if (target) walkTo(target);
+    },
+    [grid, walkTo],
+  );
 
   return (
     <div className="grid h-full grid-cols-[260px_1fr] grid-rows-[56px_1fr]">
@@ -52,6 +79,8 @@ export function OfficePage() {
           <FloorSwitcher floors={floors.data.floors} currentFloorId={floorId} onSelect={setSelectedFloorId} />
         )}
         <div className="ml-auto flex items-center gap-3">
+          <ConversationLockToggle />
+          <MicrophoneToggle />
           <ConnectionBadge />
           {me.data && (
             <span
@@ -69,7 +98,8 @@ export function OfficePage() {
       </header>
 
       <aside className="overflow-y-auto border-r border-border-subtle bg-surface-sunken p-4">
-        <PeopleList />
+        <PeopleList onTalkTo={talkTo} />
+        <ConversationAnnouncer />
         <p className="mt-6 text-xs text-text-secondary">{t('office.walkHint')}</p>
       </aside>
 

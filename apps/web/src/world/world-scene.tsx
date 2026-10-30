@@ -5,6 +5,7 @@ import { Suspense, useState } from 'react';
 import { Object3D } from 'three';
 import { Avatars } from './avatars/avatars.tsx';
 import { CameraRig } from './camera-rig.tsx';
+import { ConversationBubbles } from './conversations/conversation-bubbles.tsx';
 import { gridToWorld, tileCentreToWorld } from './coordinates.ts';
 import { FloorSurface } from './floor/floor-surface.tsx';
 import { Walls } from './floor/walls.tsx';
@@ -65,6 +66,7 @@ export function WorldScene({
         <Walls plan={plan} />
         <Furniture plan={plan} />
         <TilePicker width={plan.width} height={plan.height} onTileSelected={onTileSelected} />
+        <ConversationBubbles />
         <Suspense fallback={null}>
           <Avatars />
         </Suspense>

@@ -34,5 +34,38 @@
     "focus": "Fokus",
     "away": "Abwesend",
     "offline": "Offline"
+  },
+  "audioCheck": {
+    "title": "Kurzer Soundcheck",
+    "intro": "Andere hören dich, sobald du zu ihnen gehst. Lass uns kurz prüfen, ob Mikrofon und Lautsprecher funktionieren.",
+    "allowMicrophone": "Mikrofon erlauben",
+    "level": "Mikrofonpegel",
+    "speakNow": "Sag etwas: Der Balken sollte sich bewegen.",
+    "denied": "Wir konnten nicht auf dein Mikrofon zugreifen. Du kannst trotzdem zuhören und es später einschalten.",
+    "testSpeakers": "Testton abspielen",
+    "enter": "Ins Büro",
+    "withoutMicrophone": "Ohne Mikrofon weiter"
+  },
+  "media": {
+    "microphoneOn": "Mikro an",
+    "microphoneOff": "Mikro aus",
+    "microphoneUnavailable": "Kein Mikro",
+    "microphoneShortcut": "Mikrofon ein- oder ausschalten (M)"
+  },
+  "conversation": {
+    "title": "Gespräch",
+    "yours": "Dein Gespräch",
+    "group": "Gespräch",
+    "groupLocked": "Privates Gespräch",
+    "lock": "Privat machen",
+    "unlock": "Öffnen",
+    "nowLocked": "Dein Gespräch ist jetzt privat. Niemand Neues kommt dazu.",
+    "nowUnlocked": "Dein Gespräch ist wieder offen.",
+    "talkingWith": "Du sprichst mit {{names}}.",
+    "left": "Du hast das Gespräch verlassen.",
+    "speaking": "spricht",
+    "muted": "Mikrofon aus",
+    "talkTo": "Ansprechen",
+    "talkToPerson": "{{name}} ansprechen"
   }
 }

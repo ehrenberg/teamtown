@@ -8,6 +8,7 @@ import {
   type ServerEvent,
 } from '@teamtown/contracts';
 import type { TileCoord } from '@teamtown/world-core';
+import { useConversationStore } from '../stores/conversation-store.ts';
 import { usePresenceStore } from '../stores/presence-store.ts';
 import type { ServerClock } from '../shared/server-clock.ts';
 
@@ -18,6 +19,13 @@ const PING_INTERVAL_MS = 15_000;
 const MAX_RECONNECT_DELAY_MS = 15_000;
 
 type PendingCommand = (result: CommandResult) => void;
+
+export interface ConversationAccess {
+  readonly conversationId: string;
+  readonly url: string;
+  readonly token: string;
+}
+export type ConversationAccessListener = (access: ConversationAccess) => void;
 type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never;
 
 /**
@@ -33,6 +41,7 @@ export class RealtimeClient {
   #stopped = false;
   #desiredFloorId: string | null = null;
   readonly #pingSentAt = new Map<number, number>();
+  readonly #accessListeners = new Set<ConversationAccessListener>();
 
   constructor(
     private readonly options: {
@@ -63,6 +72,19 @@ export class RealtimeClient {
 
   moveTo(target: TileCoord): Promise<CommandResult> {
     return this.#command({ t: 'MoveTo', p: { target } });
+  }
+
+  lockConversation(conversationId: string, locked: boolean): Promise<CommandResult> {
+    return this.#command({ t: locked ? 'LockConversation' : 'UnlockConversation', p: { conversationId } });
+  }
+
+  requestConversationToken(conversationId: string): Promise<CommandResult> {
+    return this.#command({ t: 'RequestConversationToken', p: { conversationId } });
+  }
+
+  onConversationAccess(listener: ConversationAccessListener): () => void {
+    this.#accessListeners.add(listener);
+    return () => this.#accessListeners.delete(listener);
   }
 
   /** Sends a refreshed access token on the open connection (the server checks token expiry). */
@@ -133,6 +155,15 @@ export class RealtimeClient {
       }
       case 'FloorSnapshot':
         store.applySnapshot(event.p.floorId, event.p.avatars);
+        useConversationStore.getState().applySnapshot(event.p.floorId, event.p.conversations);
+        return;
+      case 'ConversationFormed':
+      case 'ConversationChanged':
+      case 'ConversationDissolved':
+        useConversationStore.getState().applyEvent(event);
+        return;
+      case 'ConversationAccessGranted':
+        for (const listener of this.#accessListeners) listener(event.p);
         return;
       default:
         store.applyEvent(event);

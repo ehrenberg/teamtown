@@ -1,3 +1,6 @@
+import { Lock, MicOff } from 'lucide-react';
+import { conversationOf, useConversationStore } from '../../stores/conversation-store.ts';
+import { useMediaStore } from '../../stores/media-store.ts';
 import { usePresenceStore } from '../../stores/presence-store.ts';
 import { labelElements } from './label-registry.ts';
 
@@ -8,28 +11,41 @@ import { labelElements } from './label-registry.ts';
 export function AvatarLabels() {
   const avatars = usePresenceStore((state) => state.avatars);
   const myPersonId = usePresenceStore((state) => state.myPersonId);
+  const conversations = useConversationStore((state) => state.conversations);
+  const speaking = useMediaStore((state) => state.speaking);
+  const muted = useMediaStore((state) => state.muted);
+
   return (
     <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
-      {Object.values(avatars).map((avatar) => (
-        <span
-          key={avatar.personId}
-          data-person-id={avatar.personId}
-          ref={(element) => {
-            if (element) labelElements.set(avatar.personId, element);
-            return () => {
-              labelElements.delete(avatar.personId);
-            };
-          }}
-          style={{ visibility: 'hidden' }}
-          className={
-            avatar.personId === myPersonId
-              ? 'absolute top-0 left-0 rounded-full bg-espresso px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap text-cream shadow-raised'
-              : 'absolute top-0 left-0 rounded-full bg-surface-raised px-2.5 py-0.5 text-xs font-medium whitespace-nowrap text-text-primary shadow-raised'
-          }
-        >
-          {avatar.displayName}
-        </span>
-      ))}
+      {Object.values(avatars).map((avatar) => {
+        const isMe = avatar.personId === myPersonId;
+        const locked = conversationOf(conversations, avatar.personId)?.locked ?? false;
+        const isSpeaking = speaking.includes(avatar.personId);
+        const isMuted = muted.includes(avatar.personId);
+        return (
+          <span
+            key={avatar.personId}
+            data-person-id={avatar.personId}
+            data-speaking={isSpeaking || undefined}
+            ref={(element) => {
+              if (element) labelElements.set(avatar.personId, element);
+              return () => {
+                labelElements.delete(avatar.personId);
+              };
+            }}
+            style={{ visibility: 'hidden' }}
+            className={[
+              'absolute top-0 left-0 inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs whitespace-nowrap shadow-raised',
+              isMe ? 'bg-espresso font-semibold text-cream' : 'bg-surface-raised font-medium text-text-primary',
+              isSpeaking ? 'ring-2 ring-status-available' : '',
+            ].join(' ')}
+          >
+            {locked && <Lock className="size-3" />}
+            {avatar.displayName}
+            {isMuted && <MicOff className="size-3" />}
+          </span>
+        );
+      })}
     </div>
   );
 }
