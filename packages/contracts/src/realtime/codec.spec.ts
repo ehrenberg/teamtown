@@ -39,6 +39,34 @@ describe('realtime codec', () => {
     expect(decodeServerEvent(encodeMessage(access))).toEqual({ ok: true, value: access });
   });
 
+  it('round-trips the room messages', () => {
+    const lena = '3f0e8a4c-9d1b-4c5e-8f2a-1b2c3d4e5f60';
+    const commands: ClientCommand[] = [
+      { t: 'SetDoorMode', id: 'c-3', p: { roomId: 'elbe', doorMode: 'locked' } },
+      { t: 'KnockOnRoom', p: { roomId: 'elbe' } },
+      { t: 'CancelKnock', p: { knockId: 'k-1' } },
+      { t: 'AnswerKnock', id: 'c-4', p: { knockId: 'k-1', admit: true } },
+      { t: 'RequestRoomCallToken', p: { roomId: 'elbe' } },
+    ];
+    const events: ServerEvent[] = [
+      { t: 'DoorModeChanged', p: { floorId: 'ground-floor', roomId: 'elbe', doorMode: 'knock' } },
+      { t: 'RoomCallChanged', p: { floorId: 'ground-floor', roomCall: { roomId: 'elbe', participants: [lena] } } },
+      {
+        t: 'KnockRequested',
+        p: { knockId: 'k-1', floorId: 'ground-floor', roomId: 'elbe', requester: lena, expiresAt: 1_060_000 },
+      },
+      { t: 'KnockAnswered', p: { knockId: 'k-1', roomId: 'elbe', outcome: 'admitted' } },
+      { t: 'RoomCallAccessGranted', p: { roomId: 'elbe', url: 'ws://localhost:7880', token: 'jwt' } },
+    ];
+
+    for (const command of commands) {
+      expect(decodeClientCommand(encodeMessage(command))).toEqual({ ok: true, value: command });
+    }
+    for (const event of events) {
+      expect(decodeServerEvent(encodeMessage(event))).toEqual({ ok: true, value: event });
+    }
+  });
+
   it('rejects bytes that are not MessagePack', () => {
     expect(decodeClientCommand(new Uint8Array([0xc1]))).toEqual({ ok: false, error: 'malformed' });
   });

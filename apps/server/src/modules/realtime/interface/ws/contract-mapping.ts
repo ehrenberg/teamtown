@@ -1,5 +1,16 @@
-import type { AvatarState as AvatarStateContract, ConversationContract, ServerEvent } from '@teamtown/contracts';
-import type { Conversation, ConversationEvent } from '../../../meetings/public-api.ts';
+import type {
+  AvatarState as AvatarStateContract,
+  ConversationContract,
+  RoomCallContract,
+  ServerEvent,
+} from '@teamtown/contracts';
+import type {
+  Conversation,
+  ConversationEvent,
+  KnockAnswered,
+  KnockRequested,
+  RoomCall,
+} from '../../../meetings/public-api.ts';
 import type { AvatarState, PresenceEvent } from '../../../presence/public-api.ts';
 
 export const toAvatarContract = (avatar: AvatarState): AvatarStateContract => ({
@@ -25,6 +36,8 @@ export function toServerEvent(event: PresenceEvent): ServerEvent {
           movement: { ...event.movement, path: [...event.movement.path] },
         },
       };
+    case 'DoorModeChanged':
+      return { t: 'DoorModeChanged', p: { floorId: event.floorId, roomId: event.roomId, doorMode: event.doorMode } };
   }
 }
 
@@ -32,6 +45,11 @@ export const toConversationContract = (conversation: Conversation): Conversation
   conversationId: conversation.conversationId,
   participants: [...conversation.participants],
   locked: conversation.locked,
+});
+
+export const toRoomCallContract = (roomCall: RoomCall): RoomCallContract => ({
+  roomId: roomCall.roomId,
+  participants: [...roomCall.participants],
 });
 
 export function toConversationServerEvent(event: ConversationEvent): ServerEvent {
@@ -49,4 +67,20 @@ export function toConversationServerEvent(event: ConversationEvent): ServerEvent
     case 'ConversationDissolved':
       return { t: 'ConversationDissolved', p: { floorId: event.floorId, conversationId: event.conversationId } };
   }
+}
+
+export function toKnockServerEvent(event: KnockRequested | KnockAnswered): ServerEvent {
+  const { knock } = event;
+  return event.type === 'KnockRequested'
+    ? {
+        t: 'KnockRequested',
+        p: {
+          knockId: knock.knockId,
+          floorId: knock.floorId,
+          roomId: knock.roomId,
+          requester: knock.requester,
+          expiresAt: knock.expiresAt,
+        },
+      }
+    : { t: 'KnockAnswered', p: { knockId: knock.knockId, roomId: knock.roomId, outcome: event.outcome } };
 }

@@ -11,6 +11,20 @@ import {
   RequestConversationTokenCommand,
   UnlockConversationCommand,
 } from './conversations.ts';
+import {
+  AnswerKnockCommand,
+  CancelKnockCommand,
+  DoorModeChangedEvent,
+  KnockAnsweredEvent,
+  KnockOnRoomCommand,
+  KnockRequestedEvent,
+  LiveDoorModeSchema,
+  RequestRoomCallTokenCommand,
+  RoomCallAccessGrantedEvent,
+  RoomCallChangedEvent,
+  RoomCallSchema,
+  SetDoorModeCommand,
+} from './rooms.ts';
 
 /**
  * Realtime protocol (ADR-0007, docs/architecture/world-and-realtime.md §5).
@@ -63,6 +77,11 @@ export const ClientCommand = z.discriminatedUnion('t', [
   LockConversationCommand,
   UnlockConversationCommand,
   RequestConversationTokenCommand,
+  SetDoorModeCommand,
+  KnockOnRoomCommand,
+  CancelKnockCommand,
+  AnswerKnockCommand,
+  RequestRoomCallTokenCommand,
 ]);
 export type ClientCommand = z.infer<typeof ClientCommand>;
 
@@ -103,6 +122,10 @@ export const FloorSnapshotEvent = z.object({
     floorId: FloorId,
     avatars: z.array(AvatarStateSchema),
     conversations: z.array(ConversationSchema),
+    /** Live door modes of every room on the floor. */
+    doorModes: z.array(LiveDoorModeSchema),
+    /** Room calls with at least one participant. */
+    roomCalls: z.array(RoomCallSchema),
   }),
 });
 
@@ -135,6 +158,17 @@ export const NackCode = z.enum([
   'unreachable',
   'conversation-not-found',
   'not-in-conversation',
+  /** The room is `knock` or `locked` and the walker has neither an entry pass nor a grace period. */
+  'door-closed',
+  'room-not-found',
+  'not-in-room',
+  /** Only enclosed rooms without a spawn point can change their door mode. */
+  'door-mode-fixed',
+  'knock-not-found',
+  /** The person already has an open knock. */
+  'knock-pending',
+  /** The room is open or empty: just walk in. */
+  'knock-not-needed',
   /** Audio is not configured on this server (no LiveKit). */
   'media-unavailable',
   'invalid-message',
@@ -158,6 +192,11 @@ export const ServerEvent = z.discriminatedUnion('t', [
   ConversationChangedEvent,
   ConversationDissolvedEvent,
   ConversationAccessGrantedEvent,
+  DoorModeChangedEvent,
+  RoomCallChangedEvent,
+  KnockRequestedEvent,
+  KnockAnsweredEvent,
+  RoomCallAccessGrantedEvent,
   AckEvent,
   NackEvent,
 ]);

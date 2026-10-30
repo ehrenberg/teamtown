@@ -15,7 +15,8 @@ export class FloorRegistry {
     if (!definition) return null;
     // Another join may have opened the floor while the definition was loading.
     const instance =
-      this.#floors.get(floorId) ?? new FloorInstance(definition.floorId, definition.grid, definition.spawnPoints);
+      this.#floors.get(floorId) ??
+      new FloorInstance(definition.floorId, definition.grid, definition.spawnPoints, definition.rooms);
     this.#floors.set(floorId, instance);
     return instance;
   }

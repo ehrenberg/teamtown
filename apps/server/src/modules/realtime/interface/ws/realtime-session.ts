@@ -11,12 +11,16 @@ import type { WebSocket } from 'ws';
 import type { Authenticate } from '../../../identity/public-api.ts';
 import type { ResolvePerson } from '../../../people/public-api.ts';
 import type {
+  AnswerKnock,
+  CancelKnock,
   ConversationQueries,
+  KnockOnRoom,
   RequestConversationToken,
+  RequestRoomCallToken,
   SetConversationLock,
 } from '../../../meetings/public-api.ts';
-import type { JoinFloor, MoveTo, Occupant } from '../../../presence/public-api.ts';
-import { toAvatarContract, toConversationContract } from './contract-mapping.ts';
+import type { JoinFloor, MoveTo, Occupant, PresenceQueries, SetDoorMode } from '../../../presence/public-api.ts';
+import { toAvatarContract, toConversationContract, toRoomCallContract } from './contract-mapping.ts';
 import type { CommandOutcome, RealtimeTelemetry } from './realtime-telemetry.ts';
 
 export interface SessionDependencies {
@@ -29,6 +33,12 @@ export interface SessionDependencies {
   readonly conversations: ConversationQueries;
   readonly setConversationLock: SetConversationLock;
   readonly requestConversationToken: RequestConversationToken;
+  readonly presence: PresenceQueries;
+  readonly setDoorMode: SetDoorMode;
+  readonly knockOnRoom: KnockOnRoom;
+  readonly answerKnock: AnswerKnock;
+  readonly cancelKnock: CancelKnock;
+  readonly requestRoomCallToken: RequestRoomCallToken;
 }
 
 /** Disconnect if the socket's send buffer grows beyond this (slow or stuck client). */
@@ -140,6 +150,8 @@ export class RealtimeSession {
             floorId: command.p.floorId,
             avatars: snapshot.value.map(toAvatarContract),
             conversations: this.deps.conversations.onFloor(command.p.floorId).map(toConversationContract),
+            doorModes: this.deps.presence.doorModesOn(command.p.floorId),
+            roomCalls: this.deps.conversations.roomCallsOn(command.p.floorId).map(toRoomCallContract),
           },
         });
         return undefined;
@@ -167,6 +179,36 @@ export class RealtimeSession {
         });
         if (!access.ok) return access.error;
         this.send({ t: 'ConversationAccessGranted', p: { conversationId: command.p.conversationId, ...access.value } });
+        return undefined;
+      }
+      case 'SetDoorMode': {
+        if (!this.occupant) return 'not-authenticated';
+        const result = this.deps.setDoorMode.execute({ personId: this.occupant.personId, ...command.p });
+        return result.ok ? undefined : result.error;
+      }
+      case 'KnockOnRoom': {
+        if (!this.occupant) return 'not-authenticated';
+        const result = this.deps.knockOnRoom.execute({ personId: this.occupant.personId, roomId: command.p.roomId });
+        return result.ok ? undefined : result.error;
+      }
+      case 'CancelKnock': {
+        if (!this.occupant) return 'not-authenticated';
+        const result = this.deps.cancelKnock.execute({ personId: this.occupant.personId, knockId: command.p.knockId });
+        return result.ok ? undefined : result.error;
+      }
+      case 'AnswerKnock': {
+        if (!this.occupant) return 'not-authenticated';
+        const result = this.deps.answerKnock.execute({ personId: this.occupant.personId, ...command.p });
+        return result.ok ? undefined : result.error;
+      }
+      case 'RequestRoomCallToken': {
+        if (!this.occupant) return 'not-authenticated';
+        const access = await this.deps.requestRoomCallToken.execute({
+          personId: this.occupant.personId,
+          roomId: command.p.roomId,
+        });
+        if (!access.ok) return access.error;
+        this.send({ t: 'RoomCallAccessGranted', p: { roomId: command.p.roomId, ...access.value } });
         return undefined;
       }
     }

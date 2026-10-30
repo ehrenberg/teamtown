@@ -215,6 +215,146 @@ channels:
           required:
             - t
             - p
+      SetDoorMode:
+        name: SetDoorMode
+        title: SetDoorMode
+        summary: Changes the door mode of the room the person is in. Any occupant may do this until M4.
+        payload:
+          type: object
+          properties:
+            t:
+              type: string
+              const: SetDoorMode
+            id:
+              type: string
+              minLength: 1
+              maxLength: 64
+            p:
+              type: object
+              properties:
+                roomId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                doorMode:
+                  type: string
+                  enum:
+                    - open
+                    - knock
+                    - locked
+              required:
+                - roomId
+                - doorMode
+          required:
+            - t
+            - p
+      KnockOnRoom:
+        name: KnockOnRoom
+        title: KnockOnRoom
+        summary: Knocks on an occupied knock-mode room. Everyone inside sees the request; it expires after 60 s.
+        payload:
+          type: object
+          properties:
+            t:
+              type: string
+              const: KnockOnRoom
+            id:
+              type: string
+              minLength: 1
+              maxLength: 64
+            p:
+              type: object
+              properties:
+                roomId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+              required:
+                - roomId
+          required:
+            - t
+            - p
+      CancelKnock:
+        name: CancelKnock
+        title: CancelKnock
+        summary: Withdraws the own knock.
+        payload:
+          type: object
+          properties:
+            t:
+              type: string
+              const: CancelKnock
+            id:
+              type: string
+              minLength: 1
+              maxLength: 64
+            p:
+              type: object
+              properties:
+                knockId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+              required:
+                - knockId
+          required:
+            - t
+            - p
+      AnswerKnock:
+        name: AnswerKnock
+        title: AnswerKnock
+        summary: Admits or declines a knock on the room the person is in. The first answer counts.
+        payload:
+          type: object
+          properties:
+            t:
+              type: string
+              const: AnswerKnock
+            id:
+              type: string
+              minLength: 1
+              maxLength: 64
+            p:
+              type: object
+              properties:
+                knockId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                admit:
+                  type: boolean
+              required:
+                - knockId
+                - admit
+          required:
+            - t
+            - p
+      RequestRoomCallToken:
+        name: RequestRoomCallToken
+        title: RequestRoomCallToken
+        summary: Asks for a fresh media token for the call of the room the person is in.
+        payload:
+          type: object
+          properties:
+            t:
+              type: string
+              const: RequestRoomCallToken
+            id:
+              type: string
+              minLength: 1
+              maxLength: 64
+            p:
+              type: object
+              properties:
+                roomId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+              required:
+                - roomId
+          required:
+            - t
+            - p
       Authenticated:
         name: Authenticated
         title: Authenticated
@@ -270,7 +410,7 @@ channels:
       FloorSnapshot:
         name: FloorSnapshot
         title: FloorSnapshot
-        summary: Full state of a floor (avatars and conversations), sent after joining it.
+        summary: Full state of a floor (avatars, conversations, live door modes and room calls), sent after joining it.
         payload:
           type: object
           properties:
@@ -390,10 +530,50 @@ channels:
                       - participants
                       - locked
                     additionalProperties: false
+                doorModes:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      roomId:
+                        type: string
+                        minLength: 1
+                        maxLength: 64
+                      doorMode:
+                        type: string
+                        enum:
+                          - open
+                          - knock
+                          - locked
+                    required:
+                      - roomId
+                      - doorMode
+                    additionalProperties: false
+                roomCalls:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      roomId:
+                        type: string
+                        minLength: 1
+                        maxLength: 64
+                      participants:
+                        type: array
+                        items:
+                          type: string
+                          format: uuid
+                          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                    required:
+                      - roomId
+                      - participants
+                    additionalProperties: false
               required:
                 - floorId
                 - avatars
                 - conversations
+                - doorModes
+                - roomCalls
               additionalProperties: false
           required:
             - t
@@ -763,6 +943,196 @@ channels:
             - t
             - p
           additionalProperties: false
+      DoorModeChanged:
+        name: DoorModeChanged
+        title: DoorModeChanged
+        summary: The live door mode of a room changed. Sent to everyone on the floor.
+        payload:
+          type: object
+          properties:
+            t:
+              type: string
+              const: DoorModeChanged
+            p:
+              type: object
+              properties:
+                floorId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                roomId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                doorMode:
+                  type: string
+                  enum:
+                    - open
+                    - knock
+                    - locked
+              required:
+                - floorId
+                - roomId
+                - doorMode
+              additionalProperties: false
+          required:
+            - t
+            - p
+          additionalProperties: false
+      RoomCallChanged:
+        name: RoomCallChanged
+        title: RoomCallChanged
+        summary: Who is in a room call changed; no participants means it ended. Sent to everyone on the floor.
+        payload:
+          type: object
+          properties:
+            t:
+              type: string
+              const: RoomCallChanged
+            p:
+              type: object
+              properties:
+                floorId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                roomCall:
+                  type: object
+                  properties:
+                    roomId:
+                      type: string
+                      minLength: 1
+                      maxLength: 64
+                    participants:
+                      type: array
+                      items:
+                        type: string
+                        format: uuid
+                        pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                  required:
+                    - roomId
+                    - participants
+                  additionalProperties: false
+              required:
+                - floorId
+                - roomCall
+              additionalProperties: false
+          required:
+            - t
+            - p
+          additionalProperties: false
+      KnockRequested:
+        name: KnockRequested
+        title: KnockRequested
+        summary: Someone knocked. Sent to the occupants of the room and to the requester.
+        payload:
+          type: object
+          properties:
+            t:
+              type: string
+              const: KnockRequested
+            p:
+              type: object
+              properties:
+                knockId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                floorId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                roomId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                requester:
+                  type: string
+                  format: uuid
+                  pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                expiresAt:
+                  type: number
+              required:
+                - knockId
+                - floorId
+                - roomId
+                - requester
+                - expiresAt
+              additionalProperties: false
+          required:
+            - t
+            - p
+          additionalProperties: false
+      KnockAnswered:
+        name: KnockAnswered
+        title: KnockAnswered
+        summary: A knock was admitted, declined, expired or cancelled. Sent to the occupants and to the requester.
+        payload:
+          type: object
+          properties:
+            t:
+              type: string
+              const: KnockAnswered
+            p:
+              type: object
+              properties:
+                knockId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                roomId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                outcome:
+                  type: string
+                  enum:
+                    - admitted
+                    - declined
+                    - expired
+                    - cancelled
+              required:
+                - knockId
+                - roomId
+                - outcome
+              additionalProperties: false
+          required:
+            - t
+            - p
+          additionalProperties: false
+      RoomCallAccessGranted:
+        name: RoomCallAccessGranted
+        title: RoomCallAccessGranted
+        summary: "Media access to a room call: LiveKit URL and a token valid for 30 s. Sent only to the occupant it is for."
+        payload:
+          type: object
+          properties:
+            t:
+              type: string
+              const: RoomCallAccessGranted
+            p:
+              type: object
+              properties:
+                roomId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                url:
+                  type: string
+                  minLength: 1
+                token:
+                  type: string
+                  minLength: 1
+                  maxLength: 8192
+              required:
+                - roomId
+                - url
+                - token
+              additionalProperties: false
+          required:
+            - t
+            - p
+          additionalProperties: false
       Ack:
         name: Ack
         title: Ack
@@ -816,6 +1186,13 @@ channels:
                     - unreachable
                     - conversation-not-found
                     - not-in-conversation
+                    - door-closed
+                    - room-not-found
+                    - not-in-room
+                    - door-mode-fixed
+                    - knock-not-found
+                    - knock-pending
+                    - knock-not-needed
                     - media-unavailable
                     - invalid-message
                     - internal-error
@@ -841,6 +1218,11 @@ operations:
       - $ref: "#/channels/realtime/messages/LockConversation"
       - $ref: "#/channels/realtime/messages/UnlockConversation"
       - $ref: "#/channels/realtime/messages/RequestConversationToken"
+      - $ref: "#/channels/realtime/messages/SetDoorMode"
+      - $ref: "#/channels/realtime/messages/KnockOnRoom"
+      - $ref: "#/channels/realtime/messages/CancelKnock"
+      - $ref: "#/channels/realtime/messages/AnswerKnock"
+      - $ref: "#/channels/realtime/messages/RequestRoomCallToken"
   sendEvents:
     action: send
     channel:
@@ -857,5 +1239,10 @@ operations:
       - $ref: "#/channels/realtime/messages/ConversationChanged"
       - $ref: "#/channels/realtime/messages/ConversationDissolved"
       - $ref: "#/channels/realtime/messages/ConversationAccessGranted"
+      - $ref: "#/channels/realtime/messages/DoorModeChanged"
+      - $ref: "#/channels/realtime/messages/RoomCallChanged"
+      - $ref: "#/channels/realtime/messages/KnockRequested"
+      - $ref: "#/channels/realtime/messages/KnockAnswered"
+      - $ref: "#/channels/realtime/messages/RoomCallAccessGranted"
       - $ref: "#/channels/realtime/messages/Ack"
       - $ref: "#/channels/realtime/messages/Nack"

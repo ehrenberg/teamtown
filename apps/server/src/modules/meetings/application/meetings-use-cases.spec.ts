@@ -9,6 +9,7 @@ import type { LivePresence } from './ports/live-presence.port.ts';
 import type { MediaGateway } from './ports/media-gateway.port.ts';
 import { ReconcileMediaRooms } from './reconcile-media-rooms.ts';
 import { RequestConversationToken } from './request-conversation-token.ts';
+import { RequestRoomCallToken } from './request-room-call-token.ts';
 import { SetConversationLock } from './set-conversation-lock.ts';
 import { UpdateConversations } from './update-conversations.ts';
 
@@ -46,15 +47,25 @@ class FakeMediaGateway implements MediaGateway {
 
 function setup({ withMedia = true } = {}) {
   const positions = new Map<string, Point>();
+  // Columns 20+ are an audio-isolated meeting room.
+  const isIsolated = ({ x }: Point) => x >= 20;
+  const roomOf = (personId: string) => {
+    const position = positions.get(personId);
+    return position && isIsolated(position) ? 'meeting' : null;
+  };
   const presence: LivePresence = {
     occupiedFloorIds: () => (positions.size > 0 ? ['ground-floor'] : []),
     positionsOn: () => [...positions].map(([personId, position]) => ({ personId, position })),
+    floorOf: (personId) => (positions.has(personId) ? 'ground-floor' : null),
+    roomOf,
+    occupantsOf: (_, roomId) => [...positions.keys()].filter((personId) => roomOf(personId) === roomId).sort(),
+    doorModeOf: (_, roomId) => (roomId === 'meeting' ? 'open' : null),
   };
   const acoustics: FloorAcoustics = {
     floorId: 'ground-floor',
     grid: unwrap(FloorGrid.builder(30, 10)).build(),
-    // Columns 20+ are an audio-isolated meeting room.
-    isIsolated: ({ x }) => x >= 20,
+    isolatedRoomIds: ['meeting'],
+    isIsolated,
   };
   let ids = 0;
   const registry = new ConversationRegistry(
@@ -76,6 +87,7 @@ function setup({ withMedia = true } = {}) {
     reconcile: () => new ReconcileMediaRooms(registry, media).execute(),
     lock: new SetConversationLock(registry, events),
     token: new RequestConversationToken(registry, media),
+    roomCallToken: new RequestRoomCallToken(presence, registry, media),
   };
 }
 
@@ -136,7 +148,79 @@ describe('Meetings use cases', () => {
   it('leaves out people in audio-isolated rooms, however close', async () => {
     s.positions.set('anna', { x: 19, y: 2 }).set('ben', { x: 20, y: 2 });
     await s.update();
-    expect(s.published).toEqual([]);
+    expect(s.published.filter((e) => e.type.startsWith('Conversation'))).toEqual([]);
+  });
+
+  it('puts everyone in an isolated room into its room call, and nobody else', async () => {
+    s.positions.set('anna', { x: 21, y: 2 }).set('ben', { x: 28, y: 8 }).set('carl', { x: 19, y: 2 });
+    await s.update();
+
+    expect(s.published.filter((e) => e.type.startsWith('RoomCall'))).toEqual([
+      {
+        type: 'RoomCallChanged',
+        floorId: 'ground-floor',
+        roomCall: { roomId: 'meeting', participants: ['anna', 'ben'] },
+        joined: ['anna', 'ben'],
+        left: [],
+      },
+      {
+        type: 'RoomCallAccessGranted',
+        personId: 'anna',
+        roomId: 'meeting',
+        url: 'ws://media.test',
+        token: 'token:room:ground-floor:meeting:anna',
+      },
+      {
+        type: 'RoomCallAccessGranted',
+        personId: 'ben',
+        roomId: 'meeting',
+        url: 'ws://media.test',
+        token: 'token:room:ground-floor:meeting:ben',
+      },
+    ]);
+  });
+
+  it('removes whoever walks out of the room from its call at once, and closes the call when empty', async () => {
+    s.positions.set('anna', { x: 21, y: 2 }).set('ben', { x: 22, y: 2 });
+    await s.update();
+    s.gateway.join('room:ground-floor:meeting', 'anna');
+    s.gateway.join('room:ground-floor:meeting', 'ben');
+
+    s.positions.set('ben', { x: 10, y: 2 });
+    await s.update();
+    expect(s.gateway.removed).toEqual(['room:ground-floor:meeting:ben']);
+
+    s.positions.set('anna', { x: 1, y: 9 });
+    await s.update();
+    expect(s.gateway.rooms.has('room:ground-floor:meeting')).toBe(false);
+    expect(s.published.at(-1)).toMatchObject({ type: 'RoomCallChanged', roomCall: { participants: [] } });
+  });
+
+  it('throws out anyone in a room call who is not inside (modified client)', async () => {
+    s.positions.set('anna', { x: 21, y: 2 });
+    await s.update();
+    s.gateway.join('room:ground-floor:meeting', 'anna');
+    s.gateway.join('room:ground-floor:meeting', 'mallory');
+    s.gateway.join('room:ground-floor:stale', 'eve');
+
+    await s.reconcile();
+
+    expect([...(s.gateway.rooms.get('room:ground-floor:meeting') ?? [])]).toEqual(['anna']);
+    expect(s.gateway.rooms.has('room:ground-floor:stale')).toBe(false);
+  });
+
+  it('hands out fresh room-call tokens to occupants only', async () => {
+    s.positions.set('anna', { x: 21, y: 2 }).set('carl', { x: 2, y: 2 });
+    await s.update();
+
+    expect(await s.roomCallToken.execute({ personId: 'anna', roomId: 'meeting' })).toEqual({
+      ok: true,
+      value: { url: 'ws://media.test', token: 'token:room:ground-floor:meeting:anna' },
+    });
+    expect(await s.roomCallToken.execute({ personId: 'carl', roomId: 'meeting' })).toEqual({
+      ok: false,
+      error: 'not-in-room',
+    });
   });
 
   it('throws out anyone in a conversation room who is not a participant (modified client)', async () => {

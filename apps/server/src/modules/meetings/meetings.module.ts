@@ -2,19 +2,26 @@ import { Module } from '@nestjs/common';
 import type { Clock, IdGenerator } from '@teamtown/kernel';
 import { APP_CONFIG, type AppConfig } from '../../platform/config/app-config.ts';
 import { CLOCK, ID_GENERATOR } from '../../platform/config/config.module.ts';
-import { PresenceModule, PresenceQueries } from '../presence/public-api.ts';
+import { AdmitToRoom, PresenceModule, PresenceQueries } from '../presence/public-api.ts';
 import { FloorQueries, WorldModule } from '../world/public-api.ts';
+import { AnswerKnock } from './application/answer-knock.ts';
+import { CancelKnock } from './application/cancel-knock.ts';
 import { ConversationMedia } from './application/conversation-media.ts';
 import { ConversationQueries } from './application/conversation-queries.ts';
 import { ConversationRegistry } from './application/conversation-registry.ts';
+import { ExpireKnocks } from './application/expire-knocks.ts';
+import { KnockOnRoom } from './application/knock-on-room.ts';
 import { MeetingsEventStream } from './application/meetings-event-stream.ts';
 import { FLOOR_ACOUSTICS_SOURCE, type FloorAcousticsSource } from './application/ports/floor-acoustics.port.ts';
 import { LIVE_PRESENCE, type LivePresence } from './application/ports/live-presence.port.ts';
 import { MEDIA_GATEWAY, type MediaGateway } from './application/ports/media-gateway.port.ts';
 import { ReconcileMediaRooms } from './application/reconcile-media-rooms.ts';
+import { ROOM_ADMISSION, type RoomAdmission } from './application/ports/room-admission.port.ts';
 import { RequestConversationToken } from './application/request-conversation-token.ts';
+import { RequestRoomCallToken } from './application/request-room-call-token.ts';
 import { SetConversationLock } from './application/set-conversation-lock.ts';
 import { UpdateConversations } from './application/update-conversations.ts';
+import { Knocks } from './domain/knocks.ts';
 import { LiveKitMediaGateway } from './infrastructure/livekit-media-gateway.ts';
 import { PresenceLivePositions } from './infrastructure/presence-live-positions.ts';
 import { ProximityTicker } from './infrastructure/proximity-ticker.ts';
@@ -43,9 +50,42 @@ const mediaGateway = (config: AppConfig): MediaGateway | null => {
       inject: [FloorQueries],
     },
     {
-      provide: LIVE_PRESENCE,
-      useFactory: (presence: PresenceQueries) => new PresenceLivePositions(presence),
-      inject: [PresenceQueries],
+      provide: PresenceLivePositions,
+      useFactory: (presence: PresenceQueries, admit: AdmitToRoom) => new PresenceLivePositions(presence, admit),
+      inject: [PresenceQueries, AdmitToRoom],
+    },
+    { provide: LIVE_PRESENCE, useExisting: PresenceLivePositions },
+    { provide: ROOM_ADMISSION, useExisting: PresenceLivePositions },
+    { provide: Knocks, useFactory: (ids: IdGenerator) => new Knocks(() => ids.next()), inject: [ID_GENERATOR] },
+    {
+      provide: KnockOnRoom,
+      useFactory: (presence: LivePresence, knocks: Knocks, events: MeetingsEventStream, clock: Clock) =>
+        new KnockOnRoom(presence, knocks, events, clock),
+      inject: [LIVE_PRESENCE, Knocks, MeetingsEventStream, CLOCK],
+    },
+    {
+      provide: AnswerKnock,
+      useFactory: (presence: LivePresence, admission: RoomAdmission, knocks: Knocks, events: MeetingsEventStream) =>
+        new AnswerKnock(presence, admission, knocks, events),
+      inject: [LIVE_PRESENCE, ROOM_ADMISSION, Knocks, MeetingsEventStream],
+    },
+    {
+      provide: CancelKnock,
+      useFactory: (presence: LivePresence, knocks: Knocks, events: MeetingsEventStream) =>
+        new CancelKnock(presence, knocks, events),
+      inject: [LIVE_PRESENCE, Knocks, MeetingsEventStream],
+    },
+    {
+      provide: ExpireKnocks,
+      useFactory: (presence: LivePresence, knocks: Knocks, events: MeetingsEventStream, clock: Clock) =>
+        new ExpireKnocks(presence, knocks, events, clock),
+      inject: [LIVE_PRESENCE, Knocks, MeetingsEventStream, CLOCK],
+    },
+    {
+      provide: RequestRoomCallToken,
+      useFactory: (presence: LivePresence, registry: ConversationRegistry, media: ConversationMedia) =>
+        new RequestRoomCallToken(presence, registry, media),
+      inject: [LIVE_PRESENCE, ConversationRegistry, ConversationMedia],
     },
     {
       provide: ConversationRegistry,
@@ -93,11 +133,20 @@ const mediaGateway = (config: AppConfig): MediaGateway | null => {
     },
     {
       provide: ProximityTicker,
-      useFactory: (update: UpdateConversations, reconcile: ReconcileMediaRooms) =>
-        new ProximityTicker(update, reconcile),
-      inject: [UpdateConversations, ReconcileMediaRooms],
+      useFactory: (update: UpdateConversations, reconcile: ReconcileMediaRooms, expire: ExpireKnocks) =>
+        new ProximityTicker(update, reconcile, expire),
+      inject: [UpdateConversations, ReconcileMediaRooms, ExpireKnocks],
     },
   ],
-  exports: [MeetingsEventStream, SetConversationLock, RequestConversationToken, ConversationQueries],
+  exports: [
+    MeetingsEventStream,
+    SetConversationLock,
+    RequestConversationToken,
+    RequestRoomCallToken,
+    KnockOnRoom,
+    AnswerKnock,
+    CancelKnock,
+    ConversationQueries,
+  ],
 })
 export class MeetingsModule {}

@@ -28,9 +28,15 @@ const summaries = {
   LockConversation: 'Locks the own conversation: it takes in no new people. Any participant may lock it.',
   UnlockConversation: 'Unlocks the own conversation.',
   RequestConversationToken: 'Asks for a fresh media token for the own conversation, e.g. after a reconnect.',
+  SetDoorMode: 'Changes the door mode of the room the person is in. Any occupant may do this until M4.',
+  KnockOnRoom: 'Knocks on an occupied knock-mode room. Everyone inside sees the request; it expires after 60 s.',
+  CancelKnock: 'Withdraws the own knock.',
+  AnswerKnock: 'Admits or declines a knock on the room the person is in. The first answer counts.',
+  RequestRoomCallToken: 'Asks for a fresh media token for the call of the room the person is in.',
   Authenticated: 'The connection is authenticated.',
   Pong: 'Answer to Ping with the server time.',
-  FloorSnapshot: 'Full state of a floor (avatars and conversations), sent after joining it.',
+  FloorSnapshot:
+    'Full state of a floor (avatars, conversations, live door modes and room calls), sent after joining it.',
   AvatarJoined: 'Someone entered the floor. Sent to everyone on the floor.',
   AvatarLeft: 'Someone left the floor. Sent to everyone on the floor.',
   AvatarPathStarted: 'Someone started walking along a server-validated path. Sent to everyone on the floor.',
@@ -39,6 +45,12 @@ const summaries = {
   ConversationDissolved: 'A conversation ended. Sent to everyone on the floor.',
   ConversationAccessGranted:
     'Media access to a conversation: LiveKit URL and a token valid for 30 s. Sent only to the participant it is for.',
+  DoorModeChanged: 'The live door mode of a room changed. Sent to everyone on the floor.',
+  RoomCallChanged: 'Who is in a room call changed; no participants means it ended. Sent to everyone on the floor.',
+  KnockRequested: 'Someone knocked. Sent to the occupants of the room and to the requester.',
+  KnockAnswered: 'A knock was admitted, declined, expired or cancelled. Sent to the occupants and to the requester.',
+  RoomCallAccessGranted:
+    'Media access to a room call: LiveKit URL and a token valid for 30 s. Sent only to the occupant it is for.',
   Ack: 'The command with this correlation ID succeeded.',
   Nack: 'The command failed. Codes are stable and translated in the client.',
 };

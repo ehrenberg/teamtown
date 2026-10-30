@@ -1,4 +1,5 @@
 import { Logger, type OnApplicationBootstrap, type OnApplicationShutdown } from '@nestjs/common';
+import type { ExpireKnocks } from '../application/expire-knocks.ts';
 import type { ReconcileMediaRooms } from '../application/reconcile-media-rooms.ts';
 import type { UpdateConversations } from '../application/update-conversations.ts';
 
@@ -29,11 +30,16 @@ export class ProximityTicker implements OnApplicationBootstrap, OnApplicationShu
   constructor(
     private readonly update: UpdateConversations,
     private readonly reconcile: ReconcileMediaRooms,
+    private readonly expireKnocks: ExpireKnocks,
   ) {}
 
   onApplicationBootstrap(): void {
     this.#timers = [
       every(CONVERSATION_TICK_MS, 'Updating conversations', () => this.update.execute()),
+      every(CONVERSATION_TICK_MS, 'Expiring knocks', () => {
+        this.expireKnocks.execute();
+        return Promise.resolve();
+      }),
       every(RECONCILE_INTERVAL_MS, 'Reconciling media rooms', () => this.reconcile.execute()),
     ];
   }

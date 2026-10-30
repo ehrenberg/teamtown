@@ -1,10 +1,12 @@
 import type { IdGenerator } from '@teamtown/kernel';
 import { FloorConversations, type Conversation } from '../domain/floor-conversations.ts';
+import { FloorRoomCalls } from '../domain/room-calls.ts';
 import type { FloorAcoustics, FloorAcousticsSource } from './ports/floor-acoustics.port.ts';
 
 export interface RunningFloor {
   readonly acoustics: FloorAcoustics;
   readonly conversations: FloorConversations;
+  readonly roomCalls: FloorRoomCalls;
 }
 
 export class ConversationRegistry {
@@ -23,6 +25,7 @@ export class ConversationRegistry {
     const floor = this.#floors.get(floorId) ?? {
       acoustics,
       conversations: new FloorConversations(floorId, acoustics.grid, () => this.ids.next()),
+      roomCalls: new FloorRoomCalls(floorId),
     };
     this.#floors.set(floorId, floor);
     return floor;

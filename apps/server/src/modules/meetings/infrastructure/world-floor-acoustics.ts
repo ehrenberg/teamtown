@@ -11,6 +11,7 @@ export class WorldFloorAcoustics implements FloorAcousticsSource {
     return {
       floorId,
       grid: floor.grid,
+      isolatedRoomIds: floor.rooms.filter((room) => room.audioIsolated).map((room) => room.roomId),
       isIsolated: ({ x, y }) => {
         const tx = Math.round(x);
         const ty = Math.round(y);

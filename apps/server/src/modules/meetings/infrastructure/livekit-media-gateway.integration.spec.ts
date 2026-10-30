@@ -46,7 +46,7 @@ async function freePort(kind: 'tcp' | 'udp'): Promise<number> {
   throw new Error(`No free ${kind} port found`);
 }
 
-describe('LiveKit conversation rooms (integration)', () => {
+describe('LiveKit conversation and room-call rooms (integration)', () => {
   let container: StartedTestContainer | undefined;
   let gateway: LiveKitMediaGateway;
   let media: ConversationMedia;
@@ -127,10 +127,38 @@ describe('LiveKit conversation rooms (integration)', () => {
     // Mallory kept a token from an earlier conversation and reconnects with it.
     const mallory = await join('conversation:c2', 'mallory');
 
-    await media.reconcile(new Map([['c2', ['anna', 'ben']]]));
+    await media.reconcile(new Map([['conversation:c2', ['anna', 'ben']]]));
 
     expect(await within(mallory.disconnected, 5_000)).toBe(true);
     expect(await gateway.listParticipants('conversation:c2')).toEqual(['anna']);
+  }, 60_000);
+
+  it('removes someone who walks out of a meeting room from its call', async () => {
+    await join('room:ground-floor:elbe', 'anna');
+    const ben = await join('room:ground-floor:elbe', 'ben');
+
+    await media.applyRoomCalls([
+      {
+        type: 'RoomCallChanged',
+        floorId: 'ground-floor',
+        roomCall: { roomId: 'elbe', participants: ['anna'] },
+        joined: [],
+        left: ['ben'],
+      },
+    ]);
+
+    expect(await within(ben.disconnected, 5_000)).toBe(true);
+    expect(await gateway.listParticipants('room:ground-floor:elbe')).toEqual(['anna']);
+  }, 60_000);
+
+  it('throws out a modified client that sits in a room call without being inside', async () => {
+    await join('room:ground-floor:alster', 'anna');
+    const mallory = await join('room:ground-floor:alster', 'mallory');
+
+    await media.reconcile(new Map([['room:ground-floor:alster', ['anna']]]));
+
+    expect(await within(mallory.disconnected, 5_000)).toBe(true);
+    expect(await gateway.listParticipants('room:ground-floor:alster')).toEqual(['anna']);
   }, 60_000);
 
   it('closes rooms of conversations that ended', async () => {

@@ -15,3 +15,6 @@ export interface MediaGateway {
 export const MEDIA_GATEWAY = Symbol('MEDIA_GATEWAY');
 
 export const conversationRoomName = (conversationId: string): string => `conversation:${conversationId}`;
+
+/** Room IDs are unique per floor only. */
+export const roomCallRoomName = (floorId: string, roomId: string): string => `room:${floorId}:${roomId}`;

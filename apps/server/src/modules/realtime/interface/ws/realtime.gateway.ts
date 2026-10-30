@@ -8,14 +8,30 @@ import { CLOCK } from '../../../../platform/config/config.module.ts';
 import { Authenticate } from '../../../identity/public-api.ts';
 import { ResolvePerson } from '../../../people/public-api.ts';
 import {
+  AnswerKnock,
+  CancelKnock,
   ConversationQueries,
+  KnockOnRoom,
   MeetingsEventStream,
   RequestConversationToken,
+  RequestRoomCallToken,
   SetConversationLock,
   type MeetingsEvent,
 } from '../../../meetings/public-api.ts';
-import { JoinFloor, LeavePresence, MoveTo, PresenceEventStream } from '../../../presence/public-api.ts';
-import { toConversationServerEvent, toServerEvent } from './contract-mapping.ts';
+import {
+  JoinFloor,
+  LeavePresence,
+  MoveTo,
+  PresenceEventStream,
+  PresenceQueries,
+  SetDoorMode,
+} from '../../../presence/public-api.ts';
+import {
+  toConversationServerEvent,
+  toKnockServerEvent,
+  toRoomCallContract,
+  toServerEvent,
+} from './contract-mapping.ts';
 import { RealtimeSession } from './realtime-session.ts';
 import { RealtimeTelemetry } from './realtime-telemetry.ts';
 
@@ -58,6 +74,12 @@ export class RealtimeGateway implements OnApplicationBootstrap, OnApplicationShu
     @Inject(ConversationQueries) private readonly conversations: ConversationQueries,
     @Inject(SetConversationLock) private readonly setConversationLock: SetConversationLock,
     @Inject(RequestConversationToken) private readonly requestConversationToken: RequestConversationToken,
+    @Inject(PresenceQueries) private readonly presence: PresenceQueries,
+    @Inject(SetDoorMode) private readonly setDoorMode: SetDoorMode,
+    @Inject(KnockOnRoom) private readonly knockOnRoom: KnockOnRoom,
+    @Inject(AnswerKnock) private readonly answerKnock: AnswerKnock,
+    @Inject(CancelKnock) private readonly cancelKnock: CancelKnock,
+    @Inject(RequestRoomCallToken) private readonly requestRoomCallToken: RequestRoomCallToken,
   ) {}
 
   onApplicationBootstrap(): void {
@@ -109,6 +131,12 @@ export class RealtimeGateway implements OnApplicationBootstrap, OnApplicationShu
       conversations: this.conversations,
       setConversationLock: this.setConversationLock,
       requestConversationToken: this.requestConversationToken,
+      presence: this.presence,
+      setDoorMode: this.setDoorMode,
+      knockOnRoom: this.knockOnRoom,
+      answerKnock: this.answerKnock,
+      cancelKnock: this.cancelKnock,
+      requestRoomCallToken: this.requestRoomCallToken,
     });
     this.#sessions.add(session);
     this.#telemetry.connectionOpened();
@@ -140,18 +168,51 @@ export class RealtimeGateway implements OnApplicationBootstrap, OnApplicationShu
     }
   }
 
-  /** Conversations are visible to the whole floor; a media token goes only to the person it is for. */
+  /**
+   * Conversations and room calls are visible to the whole floor; a media token goes only to the person it is for;
+   * knocks go only to the occupants of the room and the requester.
+   */
   #deliverMeetingsEvent(event: MeetingsEvent): void {
-    if (event.type !== 'ConversationAccessGranted') {
-      this.#sendToFloor(event.floorId, encodeMessage(toConversationServerEvent(event)));
-      return;
+    switch (event.type) {
+      case 'ConversationAccessGranted':
+        this.#sendToPeople(
+          [event.personId],
+          encodeMessage({
+            t: 'ConversationAccessGranted',
+            p: { conversationId: event.conversationId, url: event.url, token: event.token },
+          }),
+        );
+        return;
+      case 'RoomCallAccessGranted':
+        this.#sendToPeople(
+          [event.personId],
+          encodeMessage({
+            t: 'RoomCallAccessGranted',
+            p: { roomId: event.roomId, url: event.url, token: event.token },
+          }),
+        );
+        return;
+      case 'KnockRequested':
+      case 'KnockAnswered':
+        this.#sendToPeople(event.recipients, encodeMessage(toKnockServerEvent(event)));
+        return;
+      case 'RoomCallChanged':
+        this.#sendToFloor(
+          event.floorId,
+          encodeMessage({
+            t: 'RoomCallChanged',
+            p: { floorId: event.floorId, roomCall: toRoomCallContract(event.roomCall) },
+          }),
+        );
+        return;
+      default:
+        this.#sendToFloor(event.floorId, encodeMessage(toConversationServerEvent(event)));
     }
-    const bytes = encodeMessage({
-      t: 'ConversationAccessGranted',
-      p: { conversationId: event.conversationId, url: event.url, token: event.token },
-    });
+  }
+
+  #sendToPeople(personIds: readonly string[], bytes: Uint8Array): void {
     for (const session of this.#sessions) {
-      if (session.occupant?.personId === event.personId) session.sendEncoded(bytes);
+      if (session.occupant && personIds.includes(session.occupant.personId)) session.sendEncoded(bytes);
     }
   }
 

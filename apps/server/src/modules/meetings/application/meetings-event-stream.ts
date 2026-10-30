@@ -1,4 +1,6 @@
 import type { ConversationEvent } from '../domain/floor-conversations.ts';
+import type { KnockOutcome, KnockRequest } from '../domain/knocks.ts';
+import type { RoomCallChanged } from '../domain/room-calls.ts';
 
 export interface ConversationAccessGranted {
   readonly type: 'ConversationAccessGranted';
@@ -8,7 +10,35 @@ export interface ConversationAccessGranted {
   readonly token: string;
 }
 
-export type MeetingsEvent = ConversationEvent | ConversationAccessGranted;
+export interface RoomCallAccessGranted {
+  readonly type: 'RoomCallAccessGranted';
+  readonly personId: string;
+  readonly roomId: string;
+  readonly url: string;
+  readonly token: string;
+}
+
+/** Knock events go only to `recipients`: the occupants of the room and the requester. */
+export interface KnockRequested {
+  readonly type: 'KnockRequested';
+  readonly knock: KnockRequest;
+  readonly recipients: readonly string[];
+}
+
+export interface KnockAnswered {
+  readonly type: 'KnockAnswered';
+  readonly knock: KnockRequest;
+  readonly outcome: KnockOutcome;
+  readonly recipients: readonly string[];
+}
+
+export type MeetingsEvent =
+  | ConversationEvent
+  | ConversationAccessGranted
+  | RoomCallChanged
+  | RoomCallAccessGranted
+  | KnockRequested
+  | KnockAnswered;
 export type MeetingsEventListener = (event: MeetingsEvent) => void;
 
 export class MeetingsEventStream {

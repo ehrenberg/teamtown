@@ -1,10 +1,12 @@
 import type { Clock } from '@teamtown/kernel';
 import type { ConversationEvent } from '../domain/floor-conversations.ts';
+import type { RoomCallChanged } from '../domain/room-calls.ts';
 import type { ConversationMedia } from './conversation-media.ts';
 import type { ConversationRegistry } from './conversation-registry.ts';
 import type { MeetingsEventStream } from './meetings-event-stream.ts';
 import type { LivePresence } from './ports/live-presence.port.ts';
 
+/** Runs on a short tick: proximity conversations and room calls follow the live positions. */
 export class UpdateConversations {
   constructor(
     private readonly presence: LivePresence,
@@ -18,6 +20,7 @@ export class UpdateConversations {
     const now = this.clock.now().getTime();
     const occupied = new Set(this.presence.occupiedFloorIds());
     const changes: ConversationEvent[] = [];
+    const roomCallChanges: RoomCallChanged[] = [];
 
     for (const floorId of occupied) {
       const floor = await this.registry.open(floorId);
@@ -27,6 +30,11 @@ export class UpdateConversations {
         .filter(({ position }) => !floor.acoustics.isIsolated(position));
       floor.conversations.update(listeners, now);
       changes.push(...floor.conversations.pullEvents());
+
+      const occupants = new Map(
+        floor.acoustics.isolatedRoomIds.map((roomId) => [roomId, this.presence.occupantsOf(floorId, roomId)]),
+      );
+      roomCallChanges.push(...floor.roomCalls.update(occupants));
     }
 
     for (const floorId of this.registry.runningFloorIds()) {
@@ -34,10 +42,12 @@ export class UpdateConversations {
       const floor = this.registry.get(floorId);
       floor?.conversations.update([], now);
       changes.push(...(floor?.conversations.pullEvents() ?? []));
+      roomCallChanges.push(...(floor?.roomCalls.update(new Map()) ?? []));
       this.registry.close(floorId);
     }
 
-    this.events.publish(changes);
+    this.events.publish([...changes, ...roomCallChanges]);
     await this.media.apply(changes);
+    await this.media.applyRoomCalls(roomCallChanges);
   }
 }
