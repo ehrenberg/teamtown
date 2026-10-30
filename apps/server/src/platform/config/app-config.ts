@@ -19,6 +19,8 @@ const AppConfigSchema = z.object({
   OIDC_ISSUER: z.url(),
   /** Audience that access tokens must contain. */
   OIDC_AUDIENCE: z.string().min(1).default('teamtown-api'),
+  /** Minimum level of the JSON logs (ADR-0019). */
+  LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
 });
 
 export type AppConfig = z.infer<typeof AppConfigSchema>;

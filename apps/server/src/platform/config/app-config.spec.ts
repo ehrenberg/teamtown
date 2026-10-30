@@ -17,6 +17,7 @@ describe('loadAppConfig', () => {
         PORT: 3000,
         DATABASE_MIGRATE_ON_START: true,
         OIDC_AUDIENCE: 'teamtown-api',
+        LOG_LEVEL: 'info',
       },
     });
   });
@@ -31,11 +32,17 @@ describe('loadAppConfig', () => {
   });
 
   it('reports every invalid variable at once', () => {
-    const result = loadAppConfig({ ...REQUIRED, PORT: 'eighty', NODE_ENV: 'staging', DATABASE_URL: 'mysql://x' });
+    const result = loadAppConfig({
+      ...REQUIRED,
+      PORT: 'eighty',
+      NODE_ENV: 'staging',
+      DATABASE_URL: 'mysql://x',
+      LOG_LEVEL: 'verbose',
+    });
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error).toHaveLength(3);
+      expect(result.error).toHaveLength(4);
     }
   });
 });

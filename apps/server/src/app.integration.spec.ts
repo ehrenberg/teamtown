@@ -107,6 +107,7 @@ describe('TeamTown server (integration)', () => {
         DATABASE_MIGRATE_ON_START: true,
         OIDC_ISSUER: 'http://issuer.invalid/realms/test',
         OIDC_AUDIENCE: 'teamtown-api',
+        LOG_LEVEL: 'info',
       },
       { tokenVerifier: fakeVerifier },
     );

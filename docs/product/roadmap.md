@@ -21,19 +21,23 @@ gantt
     M7+ Delight & reach     :m7, after m6, 3
 ```
 
-| Milestone                | Goal                                                 | Content (proposal)                                                                                                                                                                 |
-| ------------------------ | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **M0 Foundation** ✅     | Repo is ready for contributors                       | Monorepo (pnpm + Turborepo), lint, boundaries and test setup, GitHub Actions, Docker Compose dev stack (Postgres, Keycloak, LiveKit), design tokens, CLAUDE.md, contributing guide |
-| **M1 Walking skeleton**  | Log in, see the office, walk, see others             | OIDC login, a hard-coded demo office (two floors, floor switcher), avatar movement (server-authoritative), presence via WebSocket, Electron shell starts the web app               |
-| **M2 Talk**              | Proximity audio and room meetings                    | LiveKit integration, proximity groups, room meetings, knock, door states, screen share, direct call                                                                                |
-| **M3 Write**             | Channels and DMs                                     | Messaging context, threads, mentions, reactions, room walls, files, search                                                                                                         |
-| **M4 Govern**            | Rights and roles                                     | Scoped RBAC, custom roles, room and channel policies, guest links, audit log                                                                                                       |
-| **M5 Build your office** | Self-service office                                  | Tile-grid editor, furniture catalogue, tracing image, setup wizard                                                                                                                 |
-| **M6 MVP hardening**     | Production-ready showcase                            | Demo mode (guest login, demo bots, nightly reset), load test, a11y audit, privacy page, i18n DE complete, backups, website on webhosting, VPS deployment                           |
-| **M7+ Delight & reach**  | Selected from the [idea catalogue](brainstorming.md) | e.g. calendar, town hall, emotes, integration bots, mobile companion                                                                                                               |
+| Milestone                  | Goal                                                 | Content (proposal)                                                                                                                                                                 |
+| -------------------------- | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **M0 Foundation** ✅       | Repo is ready for contributors                       | Monorepo (pnpm + Turborepo), lint, boundaries and test setup, GitHub Actions, Docker Compose dev stack (Postgres, Keycloak, LiveKit), design tokens, CLAUDE.md, contributing guide |
+| **M1 Walking skeleton** ✅ | Log in, see the office, walk, see others             | OIDC login, a hard-coded demo office (two floors, floor switcher), avatar movement (server-authoritative), presence via WebSocket, Electron shell starts the web app               |
+| **M2 Talk**                | Proximity audio and room meetings                    | LiveKit integration, proximity groups, room meetings, knock, door states, screen share, direct call                                                                                |
+| **M3 Write**               | Channels and DMs                                     | Messaging context, threads, mentions, reactions, room walls, files, search                                                                                                         |
+| **M4 Govern**              | Rights and roles                                     | Scoped RBAC, custom roles, room and channel policies, guest links, audit log                                                                                                       |
+| **M5 Build your office**   | Self-service office                                  | Tile-grid editor, furniture catalogue, tracing image, setup wizard                                                                                                                 |
+| **M6 MVP hardening**       | Production-ready showcase                            | Demo mode (guest login, demo bots, nightly reset), load test, a11y audit, privacy page, i18n DE complete, backups, website on webhosting, VPS deployment                           |
+| **M7+ Delight & reach**    | Selected from the [idea catalogue](brainstorming.md) | e.g. calendar, town hall, emotes, integration bots, mobile companion                                                                                                               |
 
 **M0 notes:** done on 2026-10-30. Moved to M1: Postman collections for the REST API and OpenTelemetry
 instrumentation of the server (the observability stack itself is running).
+
+**M1 notes:** done on 2026-10-30 ([feature spec](../features/m1-walking-skeleton.md)), including the items moved
+from M0: Postman collection (`postman/`) and OpenTelemetry instrumentation (ADR-0030). Not yet on the showcase
+instance; deployment is part of M6.
 
 M2 and M3 can be developed in parallel by different contributors because they are separate bounded
 contexts ([domain model](../architecture/domain-model.md)).

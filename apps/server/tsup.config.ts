@@ -1,7 +1,8 @@
 import { defineConfig } from 'tsup';
 
 export default defineConfig({
-  entry: ['src/main.ts'],
+  // instrumentation.ts is loaded first with `node --import` (ADR-0019), so it is a separate entry.
+  entry: ['src/main.ts', 'src/instrumentation.ts'],
   format: ['esm'],
   platform: 'node',
   target: 'node24',

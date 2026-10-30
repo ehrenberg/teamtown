@@ -37,6 +37,8 @@ room meetings (open/knock/locked), channels and DMs with scoped roles.
 
 - **Backend:** NestJS modular monolith (DDD + hexagonal) · PostgreSQL + MikroORM · transactional outbox ·
   in-process WebSocket gateway (MessagePack, Zod contracts) · PostgreSQL full-text search · no Redis in the MVP
+- **Logging & telemetry:** pino (nestjs-pino) JSON logs · OpenTelemetry started in `apps/server/src/instrumentation.ts`,
+  selective instrumentation (HTTP, pg, pino) + realtime metrics · privacy filter in `platform/telemetry` (ADR-0030)
 - **Identity & access:** Keycloak (OIDC; desktop via system browser + `teamtown://` deep link) · scoped RBAC ·
   admins can't read private content · meeting logs are opt-in only
 - **Media:** LiveKit (one room per floor for proximity, per meeting room, per direct call)

@@ -34,3 +34,4 @@ See [ADR-0001](0001-record-architecture-decisions.md) for the process. New ADRs 
 | [0027](0027-logged-meeting-consent-and-retention.md) | Explicit consent and retention for logged meetings                 | Accepted |
 | [0028](0028-foundation-tooling.md)                   | Foundation tooling (Node 24, pnpm 12, TS 6, ESLint 9, …)           | Accepted |
 | [0029](0029-walking-skeleton.md)                     | Walking skeleton (M1): seeds, glTF avatar, OIDC, ws, asset licence | Accepted |
+| [0030](0030-server-logging-and-instrumentation.md)   | Server logging (pino) and targeted OpenTelemetry instrumentation   | Accepted |

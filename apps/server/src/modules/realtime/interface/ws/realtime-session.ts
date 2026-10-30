@@ -12,6 +12,7 @@ import type { Authenticate } from '../../../identity/public-api.ts';
 import type { ResolvePerson } from '../../../people/public-api.ts';
 import type { JoinFloor, MoveTo, Occupant } from '../../../presence/public-api.ts';
 import { toAvatarContract } from './contract-mapping.ts';
+import type { CommandOutcome, RealtimeTelemetry } from './realtime-telemetry.ts';
 
 export interface SessionDependencies {
   readonly authenticate: Authenticate;
@@ -19,6 +20,7 @@ export interface SessionDependencies {
   readonly joinFloor: JoinFloor;
   readonly moveTo: MoveTo;
   readonly clock: Clock;
+  readonly telemetry: RealtimeTelemetry;
 }
 
 /** Disconnect if the socket's send buffer grows beyond this (slow or stuck client). */
@@ -79,25 +81,35 @@ export class RealtimeSession {
   async #handle(bytes: Uint8Array): Promise<void> {
     const decoded = decodeClientCommand(bytes);
     if (!decoded.ok) {
-      this.#nack(null, 'invalid-message');
+      await this.deps.telemetry.observeCommand('invalid', () => {
+        this.#nack(null, 'invalid-message');
+        return Promise.resolve('invalid-message');
+      });
       return;
     }
     const command = decoded.value;
+    await this.deps.telemetry.observeCommand(command.t, () => this.#execute(command));
+  }
+
+  /** Runs a command and answers with Ack or Nack; returns the outcome for telemetry. */
+  async #execute(command: ClientCommand): Promise<CommandOutcome> {
     const correlationId = command.id ?? null;
     try {
       if (command.t !== 'Authenticate' && command.t !== 'Ping' && !this.isAuthenticated) {
         this.#nack(correlationId, 'not-authenticated');
-        return;
+        return 'not-authenticated';
       }
       const failure = await this.#dispatch(command);
       if (failure) {
         this.#nack(correlationId, failure);
-      } else if (correlationId) {
-        this.send({ t: 'Ack', p: { id: correlationId } });
+        return failure;
       }
+      if (correlationId) this.send({ t: 'Ack', p: { id: correlationId } });
+      return 'ok';
     } catch (error) {
       logger.error(`Command ${command.t} failed`, error instanceof Error ? error.stack : undefined);
       this.#nack(correlationId, 'internal-error');
+      return 'internal-error';
     }
   }
 

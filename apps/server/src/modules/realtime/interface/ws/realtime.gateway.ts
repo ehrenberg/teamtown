@@ -10,6 +10,7 @@ import { ResolvePerson } from '../../../people/public-api.ts';
 import { JoinFloor, LeavePresence, MoveTo, PresenceEventStream } from '../../../presence/public-api.ts';
 import { toServerEvent } from './contract-mapping.ts';
 import { RealtimeSession } from './realtime-session.ts';
+import { RealtimeTelemetry } from './realtime-telemetry.ts';
 
 const AUTH_TIMEOUT_MS = 10_000;
 const HEARTBEAT_INTERVAL_MS = 30_000;
@@ -32,6 +33,7 @@ const toBytes = (data: RawData): Uint8Array =>
 export class RealtimeGateway implements OnApplicationBootstrap, OnApplicationShutdown {
   private readonly logger = new Logger('Realtime');
   readonly #sessions = new Set<RealtimeSession>();
+  readonly #telemetry = new RealtimeTelemetry();
   #server: WebSocketServer | undefined;
   #maintenance: NodeJS.Timeout | undefined;
   #unsubscribe: (() => void) | undefined;
@@ -90,8 +92,10 @@ export class RealtimeGateway implements OnApplicationBootstrap, OnApplicationShu
       joinFloor: this.joinFloor,
       moveTo: this.moveTo,
       clock: this.clock,
+      telemetry: this.#telemetry,
     });
     this.#sessions.add(session);
+    this.#telemetry.connectionOpened();
 
     const authTimeout = setTimeout(() => {
       if (!session.isAuthenticated) socket.close(CLOSE_AUTH_TIMEOUT, 'authentication timeout');
@@ -106,6 +110,7 @@ export class RealtimeGateway implements OnApplicationBootstrap, OnApplicationShu
     socket.on('close', () => {
       clearTimeout(authTimeout);
       this.#sessions.delete(session);
+      this.#telemetry.connectionClosed();
       this.#leaveIfLastConnection(session);
     });
     socket.on('error', () => {

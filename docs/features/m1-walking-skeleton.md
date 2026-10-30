@@ -1,6 +1,6 @@
 # Feature: Walking skeleton (log in, see the office, walk, see others)
 
-- **Status:** In progress
+- **Status:** Done
 - **Brainstorming IDs:** S2 (click-to-walk + keyboard), S5 (floors), P1 (status, basic)
 - **Bounded contexts:** Identity, People, World, Presence (+ realtime gateway)
 - **Milestone:** M1

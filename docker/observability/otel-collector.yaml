@@ -1,5 +1,6 @@
 # Receives OTLP from the TeamTown server and fans out: metrics → Prometheus, logs → Loki, traces → Tempo.
-# Privacy (ADR-0012/0019): attributes that could carry presence or message data are dropped here as a safety net.
+# Privacy (ADR-0012/0019): the server scrubs telemetry itself (src/platform/telemetry/telemetry-privacy.ts);
+# attributes that could carry presence, message or personal data are dropped here again as a safety net.
 receivers:
   otlp:
     protocols:
@@ -13,6 +14,21 @@ processors:
       - { key: teamtown.position, action: delete }
       - { key: teamtown.path, action: delete }
       - { key: teamtown.message.body, action: delete }
+      - { key: teamtown.target, action: delete }
+      - { key: client.address, action: delete }
+      - { key: client.port, action: delete }
+      - { key: network.peer.address, action: delete }
+      - { key: network.peer.port, action: delete }
+      - { key: user_agent.original, action: delete }
+      - { key: url.query, action: delete }
+  # Resource attributes that identify a person or reveal local paths (the server does not send them).
+  resource/privacy:
+    attributes:
+      - { key: process.owner, action: delete }
+      - { key: process.command, action: delete }
+      - { key: process.command_args, action: delete }
+      - { key: process.command_line, action: delete }
+      - { key: process.executable.path, action: delete }
 
 exporters:
   otlphttp/prometheus:
@@ -27,13 +43,13 @@ service:
   pipelines:
     metrics:
       receivers: [otlp]
-      processors: [attributes/privacy, batch]
+      processors: [resource/privacy, attributes/privacy, batch]
       exporters: [otlphttp/prometheus]
     logs:
       receivers: [otlp]
-      processors: [attributes/privacy, batch]
+      processors: [resource/privacy, attributes/privacy, batch]
       exporters: [otlphttp/loki]
     traces:
       receivers: [otlp]
-      processors: [attributes/privacy, batch]
+      processors: [resource/privacy, attributes/privacy, batch]
       exporters: [otlp/tempo]

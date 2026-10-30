@@ -8,6 +8,7 @@ import type { AppConfig } from './platform/config/app-config.ts';
 import { ConfigModule } from './platform/config/config.module.ts';
 import { DatabaseModule } from './platform/database/database.module.ts';
 import { HealthModule } from './platform/health/health.module.ts';
+import { LoggingModule } from './platform/logging/logging.module.ts';
 
 export type AppOverrides = IdentityModuleOptions;
 
@@ -22,6 +23,7 @@ export class AppModule {
       module: AppModule,
       imports: [
         ConfigModule.forRoot(config),
+        LoggingModule.forRoot(config),
         DatabaseModule.forRoot(config, {
           entities: [...PeopleModule.entities, ...WorldModule.entities],
           migrations: [...PeopleModule.migrations, ...WorldModule.migrations],
