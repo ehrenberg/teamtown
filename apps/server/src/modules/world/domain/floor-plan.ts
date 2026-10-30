@@ -4,6 +4,7 @@ import {
   footprintOf,
   isCatalogueItemId,
   reachableTiles,
+  RoomMap,
   tileKey,
   type FloorGrid,
   type FloorLayout,
@@ -43,18 +44,25 @@ export interface FloorPlanProps extends FloorLayout {
 }
 
 export type FloorPlanError =
-  FloorLayoutError | 'spawn-not-walkable' | 'room-unreachable' | 'furniture-outside-floor' | 'duplicate-id';
+  | FloorLayoutError
+  | 'spawn-not-walkable'
+  | 'room-unreachable'
+  | 'furniture-outside-floor'
+  | 'duplicate-id'
+  | 'door-mode-not-enforceable';
 
 const hasDuplicates = (ids: readonly string[]): boolean => new Set(ids).size !== ids.length;
 
 /**
  * A published floor plan (World context). Invariants: the layout forms a valid grid, people can only
- * spawn on walkable tiles, and every room can be reached from the spawn points.
+ * spawn on walkable tiles, every room can be reached from the spawn points, and only rooms whose door
+ * mode can be adjusted have a door mode other than `open`.
  */
 export class FloorPlan {
   private constructor(
     readonly props: FloorPlanProps,
     readonly grid: FloorGrid,
+    readonly roomMap: RoomMap,
   ) {}
 
   static create(props: FloorPlanProps): Result<FloorPlan, FloorPlanError> {
@@ -86,7 +94,21 @@ export class FloorPlan {
     );
     if (!everyRoomReachable) return err('room-unreachable');
 
-    return ok(new FloorPlan(props, grid.value));
+    const plan = new FloorPlan(props, grid.value, RoomMap.build(props, props.rooms));
+    if (props.rooms.some((room) => room.doorMode !== 'open' && !plan.isDoorModeAdjustable(room.id))) {
+      return err('door-mode-not-enforceable');
+    }
+    return ok(plan);
+  }
+
+  /**
+   * Only rooms that can be entered through doors alone and have no spawn point may be closed, so nobody
+   * is placed inside a closed room or locked out of the floor (M2b).
+   */
+  isDoorModeAdjustable(roomId: string): boolean {
+    return (
+      this.roomMap.isEnclosed(roomId) && !this.props.spawnPoints.some((spawn) => this.roomMap.roomAt(spawn) === roomId)
+    );
   }
 
   get floorId(): string {

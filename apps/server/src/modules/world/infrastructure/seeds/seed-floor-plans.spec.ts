@@ -12,4 +12,13 @@ describe('seed floor plans', () => {
       expect(plan.props.spawnPoints.every((spawn) => plan.grid.isWalkable(spawn))).toBe(true);
     },
   );
+
+  it('lets only the closed rooms of the demo office change their door mode', () => {
+    const adjustable = loadSeedFloorPlans().flatMap((seed) => {
+      const plan = unwrap(FloorPlan.create(seed));
+      return seed.rooms.filter((room) => plan.isDoorModeAdjustable(room.id)).map((room) => room.id);
+    });
+
+    expect(adjustable.sort()).toEqual(['alster', 'elbe', 'terrace']);
+  });
 });

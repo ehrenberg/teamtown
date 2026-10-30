@@ -1,3 +1,4 @@
+import { unwrap } from '@teamtown/kernel';
 import { describe, expect, it } from 'vitest';
 import { FloorPlan, type FloorPlanProps, type RoomProps } from './floor-plan.ts';
 
@@ -62,5 +63,49 @@ describe('FloorPlan', () => {
       ok: false,
       error: 'duplicate-id',
     });
+  });
+
+  it('lets enclosed rooms without a spawn point change their door mode', () => {
+    const plan = unwrap(FloorPlan.create(smallPlan));
+
+    expect(plan.isDoorModeAdjustable('east')).toBe(true);
+    expect(plan.isDoorModeAdjustable('west')).toBe(false);
+    expect(plan.isDoorModeAdjustable('unknown')).toBe(false);
+  });
+
+  it('keeps rooms with an open border open', () => {
+    const openBorder = {
+      ...smallPlan,
+      walls: [{ from: { x: 3, y: 0 }, to: { x: 3, y: 2 }, material: 'glass' as const }],
+    };
+
+    expect(FloorPlan.create(openBorder)).toEqual({ ok: false, error: 'door-mode-not-enforceable' });
+    expect(
+      unwrap(
+        FloorPlan.create({
+          ...openBorder,
+          rooms: openBorder.rooms.map((room) => ({ ...room, doorMode: 'open' as const })),
+        }),
+      ).isDoorModeAdjustable('east'),
+    ).toBe(false);
+  });
+
+  it('keeps rooms with a spawn point open', () => {
+    expect(
+      FloorPlan.create({
+        ...smallPlan,
+        spawnPoints: [
+          { x: 0, y: 0 },
+          { x: 4, y: 1 },
+        ],
+      }),
+    ).toEqual({
+      ok: false,
+      error: 'door-mode-not-enforceable',
+    });
+  });
+
+  it('knows which room a tile belongs to', () => {
+    expect(unwrap(FloorPlan.create(smallPlan)).roomMap.roomAt({ x: 4, y: 1 })).toBe('east');
   });
 });
