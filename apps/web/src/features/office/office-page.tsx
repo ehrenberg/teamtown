@@ -9,6 +9,9 @@ import { useCallAudio } from '../../media/use-call-audio.ts';
 import { useRealtime } from '../../realtime/realtime-context.tsx';
 import { serverClock } from '../../shared/server-clock.ts';
 import { usePresenceStore } from '../../stores/presence-store.ts';
+import { Phone } from 'lucide-react';
+import { useCallStore } from '../../stores/call-store.ts';
+import { CallAnnouncer, CallPanel, CallSomeoneDialog, IncomingCallDialog } from './calls.tsx';
 import { ConnectionBadge } from './connection-badge.tsx';
 import { ConversationAnnouncer } from './conversation-announcer.tsx';
 import { ConversationLockToggle, MicrophoneToggle } from './conversation-controls.tsx';
@@ -54,6 +57,7 @@ export function OfficePage() {
   const connection = usePresenceStore((state) => state.connection);
   const [selectedFloorId, setSelectedFloorId] = useState<string | null>(null);
   const [closedDoorRoomId, setClosedDoorRoomId] = useState<string | null>(null);
+  const [callDialogOpen, setCallDialogOpen] = useState(false);
 
   const floorId = selectedFloorId ?? floors.data?.floors[0]?.floorId ?? null;
   const plan = useFloorPlan(floorId);
@@ -96,6 +100,16 @@ export function OfficePage() {
     },
     [grid, walkTo],
   );
+  const call = useCallback(
+    (personId: string) => {
+      void realtime.startCall(personId).then((result) => {
+        if (!result.ok) {
+          useCallStore.getState().notify({ personId, outcome: result.code === 'busy' ? 'busy' : 'cancelled' });
+        }
+      });
+    },
+    [realtime],
+  );
   const goToRoom = useCallback(
     (roomId: string) => {
       const { me, tileOf } = currentTiles();
@@ -120,6 +134,15 @@ export function OfficePage() {
         )}
         <div className="ml-auto flex items-center gap-3">
           {myRoom?.doorModeAdjustable && <DoorModeControl room={myRoom} />}
+          <Button
+            variant="ghost"
+            onClick={() => {
+              setCallDialogOpen(true);
+            }}
+          >
+            <Phone aria-hidden="true" className="size-4" />
+            {t('call.callSomeone')}
+          </Button>
           <ConversationLockToggle />
           <MicrophoneToggle />
           <ConnectionBadge />
@@ -139,11 +162,17 @@ export function OfficePage() {
       </header>
 
       <aside className="overflow-y-auto border-r border-border-subtle bg-surface-sunken p-4">
+        <CallPanel
+          onAddSomeone={() => {
+            setCallDialogOpen(true);
+          }}
+        />
         <KnockTray roomId={myRoomId} roomName={myRoom?.name ?? ''} />
-        <PeopleList onTalkTo={talkTo} />
+        <PeopleList onTalkTo={talkTo} onCall={call} />
         {rooms && <RoomsList rooms={rooms.rooms} roomMap={rooms.roomMap} myRoomId={myRoomId} onGoTo={goToRoom} />}
         <ConversationAnnouncer />
         <RoomAnnouncer myRoomId={myRoomId} roomNames={roomNames} />
+        <CallAnnouncer />
         <p className="mt-6 text-xs text-text-secondary">{t('office.walkHint')}</p>
       </aside>
 
@@ -173,6 +202,8 @@ export function OfficePage() {
           />
         )}
       </main>
+      <CallSomeoneDialog open={callDialogOpen} onOpenChange={setCallDialogOpen} />
+      <IncomingCallDialog />
     </div>
   );
 }

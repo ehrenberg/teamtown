@@ -1,6 +1,6 @@
 # Feature: Direct calls
 
-- **Status:** Ready
+- **Status:** Done (2026-10-30)
 - **Brainstorming ID:** C8 (call someone who's far away)
 - **Bounded context(s):** Meetings, Presence, People, realtime gateway
 - **Milestone:** M2c, part 1 of 3 (direct call → camera → screen share; ADR-0031)
@@ -36,24 +36,25 @@ settle things together.
 
 ## Acceptance criteria
 
-- [ ] Given two people on different floors, when one calls the other and the other accepts, then both hear each
-      other within 1 s, and nobody else hears them.
-- [ ] Given a ringing call, when 30 s pass without an answer, then the caller is told "Not reached" and the callee
+- [x] Given two people on different floors, when one calls the other and the other accepts, then both hear each
+      other within 1 s, and nobody else hears them. _(Verified in e2e `direct-calls.spec.ts` without the 1 s budget,
+      which is measured in M6.)_
+- [x] Given a ringing call, when 30 s pass without an answer, then the caller is told "Not reached" and the callee
       stops ringing; when the callee declines, the caller is told at once.
-- [ ] Given a person already in a call, when someone calls them, then the caller is told they are busy.
-- [ ] Given a person in a call standing next to others in a conversation or inside a room with a room call, then
+- [x] Given a person already in a call, when someone calls them, then the caller is told they are busy.
+- [x] Given a person in a call standing next to others in a conversation or inside a room with a room call, then
       they are part of neither: they don't hear them and aren't heard.
-- [ ] Given a call of two, when one invites a third person who accepts, then all three hear each other; a ninth
+- [x] Given a call of two, when one invites a third person who accepts, then all three hear each other; a ninth
       invitation is rejected.
-- [ ] Given a call of three, when two hang up, then the call ends for the last one.
-- [ ] Given a modified client that joins `direct:{callId}` without being a participant (or stays after leaving),
+- [x] Given a call of three, when two hang up, then the call ends for the last one.
+- [x] Given a modified client that joins `direct:{callId}` without being a participant (or stays after leaving),
       then the server removes it (privacy test against a real LiveKit server).
-- [ ] People on the floor see "In a call" and a phone icon for participants, but not who they are talking to.
-- [ ] Non-spatial path: calling, answering, inviting and hanging up work from the people list, the "Call someone"
+- [x] People on the floor see "In a call" and a phone icon for participants, but not who they are talking to.
+- [x] Non-spatial path: calling, answering, inviting and hanging up work from the people list, the "Call someone"
       dialog and the call panel, all by keyboard.
-- [ ] Accessibility: the incoming call is a dialog with a label (Radix), focus goes to it, and the ringing has a
-      visible counterpart; joining and leaving are announced politely (`aria-live`).
-- [ ] i18n: all new strings in EN and DE.
+- [x] Accessibility: the incoming call is a dialog with a label (Radix), focus goes to it, and the ringing has a
+      visible counterpart; joining and leaving are announced politely (`aria-live`). _(Not yet checked with a screen reader.)_
+- [x] i18n: all new strings in EN and DE.
 
 ## Permissions
 
@@ -79,8 +80,11 @@ ringsUntil }`, max 8 people). Invariants: a person is in at most one call or inv
   `DirectCallEnded { callId }`, `CallInvitationAnswered { callId, personId, outcome }`.
 - Event to a participant only: `DirectCallAccessGranted { callId, url, token }`.
 - Event to the requester only: `OnlinePeople { people: [{ personId, displayName, avatarColor, floorId }] }`.
+- Events to participants and invitees carry the call as `{ callId, participants, invitations }`.
 - Events to everyone on the floor: `OnCallChanged { floorId, personId, onCall }`; `FloorSnapshot` gains `onCall`.
-- Nack codes: `person-not-online`, `busy`, `call-not-found`, `not-in-call`, `call-full`, `cannot-call-yourself`.
+- Nack codes: `person-not-online`, `busy`, `already-in-call`, `call-not-found`, `not-in-call`, `call-full`,
+  `cannot-call-yourself`.
+- Documented in `docs/api/asyncapi.yaml` (generated).
 
 ## Privacy impact
 
@@ -97,6 +101,11 @@ ringsUntil }`, max 8 people). Invariants: a person is in at most one call or inv
 - Call panel (sidebar, while in a call): participants, "Add someone", "Hang up"; ringing invitees shown as such.
 - World: a small phone icon in the name label of people in a call.
 - Reduced motion: no pulsing ring animation.
+
+## Not yet covered by automated tests
+
+- The 1 s budget (M6), the ring tone and the screen-reader announcements.
+- Group calls and the busy answer are covered by unit tests, not end to end.
 
 ## Open questions
 

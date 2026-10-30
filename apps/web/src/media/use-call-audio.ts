@@ -1,6 +1,13 @@
 import { positionAt, type Point } from '@teamtown/world-core';
 import { useEffect, useState } from 'react';
-import { conversationCallId, roomCallId, type CallId, type RealtimeClient } from '../realtime/realtime-client.ts';
+import {
+  conversationCallId,
+  directCallId,
+  roomCallId,
+  type CallId,
+  type RealtimeClient,
+} from '../realtime/realtime-client.ts';
+import { roleIn, useCallStore } from '../stores/call-store.ts';
 import { serverClock } from '../shared/server-clock.ts';
 import { conversationOf, useConversationStore } from '../stores/conversation-store.ts';
 import { useMediaStore } from '../stores/media-store.ts';
@@ -13,7 +20,7 @@ import { voiceMix, type VoiceMix } from './voice-mix.ts';
 const MIX_INTERVAL_MS = 100;
 /** If no token arrived this long after entering a call, ask for one (e.g. after a reconnect). */
 const TOKEN_REQUEST_DELAY_MS = 1_500;
-/** Everyone in a room call is heard at full volume from the front (ADR-0031). */
+/** Everyone in a room call or a direct call is heard at full volume from the front (ADR-0031). */
 const ROOM_CALL_MIX: VoiceMix = { volume: 1, pan: 0 };
 
 function positionOf(personId: string, now: number): Point | null {
@@ -22,9 +29,15 @@ function positionOf(personId: string, now: number): Point | null {
   return avatar.movement ? positionAt(avatar.movement, now) : avatar.tile;
 }
 
-/** The call one is in: a proximity conversation, or the call of the audio-isolated room one is inside. */
+/**
+ * The call one is in: a direct call (it replaces the surroundings), a proximity conversation, or the call of the
+ * audio-isolated room one is inside.
+ */
 function currentCall(): { readonly callId: CallId; readonly participants: readonly string[] } | null {
   const me = usePresenceStore.getState().myPersonId;
+  const { call } = useCallStore.getState();
+  if (call && roleIn(call, me) === 'participant')
+    return { callId: directCallId(call.callId), participants: call.participants };
   const conversation = conversationOf(useConversationStore.getState().conversations, me);
   if (conversation) return { callId: conversationCallId(conversation.conversationId), ...conversation };
   const { roomCalls } = useRoomStore.getState();
@@ -39,11 +52,16 @@ export function useCallAudio(realtime: RealtimeClient): void {
     (state) => conversationOf(state.conversations, myPersonId)?.conversationId ?? null,
   );
   const myRoomCallId = useRoomStore((state) => roomCallOf(state.roomCalls, myPersonId));
-  const myCallId = myConversationId
-    ? conversationCallId(myConversationId)
-    : myRoomCallId
-      ? roomCallId(myRoomCallId)
-      : null;
+  const myDirectCallId = useCallStore((state) =>
+    roleIn(state.call, myPersonId) === 'participant' ? (state.call?.callId ?? null) : null,
+  );
+  const myCallId = myDirectCallId
+    ? directCallId(myDirectCallId)
+    : myConversationId
+      ? conversationCallId(myConversationId)
+      : myRoomCallId
+        ? roomCallId(myRoomCallId)
+        : null;
 
   const [audio] = useState(() => {
     const media = useMediaStore.getState();
@@ -92,7 +110,7 @@ export function useCallAudio(realtime: RealtimeClient): void {
       const me = usePresenceStore.getState().myPersonId;
       const call = currentCall();
       const mixes = new Map<string, VoiceMix>();
-      if (call?.callId.startsWith('room:')) {
+      if (call && !call.callId.startsWith('conversation:')) {
         for (const personId of call.participants) if (personId !== me) mixes.set(personId, ROOM_CALL_MIX);
       } else if (call && me) {
         const now = serverClock.now();

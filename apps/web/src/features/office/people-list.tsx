@@ -1,7 +1,8 @@
 import type { AvatarState, ConversationContract } from '@teamtown/contracts';
 import { StatusDot } from '@teamtown/ui';
-import { Lock, MicOff, Volume2 } from 'lucide-react';
+import { Lock, MicOff, Phone, Volume2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { useCallStore } from '../../stores/call-store.ts';
 import { conversationOf, useConversationStore } from '../../stores/conversation-store.ts';
 import { useMediaStore } from '../../stores/media-store.ts';
 import { usePresenceStore } from '../../stores/presence-store.ts';
@@ -9,7 +10,13 @@ import { usePresenceStore } from '../../stores/presence-store.ts';
 const byName = (a: AvatarState, b: AvatarState) => a.displayName.localeCompare(b.displayName);
 
 /** Non-spatial view of the floor (principle "spatial is optional"). */
-export function PeopleList({ onTalkTo }: { readonly onTalkTo: (personId: string) => void }) {
+export function PeopleList({
+  onTalkTo,
+  onCall,
+}: {
+  readonly onTalkTo: (personId: string) => void;
+  readonly onCall: (personId: string) => void;
+}) {
   const { t } = useTranslation();
   const avatars = usePresenceStore((state) => state.avatars);
   const myPersonId = usePresenceStore((state) => state.myPersonId);
@@ -32,6 +39,7 @@ export function PeopleList({ onTalkTo }: { readonly onTalkTo: (personId: string)
       isMe={person.personId === myPersonId}
       canTalkTo={person.personId !== myPersonId && !mine?.participants.includes(person.personId)}
       onTalkTo={onTalkTo}
+      onCall={onCall}
     />
   );
 
@@ -70,15 +78,18 @@ function PersonRow({
   isMe,
   canTalkTo,
   onTalkTo,
+  onCall,
 }: {
   readonly person: AvatarState;
   readonly isMe: boolean;
   readonly canTalkTo: boolean;
   readonly onTalkTo: (personId: string) => void;
+  readonly onCall: (personId: string) => void;
 }) {
   const { t } = useTranslation();
   const speaking = useMediaStore((state) => state.speaking.includes(person.personId));
   const muted = useMediaStore((state) => state.muted.includes(person.personId));
+  const inACall = useCallStore((state) => state.onCall.includes(person.personId));
 
   return (
     <li className="group flex items-center gap-2.5 rounded-sm px-2 py-1.5 text-sm hover:bg-neutral-200">
@@ -100,7 +111,20 @@ function PersonRow({
       {muted && (
         <MicOff role="img" aria-label={t('conversation.muted')} className="size-3.5 shrink-0 text-text-secondary" />
       )}
-      {canTalkTo && (
+      {inACall && <Phone role="img" aria-label={t('call.inACall')} className="size-3.5 shrink-0 text-text-secondary" />}
+      {!isMe && !inACall && (
+        <button
+          type="button"
+          onClick={() => {
+            onCall(person.personId);
+          }}
+          aria-label={t('call.callPerson', { name: person.displayName })}
+          className="min-h-6 shrink-0 rounded-sm px-1.5 py-0.5 text-xs font-medium text-text-link hover:bg-neutral-100"
+        >
+          {t('call.call')}
+        </button>
+      )}
+      {canTalkTo && !inACall && (
         <button
           type="button"
           onClick={() => {

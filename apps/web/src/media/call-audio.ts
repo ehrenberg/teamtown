@@ -113,6 +113,8 @@ export class CallAudio {
     try {
       await room.localParticipant.setMicrophoneEnabled(true);
     } catch {
+      // Leaving the room while the microphone starts aborts it: that is no microphone problem.
+      if (this.#current?.room !== room || room.state !== ConnectionState.Connected) return;
       this.#microphoneOn = false;
       this.callbacks.onMicrophoneFailed();
     }

@@ -8,6 +8,7 @@ import {
   type ServerEvent,
 } from '@teamtown/contracts';
 import type { TileCoord } from '@teamtown/world-core';
+import { useCallStore } from '../stores/call-store.ts';
 import { useConversationStore } from '../stores/conversation-store.ts';
 import { usePresenceStore } from '../stores/presence-store.ts';
 import { useRoomStore, type DoorMode } from '../stores/room-store.ts';
@@ -21,10 +22,11 @@ const MAX_RECONNECT_DELAY_MS = 15_000;
 
 type PendingCommand = (result: CommandResult) => void;
 
-/** A call is either a proximity conversation or a room call; a person is in at most one at a time. */
-export type CallId = `conversation:${string}` | `room:${string}`;
+/** A call is a proximity conversation, a room call or a direct call; a person is in at most one at a time. */
+export type CallId = `conversation:${string}` | `room:${string}` | `direct:${string}`;
 export const conversationCallId = (conversationId: string): CallId => `conversation:${conversationId}`;
 export const roomCallId = (roomId: string): CallId => `room:${roomId}`;
+export const directCallId = (callId: string): CallId => `direct:${callId}`;
 
 export interface CallAccess {
   readonly callId: CallId;
@@ -86,9 +88,16 @@ export class RealtimeClient {
 
   /** Asks for a fresh media token for a conversation or room call, e.g. after a reconnect. */
   requestCallToken(callId: CallId): Promise<CommandResult> {
-    return callId.startsWith('room:')
-      ? this.#command({ t: 'RequestRoomCallToken', p: { roomId: callId.slice('room:'.length) } })
-      : this.#command({ t: 'RequestConversationToken', p: { conversationId: callId.slice('conversation:'.length) } });
+    if (callId.startsWith('room:')) {
+      return this.#command({ t: 'RequestRoomCallToken', p: { roomId: callId.slice('room:'.length) } });
+    }
+    if (callId.startsWith('direct:')) {
+      return this.#command({ t: 'RequestDirectCallToken', p: { callId: callId.slice('direct:'.length) } });
+    }
+    return this.#command({
+      t: 'RequestConversationToken',
+      p: { conversationId: callId.slice('conversation:'.length) },
+    });
   }
 
   setDoorMode(roomId: string, doorMode: DoorMode): Promise<CommandResult> {
@@ -105,6 +114,27 @@ export class RealtimeClient {
 
   answerKnock(knockId: string, admit: boolean): Promise<CommandResult> {
     return this.#command({ t: 'AnswerKnock', p: { knockId, admit } });
+  }
+
+  startCall(personId: string): Promise<CommandResult> {
+    return this.#command({ t: 'StartCall', p: { personId } });
+  }
+
+  inviteToCall(callId: string, personId: string): Promise<CommandResult> {
+    return this.#command({ t: 'InviteToCall', p: { callId, personId } });
+  }
+
+  answerCall(callId: string, accept: boolean): Promise<CommandResult> {
+    return this.#command({ t: 'AnswerCall', p: { callId, accept } });
+  }
+
+  leaveCall(callId: string): Promise<CommandResult> {
+    return this.#command({ t: 'LeaveCall', p: { callId } });
+  }
+
+  /** The answer arrives as `OnlinePeople` in the call store. */
+  listOnlinePeople(): Promise<CommandResult> {
+    return this.#command({ t: 'ListOnlinePeople', p: {} });
   }
 
   onCallAccess(listener: CallAccessListener): () => void {
@@ -182,6 +212,7 @@ export class RealtimeClient {
         store.applySnapshot(event.p.floorId, event.p.avatars);
         useConversationStore.getState().applySnapshot(event.p.floorId, event.p.conversations);
         useRoomStore.getState().applySnapshot(event.p.floorId, event.p.doorModes, event.p.roomCalls);
+        useCallStore.getState().applySnapshot(event.p.floorId, event.p.onCall);
         return;
       case 'ConversationFormed':
       case 'ConversationChanged':
@@ -196,6 +227,16 @@ export class RealtimeClient {
         return;
       case 'ConversationAccessGranted':
         this.#grantAccess({ callId: conversationCallId(event.p.conversationId), ...event.p });
+        return;
+      case 'DirectCallChanged':
+      case 'DirectCallEnded':
+      case 'CallInvitationAnswered':
+      case 'OnCallChanged':
+      case 'OnlinePeople':
+        useCallStore.getState().applyEvent(event);
+        return;
+      case 'DirectCallAccessGranted':
+        this.#grantAccess({ ...event.p, callId: directCallId(event.p.callId) });
         return;
       case 'RoomCallAccessGranted':
         this.#grantAccess({ callId: roomCallId(event.p.roomId), ...event.p });
