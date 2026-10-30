@@ -67,6 +67,46 @@ describe('realtime codec', () => {
     }
   });
 
+  it('round-trips the direct call messages', () => {
+    const anna = '3f0e8a4c-9d1b-4c5e-8f2a-1b2c3d4e5f60';
+    const ben = '7a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d';
+    const commands: ClientCommand[] = [
+      { t: 'StartCall', id: 'c-5', p: { personId: ben } },
+      { t: 'InviteToCall', p: { callId: 'call-1', personId: ben } },
+      { t: 'AnswerCall', p: { callId: 'call-1', accept: true } },
+      { t: 'LeaveCall', p: { callId: 'call-1' } },
+      { t: 'RequestDirectCallToken', p: { callId: 'call-1' } },
+      { t: 'ListOnlinePeople', id: 'c-6', p: {} },
+    ];
+    const events: ServerEvent[] = [
+      {
+        t: 'DirectCallChanged',
+        p: {
+          call: {
+            callId: 'call-1',
+            participants: [anna],
+            invitations: [{ personId: ben, invitedBy: anna, ringsUntil: 1_030_000 }],
+          },
+        },
+      },
+      { t: 'DirectCallEnded', p: { callId: 'call-1' } },
+      { t: 'CallInvitationAnswered', p: { callId: 'call-1', personId: ben, outcome: 'busy' } },
+      { t: 'DirectCallAccessGranted', p: { callId: 'call-1', url: 'ws://localhost:7880', token: 'jwt' } },
+      { t: 'OnCallChanged', p: { floorId: 'ground-floor', personId: anna, onCall: true } },
+      {
+        t: 'OnlinePeople',
+        p: { people: [{ personId: ben, displayName: 'Ben', avatarColor: '#2F6F8F', floorId: 'upper-floor' }] },
+      },
+    ];
+
+    for (const command of commands) {
+      expect(decodeClientCommand(encodeMessage(command))).toEqual({ ok: true, value: command });
+    }
+    for (const event of events) {
+      expect(decodeServerEvent(encodeMessage(event))).toEqual({ ok: true, value: event });
+    }
+  });
+
   it('rejects bytes that are not MessagePack', () => {
     expect(decodeClientCommand(new Uint8Array([0xc1]))).toEqual({ ok: false, error: 'malformed' });
   });

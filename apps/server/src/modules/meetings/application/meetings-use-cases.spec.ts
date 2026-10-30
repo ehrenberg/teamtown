@@ -12,6 +12,7 @@ import { RequestConversationToken } from './request-conversation-token.ts';
 import { RequestRoomCallToken } from './request-room-call-token.ts';
 import { SetConversationLock } from './set-conversation-lock.ts';
 import { UpdateConversations } from './update-conversations.ts';
+import { DirectCalls } from '../domain/direct-calls.ts';
 
 const NOW = new Date('2026-10-30T12:00:00Z');
 
@@ -78,13 +79,15 @@ function setup({ withMedia = true } = {}) {
   const gateway = new FakeMediaGateway();
   const media = new ConversationMedia(withMedia ? gateway : null, events);
   const clock: Clock = { now: () => NOW };
-  const update = new UpdateConversations(presence, registry, media, events, clock);
+  const calls = new DirectCalls(() => 'call-1');
+  const update = new UpdateConversations(presence, registry, media, events, clock, calls);
   return {
     positions,
     gateway,
     published,
     update: () => update.execute(),
-    reconcile: () => new ReconcileMediaRooms(registry, media).execute(),
+    calls,
+    reconcile: () => new ReconcileMediaRooms(registry, media, calls).execute(),
     lock: new SetConversationLock(registry, events),
     token: new RequestConversationToken(registry, media),
     roomCallToken: new RequestRoomCallToken(presence, registry, media),
@@ -149,6 +152,28 @@ describe('Meetings use cases', () => {
     s.positions.set('anna', { x: 19, y: 2 }).set('ben', { x: 20, y: 2 });
     await s.update();
     expect(s.published.filter((e) => e.type.startsWith('Conversation'))).toEqual([]);
+  });
+
+  it('leaves people in a direct call out of conversations and room calls', async () => {
+    s.positions.set('anna', { x: 2, y: 2 }).set('ben', { x: 4, y: 2 }).set('carl', { x: 21, y: 2 });
+    unwrap(s.calls.start('anna', 'carl', 0));
+    unwrap(s.calls.answer('call-1', 'carl', true));
+    await s.update();
+
+    expect(s.published.filter((e) => e.type.startsWith('Conversation') || e.type.startsWith('RoomCall'))).toEqual([]);
+  });
+
+  it('throws out anyone in a direct call room who is not a participant', async () => {
+    unwrap(s.calls.start('anna', 'ben', 0));
+    unwrap(s.calls.answer('call-1', 'ben', true));
+    s.gateway.join('direct:call-1', 'anna');
+    s.gateway.join('direct:call-1', 'mallory');
+    s.gateway.join('direct:gone', 'eve');
+
+    await s.reconcile();
+
+    expect([...(s.gateway.rooms.get('direct:call-1') ?? [])]).toEqual(['anna']);
+    expect(s.gateway.rooms.has('direct:gone')).toBe(false);
   });
 
   it('puts everyone in an isolated room into its room call, and nobody else', async () => {

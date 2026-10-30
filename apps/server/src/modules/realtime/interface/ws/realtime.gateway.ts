@@ -8,14 +8,19 @@ import { CLOCK } from '../../../../platform/config/config.module.ts';
 import { Authenticate } from '../../../identity/public-api.ts';
 import { ResolvePerson } from '../../../people/public-api.ts';
 import {
+  AnswerCall,
   AnswerKnock,
   CancelKnock,
   ConversationQueries,
+  InviteToCall,
   KnockOnRoom,
+  LeaveCall,
   MeetingsEventStream,
   RequestConversationToken,
+  RequestDirectCallToken,
   RequestRoomCallToken,
   SetConversationLock,
+  StartCall,
   type MeetingsEvent,
 } from '../../../meetings/public-api.ts';
 import {
@@ -27,6 +32,7 @@ import {
   SetDoorMode,
 } from '../../../presence/public-api.ts';
 import {
+  toCallContract,
   toConversationServerEvent,
   toKnockServerEvent,
   toRoomCallContract,
@@ -80,6 +86,11 @@ export class RealtimeGateway implements OnApplicationBootstrap, OnApplicationShu
     @Inject(AnswerKnock) private readonly answerKnock: AnswerKnock,
     @Inject(CancelKnock) private readonly cancelKnock: CancelKnock,
     @Inject(RequestRoomCallToken) private readonly requestRoomCallToken: RequestRoomCallToken,
+    @Inject(StartCall) private readonly startCall: StartCall,
+    @Inject(InviteToCall) private readonly inviteToCall: InviteToCall,
+    @Inject(AnswerCall) private readonly answerCall: AnswerCall,
+    @Inject(LeaveCall) private readonly leaveCall: LeaveCall,
+    @Inject(RequestDirectCallToken) private readonly requestDirectCallToken: RequestDirectCallToken,
   ) {}
 
   onApplicationBootstrap(): void {
@@ -102,6 +113,10 @@ export class RealtimeGateway implements OnApplicationBootstrap, OnApplicationShu
     this.#unsubscribe = [
       this.presenceEvents.subscribe((event) => {
         this.#sendToFloor(event.floorId, encodeMessage(toServerEvent(event)));
+        // Someone in a call walks onto another floor: people there learn that they are in a call.
+        if (event.type === 'AvatarJoined' && this.conversations.isInCall(event.avatar.occupant.personId)) {
+          this.#announceOnCall([event.avatar.occupant.personId], true);
+        }
       }),
       this.meetingsEvents.subscribe((event) => {
         this.#deliverMeetingsEvent(event);
@@ -137,6 +152,11 @@ export class RealtimeGateway implements OnApplicationBootstrap, OnApplicationShu
       answerKnock: this.answerKnock,
       cancelKnock: this.cancelKnock,
       requestRoomCallToken: this.requestRoomCallToken,
+      startCall: this.startCall,
+      inviteToCall: this.inviteToCall,
+      answerCall: this.answerCall,
+      leaveCall: this.leaveCall,
+      requestDirectCallToken: this.requestDirectCallToken,
     });
     this.#sessions.add(session);
     this.#telemetry.connectionOpened();
@@ -205,8 +225,46 @@ export class RealtimeGateway implements OnApplicationBootstrap, OnApplicationShu
           }),
         );
         return;
+      case 'DirectCallAccessGranted':
+        this.#sendToPeople(
+          [event.personId],
+          encodeMessage({
+            t: 'DirectCallAccessGranted',
+            p: { callId: event.callId, url: event.url, token: event.token },
+          }),
+        );
+        return;
+      case 'DirectCallChanged':
+        this.#sendToPeople(
+          event.recipients,
+          encodeMessage({ t: 'DirectCallChanged', p: { call: toCallContract(event.call) } }),
+        );
+        this.#announceOnCall(event.joined, true);
+        this.#announceOnCall(event.left, false);
+        return;
+      case 'DirectCallEnded':
+        this.#sendToPeople(event.recipients, encodeMessage({ t: 'DirectCallEnded', p: { callId: event.callId } }));
+        this.#announceOnCall(event.left, false);
+        return;
+      case 'CallInvitationAnswered':
+        this.#sendToPeople(
+          event.recipients,
+          encodeMessage({
+            t: 'CallInvitationAnswered',
+            p: { callId: event.callId, personId: event.personId, outcome: event.outcome },
+          }),
+        );
+        return;
       default:
         this.#sendToFloor(event.floorId, encodeMessage(toConversationServerEvent(event)));
+    }
+  }
+
+  /** Tells each person's floor that they are (or no longer are) in a call, never with whom. */
+  #announceOnCall(personIds: readonly string[], onCall: boolean): void {
+    for (const personId of personIds) {
+      const floorId = this.presence.floorOf(personId);
+      if (floorId) this.#sendToFloor(floorId, encodeMessage({ t: 'OnCallChanged', p: { floorId, personId, onCall } }));
     }
   }
 

@@ -73,7 +73,7 @@ export class ConversationMedia {
   async reconcile(active: ReadonlyMap<string, readonly string[]>): Promise<void> {
     if (!this.gateway) return;
     for (const room of await this.gateway.listRooms()) {
-      if (!room.startsWith('conversation:') && !room.startsWith('room:')) continue;
+      if (!['conversation:', 'room:', 'direct:'].some((prefix) => room.startsWith(prefix))) continue;
       const participants = active.get(room);
       if (!participants) {
         await this.gateway.closeRoom(room);

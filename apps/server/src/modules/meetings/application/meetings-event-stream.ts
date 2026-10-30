@@ -1,3 +1,4 @@
+import type { DirectCallEvent } from '../domain/direct-calls.ts';
 import type { ConversationEvent } from '../domain/floor-conversations.ts';
 import type { KnockOutcome, KnockRequest } from '../domain/knocks.ts';
 import type { RoomCallChanged } from '../domain/room-calls.ts';
@@ -6,6 +7,14 @@ export interface ConversationAccessGranted {
   readonly type: 'ConversationAccessGranted';
   readonly personId: string;
   readonly conversationId: string;
+  readonly url: string;
+  readonly token: string;
+}
+
+export interface DirectCallAccessGranted {
+  readonly type: 'DirectCallAccessGranted';
+  readonly personId: string;
+  readonly callId: string;
   readonly url: string;
   readonly token: string;
 }
@@ -38,7 +47,9 @@ export type MeetingsEvent =
   | RoomCallChanged
   | RoomCallAccessGranted
   | KnockRequested
-  | KnockAnswered;
+  | KnockAnswered
+  | DirectCallEvent
+  | DirectCallAccessGranted;
 export type MeetingsEventListener = (event: MeetingsEvent) => void;
 
 export class MeetingsEventStream {

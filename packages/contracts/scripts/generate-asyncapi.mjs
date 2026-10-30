@@ -33,6 +33,12 @@ const summaries = {
   CancelKnock: 'Withdraws the own knock.',
   AnswerKnock: 'Admits or declines a knock on the room the person is in. The first answer counts.',
   RequestRoomCallToken: 'Asks for a fresh media token for the call of the room the person is in.',
+  StartCall: 'Rings someone who is online, on any floor.',
+  InviteToCall: 'Rings one more person into the own call. Any participant may; at most 8 people per call.',
+  AnswerCall: 'Accepts or declines the call one is being rung for.',
+  LeaveCall: 'Hangs up. A call ends when fewer than two participants are left.',
+  RequestDirectCallToken: 'Asks for a fresh media token for the own direct call, e.g. after a reconnect.',
+  ListOnlinePeople: 'Asks for everyone who is online, on any floor; answered with OnlinePeople.',
   Authenticated: 'The connection is authenticated.',
   Pong: 'Answer to Ping with the server time.',
   FloorSnapshot:
@@ -51,6 +57,14 @@ const summaries = {
   KnockAnswered: 'A knock was admitted, declined, expired or cancelled. Sent to the occupants and to the requester.',
   RoomCallAccessGranted:
     'Media access to a room call: LiveKit URL and a token valid for 30 s. Sent only to the occupant it is for.',
+  DirectCallChanged: 'A direct call started ringing or changed. Sent to its participants and invitees only.',
+  DirectCallEnded: 'A direct call ended. Sent to its participants and invitees only.',
+  CallInvitationAnswered:
+    'Someone accepted, declined, did not answer, was busy, or the ringing was cancelled. Sent to participants and invitees.',
+  DirectCallAccessGranted:
+    'Media access to a direct call: LiveKit URL and a token valid for 30 s. Sent only to the participant it is for.',
+  OnCallChanged: 'Someone started or stopped being in a direct call (not with whom). Sent to everyone on the floor.',
+  OnlinePeople: 'Everyone who is online, with their floor. Sent only to the requester.',
   Ack: 'The command with this correlation ID succeeded.',
   Nack: 'The command failed. Codes are stable and translated in the client.',
 };

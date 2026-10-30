@@ -355,6 +355,164 @@ channels:
           required:
             - t
             - p
+      StartCall:
+        name: StartCall
+        title: StartCall
+        summary: Rings someone who is online, on any floor.
+        payload:
+          type: object
+          properties:
+            t:
+              type: string
+              const: StartCall
+            id:
+              type: string
+              minLength: 1
+              maxLength: 64
+            p:
+              type: object
+              properties:
+                personId:
+                  type: string
+                  format: uuid
+                  pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+              required:
+                - personId
+          required:
+            - t
+            - p
+      InviteToCall:
+        name: InviteToCall
+        title: InviteToCall
+        summary: Rings one more person into the own call. Any participant may; at most 8 people per call.
+        payload:
+          type: object
+          properties:
+            t:
+              type: string
+              const: InviteToCall
+            id:
+              type: string
+              minLength: 1
+              maxLength: 64
+            p:
+              type: object
+              properties:
+                callId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                personId:
+                  type: string
+                  format: uuid
+                  pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+              required:
+                - callId
+                - personId
+          required:
+            - t
+            - p
+      AnswerCall:
+        name: AnswerCall
+        title: AnswerCall
+        summary: Accepts or declines the call one is being rung for.
+        payload:
+          type: object
+          properties:
+            t:
+              type: string
+              const: AnswerCall
+            id:
+              type: string
+              minLength: 1
+              maxLength: 64
+            p:
+              type: object
+              properties:
+                callId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                accept:
+                  type: boolean
+              required:
+                - callId
+                - accept
+          required:
+            - t
+            - p
+      LeaveCall:
+        name: LeaveCall
+        title: LeaveCall
+        summary: Hangs up. A call ends when fewer than two participants are left.
+        payload:
+          type: object
+          properties:
+            t:
+              type: string
+              const: LeaveCall
+            id:
+              type: string
+              minLength: 1
+              maxLength: 64
+            p:
+              type: object
+              properties:
+                callId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+              required:
+                - callId
+          required:
+            - t
+            - p
+      RequestDirectCallToken:
+        name: RequestDirectCallToken
+        title: RequestDirectCallToken
+        summary: Asks for a fresh media token for the own direct call, e.g. after a reconnect.
+        payload:
+          type: object
+          properties:
+            t:
+              type: string
+              const: RequestDirectCallToken
+            id:
+              type: string
+              minLength: 1
+              maxLength: 64
+            p:
+              type: object
+              properties:
+                callId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+              required:
+                - callId
+          required:
+            - t
+            - p
+      ListOnlinePeople:
+        name: ListOnlinePeople
+        title: ListOnlinePeople
+        summary: Asks for everyone who is online, on any floor; answered with OnlinePeople.
+        payload:
+          type: object
+          properties:
+            t:
+              type: string
+              const: ListOnlinePeople
+            id:
+              type: string
+              minLength: 1
+              maxLength: 64
+            p:
+              type: object
+              properties: {}
+          required:
+            - t
+            - p
       Authenticated:
         name: Authenticated
         title: Authenticated
@@ -568,12 +726,19 @@ channels:
                       - roomId
                       - participants
                     additionalProperties: false
+                onCall:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                    pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
               required:
                 - floorId
                 - avatars
                 - conversations
                 - doorModes
                 - roomCalls
+                - onCall
               additionalProperties: false
           required:
             - t
@@ -1133,6 +1298,235 @@ channels:
             - t
             - p
           additionalProperties: false
+      DirectCallChanged:
+        name: DirectCallChanged
+        title: DirectCallChanged
+        summary: A direct call started ringing or changed. Sent to its participants and invitees only.
+        payload:
+          type: object
+          properties:
+            t:
+              type: string
+              const: DirectCallChanged
+            p:
+              type: object
+              properties:
+                call:
+                  type: object
+                  properties:
+                    callId:
+                      type: string
+                      minLength: 1
+                      maxLength: 64
+                    participants:
+                      type: array
+                      items:
+                        type: string
+                        format: uuid
+                        pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                    invitations:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          personId:
+                            type: string
+                            format: uuid
+                            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                          invitedBy:
+                            type: string
+                            format: uuid
+                            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                          ringsUntil:
+                            type: number
+                        required:
+                          - personId
+                          - invitedBy
+                          - ringsUntil
+                        additionalProperties: false
+                  required:
+                    - callId
+                    - participants
+                    - invitations
+                  additionalProperties: false
+              required:
+                - call
+              additionalProperties: false
+          required:
+            - t
+            - p
+          additionalProperties: false
+      DirectCallEnded:
+        name: DirectCallEnded
+        title: DirectCallEnded
+        summary: A direct call ended. Sent to its participants and invitees only.
+        payload:
+          type: object
+          properties:
+            t:
+              type: string
+              const: DirectCallEnded
+            p:
+              type: object
+              properties:
+                callId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+              required:
+                - callId
+              additionalProperties: false
+          required:
+            - t
+            - p
+          additionalProperties: false
+      CallInvitationAnswered:
+        name: CallInvitationAnswered
+        title: CallInvitationAnswered
+        summary: Someone accepted, declined, did not answer, was busy, or the ringing was cancelled. Sent to participants and invitees.
+        payload:
+          type: object
+          properties:
+            t:
+              type: string
+              const: CallInvitationAnswered
+            p:
+              type: object
+              properties:
+                callId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                personId:
+                  type: string
+                  format: uuid
+                  pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                outcome:
+                  type: string
+                  enum:
+                    - accepted
+                    - declined
+                    - no-answer
+                    - busy
+                    - cancelled
+              required:
+                - callId
+                - personId
+                - outcome
+              additionalProperties: false
+          required:
+            - t
+            - p
+          additionalProperties: false
+      DirectCallAccessGranted:
+        name: DirectCallAccessGranted
+        title: DirectCallAccessGranted
+        summary: "Media access to a direct call: LiveKit URL and a token valid for 30 s. Sent only to the participant it is for."
+        payload:
+          type: object
+          properties:
+            t:
+              type: string
+              const: DirectCallAccessGranted
+            p:
+              type: object
+              properties:
+                callId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                url:
+                  type: string
+                  minLength: 1
+                token:
+                  type: string
+                  minLength: 1
+                  maxLength: 8192
+              required:
+                - callId
+                - url
+                - token
+              additionalProperties: false
+          required:
+            - t
+            - p
+          additionalProperties: false
+      OnCallChanged:
+        name: OnCallChanged
+        title: OnCallChanged
+        summary: Someone started or stopped being in a direct call (not with whom). Sent to everyone on the floor.
+        payload:
+          type: object
+          properties:
+            t:
+              type: string
+              const: OnCallChanged
+            p:
+              type: object
+              properties:
+                floorId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                personId:
+                  type: string
+                  format: uuid
+                  pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                onCall:
+                  type: boolean
+              required:
+                - floorId
+                - personId
+                - onCall
+              additionalProperties: false
+          required:
+            - t
+            - p
+          additionalProperties: false
+      OnlinePeople:
+        name: OnlinePeople
+        title: OnlinePeople
+        summary: Everyone who is online, with their floor. Sent only to the requester.
+        payload:
+          type: object
+          properties:
+            t:
+              type: string
+              const: OnlinePeople
+            p:
+              type: object
+              properties:
+                people:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      personId:
+                        type: string
+                        format: uuid
+                        pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                      displayName:
+                        type: string
+                      avatarColor:
+                        type: string
+                        pattern: ^#[0-9a-f]{6}$
+                      floorId:
+                        type: string
+                        minLength: 1
+                        maxLength: 64
+                    required:
+                      - personId
+                      - displayName
+                      - avatarColor
+                      - floorId
+                    additionalProperties: false
+              required:
+                - people
+              additionalProperties: false
+          required:
+            - t
+            - p
+          additionalProperties: false
       Ack:
         name: Ack
         title: Ack
@@ -1193,6 +1587,13 @@ channels:
                     - knock-not-found
                     - knock-pending
                     - knock-not-needed
+                    - person-not-online
+                    - busy
+                    - already-in-call
+                    - cannot-call-yourself
+                    - call-not-found
+                    - not-in-call
+                    - call-full
                     - media-unavailable
                     - invalid-message
                     - internal-error
@@ -1223,6 +1624,12 @@ operations:
       - $ref: "#/channels/realtime/messages/CancelKnock"
       - $ref: "#/channels/realtime/messages/AnswerKnock"
       - $ref: "#/channels/realtime/messages/RequestRoomCallToken"
+      - $ref: "#/channels/realtime/messages/StartCall"
+      - $ref: "#/channels/realtime/messages/InviteToCall"
+      - $ref: "#/channels/realtime/messages/AnswerCall"
+      - $ref: "#/channels/realtime/messages/LeaveCall"
+      - $ref: "#/channels/realtime/messages/RequestDirectCallToken"
+      - $ref: "#/channels/realtime/messages/ListOnlinePeople"
   sendEvents:
     action: send
     channel:
@@ -1244,5 +1651,11 @@ operations:
       - $ref: "#/channels/realtime/messages/KnockRequested"
       - $ref: "#/channels/realtime/messages/KnockAnswered"
       - $ref: "#/channels/realtime/messages/RoomCallAccessGranted"
+      - $ref: "#/channels/realtime/messages/DirectCallChanged"
+      - $ref: "#/channels/realtime/messages/DirectCallEnded"
+      - $ref: "#/channels/realtime/messages/CallInvitationAnswered"
+      - $ref: "#/channels/realtime/messages/DirectCallAccessGranted"
+      - $ref: "#/channels/realtime/messages/OnCallChanged"
+      - $ref: "#/channels/realtime/messages/OnlinePeople"
       - $ref: "#/channels/realtime/messages/Ack"
       - $ref: "#/channels/realtime/messages/Nack"

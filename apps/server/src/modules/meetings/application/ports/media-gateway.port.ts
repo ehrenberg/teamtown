@@ -18,3 +18,5 @@ export const conversationRoomName = (conversationId: string): string => `convers
 
 /** Room IDs are unique per floor only. */
 export const roomCallRoomName = (floorId: string, roomId: string): string => `room:${floorId}:${roomId}`;
+
+export const directCallRoomName = (callId: string): string => `direct:${callId}`;

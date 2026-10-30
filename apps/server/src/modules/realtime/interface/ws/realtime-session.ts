@@ -11,13 +11,18 @@ import type { WebSocket } from 'ws';
 import type { Authenticate } from '../../../identity/public-api.ts';
 import type { ResolvePerson } from '../../../people/public-api.ts';
 import type {
+  AnswerCall,
   AnswerKnock,
   CancelKnock,
   ConversationQueries,
+  InviteToCall,
   KnockOnRoom,
+  LeaveCall,
   RequestConversationToken,
+  RequestDirectCallToken,
   RequestRoomCallToken,
   SetConversationLock,
+  StartCall,
 } from '../../../meetings/public-api.ts';
 import type { JoinFloor, MoveTo, Occupant, PresenceQueries, SetDoorMode } from '../../../presence/public-api.ts';
 import { toAvatarContract, toConversationContract, toRoomCallContract } from './contract-mapping.ts';
@@ -39,6 +44,11 @@ export interface SessionDependencies {
   readonly answerKnock: AnswerKnock;
   readonly cancelKnock: CancelKnock;
   readonly requestRoomCallToken: RequestRoomCallToken;
+  readonly startCall: StartCall;
+  readonly inviteToCall: InviteToCall;
+  readonly answerCall: AnswerCall;
+  readonly leaveCall: LeaveCall;
+  readonly requestDirectCallToken: RequestDirectCallToken;
 }
 
 /** Disconnect if the socket's send buffer grows beyond this (slow or stuck client). */
@@ -152,6 +162,9 @@ export class RealtimeSession {
             conversations: this.deps.conversations.onFloor(command.p.floorId).map(toConversationContract),
             doorModes: this.deps.presence.doorModesOn(command.p.floorId),
             roomCalls: this.deps.conversations.roomCallsOn(command.p.floorId).map(toRoomCallContract),
+            onCall: snapshot.value
+              .map((avatar) => avatar.occupant.personId)
+              .filter((personId) => this.deps.conversations.isInCall(personId)),
           },
         });
         return undefined;
@@ -209,6 +222,51 @@ export class RealtimeSession {
         });
         if (!access.ok) return access.error;
         this.send({ t: 'RoomCallAccessGranted', p: { roomId: command.p.roomId, ...access.value } });
+        return undefined;
+      }
+      case 'StartCall': {
+        if (!this.occupant) return 'not-authenticated';
+        const result = await this.deps.startCall.execute({
+          personId: this.occupant.personId,
+          callee: command.p.personId,
+        });
+        return result.ok ? undefined : result.error;
+      }
+      case 'InviteToCall': {
+        if (!this.occupant) return 'not-authenticated';
+        const result = await this.deps.inviteToCall.execute({
+          personId: this.occupant.personId,
+          callId: command.p.callId,
+          invitee: command.p.personId,
+        });
+        return result.ok ? undefined : result.error;
+      }
+      case 'AnswerCall': {
+        if (!this.occupant) return 'not-authenticated';
+        const result = await this.deps.answerCall.execute({ personId: this.occupant.personId, ...command.p });
+        return result.ok ? undefined : result.error;
+      }
+      case 'LeaveCall': {
+        if (!this.occupant) return 'not-authenticated';
+        const result = await this.deps.leaveCall.execute({ personId: this.occupant.personId, ...command.p });
+        return result.ok ? undefined : result.error;
+      }
+      case 'RequestDirectCallToken': {
+        if (!this.occupant) return 'not-authenticated';
+        const access = await this.deps.requestDirectCallToken.execute({
+          personId: this.occupant.personId,
+          callId: command.p.callId,
+        });
+        if (!access.ok) return access.error;
+        this.send({ t: 'DirectCallAccessGranted', p: { callId: command.p.callId, ...access.value } });
+        return undefined;
+      }
+      case 'ListOnlinePeople': {
+        if (!this.occupant) return 'not-authenticated';
+        const people = this.deps.presence
+          .onlinePeople()
+          .map(({ personId, displayName, avatarColor, floorId }) => ({ personId, displayName, avatarColor, floorId }));
+        this.send({ t: 'OnlinePeople', p: { people } });
         return undefined;
       }
     }

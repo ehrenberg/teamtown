@@ -1,4 +1,5 @@
 import type { Clock } from '@teamtown/kernel';
+import type { Occupant } from '../domain/floor-instance.ts';
 import type { DoorMode } from '../domain/room-doors.ts';
 import type { FloorRegistry } from './floor-registry.ts';
 
@@ -37,6 +38,16 @@ export class PresenceQueries {
 
   occupantsOf(floorId: string, roomId: string): string[] {
     return this.registry.running(floorId)?.occupantsOf(roomId, this.clock.now().getTime()) ?? [];
+  }
+
+  /** Everyone who is online, on any floor (for calling someone far away). */
+  onlinePeople(): (Occupant & { readonly floorId: string })[] {
+    const now = this.clock.now().getTime();
+    return this.registry
+      .runningFloorIds()
+      .flatMap((floorId) =>
+        (this.registry.running(floorId)?.snapshot(now) ?? []).map(({ occupant }) => ({ ...occupant, floorId })),
+      );
   }
 
   doorModesOn(floorId: string): LiveDoorMode[] {

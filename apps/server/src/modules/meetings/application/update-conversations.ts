@@ -1,4 +1,5 @@
 import type { Clock } from '@teamtown/kernel';
+import type { DirectCalls } from '../domain/direct-calls.ts';
 import type { ConversationEvent } from '../domain/floor-conversations.ts';
 import type { RoomCallChanged } from '../domain/room-calls.ts';
 import type { ConversationMedia } from './conversation-media.ts';
@@ -6,7 +7,10 @@ import type { ConversationRegistry } from './conversation-registry.ts';
 import type { MeetingsEventStream } from './meetings-event-stream.ts';
 import type { LivePresence } from './ports/live-presence.port.ts';
 
-/** Runs on a short tick: proximity conversations and room calls follow the live positions. */
+/**
+ * Runs on a short tick: proximity conversations and room calls follow the live positions. People in a direct call
+ * take part in neither: the call replaces their surroundings.
+ */
 export class UpdateConversations {
   constructor(
     private readonly presence: LivePresence,
@@ -14,6 +18,7 @@ export class UpdateConversations {
     private readonly media: ConversationMedia,
     private readonly events: MeetingsEventStream,
     private readonly clock: Clock,
+    private readonly calls: DirectCalls,
   ) {}
 
   async execute(): Promise<void> {
@@ -27,12 +32,15 @@ export class UpdateConversations {
       if (!floor) continue;
       const listeners = this.presence
         .positionsOn(floorId)
-        .filter(({ position }) => !floor.acoustics.isIsolated(position));
+        .filter(({ personId, position }) => !floor.acoustics.isIsolated(position) && !this.calls.isInCall(personId));
       floor.conversations.update(listeners, now);
       changes.push(...floor.conversations.pullEvents());
 
       const occupants = new Map(
-        floor.acoustics.isolatedRoomIds.map((roomId) => [roomId, this.presence.occupantsOf(floorId, roomId)]),
+        floor.acoustics.isolatedRoomIds.map((roomId) => [
+          roomId,
+          this.presence.occupantsOf(floorId, roomId).filter((personId) => !this.calls.isInCall(personId)),
+        ]),
       );
       roomCallChanges.push(...floor.roomCalls.update(occupants));
     }

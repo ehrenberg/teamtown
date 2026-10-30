@@ -12,6 +12,20 @@ import {
   UnlockConversationCommand,
 } from './conversations.ts';
 import {
+  AnswerCallCommand,
+  CallInvitationAnsweredEvent,
+  DirectCallAccessGrantedEvent,
+  DirectCallChangedEvent,
+  DirectCallEndedEvent,
+  InviteToCallCommand,
+  LeaveCallCommand,
+  ListOnlinePeopleCommand,
+  OnCallChangedEvent,
+  OnlinePeopleEvent,
+  RequestDirectCallTokenCommand,
+  StartCallCommand,
+} from './calls.ts';
+import {
   AnswerKnockCommand,
   CancelKnockCommand,
   DoorModeChangedEvent,
@@ -82,6 +96,12 @@ export const ClientCommand = z.discriminatedUnion('t', [
   CancelKnockCommand,
   AnswerKnockCommand,
   RequestRoomCallTokenCommand,
+  StartCallCommand,
+  InviteToCallCommand,
+  AnswerCallCommand,
+  LeaveCallCommand,
+  RequestDirectCallTokenCommand,
+  ListOnlinePeopleCommand,
 ]);
 export type ClientCommand = z.infer<typeof ClientCommand>;
 
@@ -126,6 +146,8 @@ export const FloorSnapshotEvent = z.object({
     doorModes: z.array(LiveDoorModeSchema),
     /** Room calls with at least one participant. */
     roomCalls: z.array(RoomCallSchema),
+    /** People on this floor who are in a direct call (not with whom). */
+    onCall: z.array(PersonId),
   }),
 });
 
@@ -169,6 +191,16 @@ export const NackCode = z.enum([
   'knock-pending',
   /** The room is open or empty: just walk in. */
   'knock-not-needed',
+  'person-not-online',
+  /** The person is already in a call or being rung. */
+  'busy',
+  /** One has to hang up (or answer) before starting another call. */
+  'already-in-call',
+  'cannot-call-yourself',
+  'call-not-found',
+  'not-in-call',
+  /** A call has at most 8 people, counting those being rung. */
+  'call-full',
   /** Audio is not configured on this server (no LiveKit). */
   'media-unavailable',
   'invalid-message',
@@ -197,6 +229,12 @@ export const ServerEvent = z.discriminatedUnion('t', [
   KnockRequestedEvent,
   KnockAnsweredEvent,
   RoomCallAccessGrantedEvent,
+  DirectCallChangedEvent,
+  DirectCallEndedEvent,
+  CallInvitationAnsweredEvent,
+  DirectCallAccessGrantedEvent,
+  OnCallChangedEvent,
+  OnlinePeopleEvent,
   AckEvent,
   NackEvent,
 ]);

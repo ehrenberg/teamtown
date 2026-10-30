@@ -161,6 +161,16 @@ describe('LiveKit conversation and room-call rooms (integration)', () => {
     expect(await gateway.listParticipants('room:ground-floor:alster')).toEqual(['anna']);
   }, 60_000);
 
+  it('throws out a modified client that sits in a direct call it is not part of', async () => {
+    await join('direct:call-1', 'anna');
+    const mallory = await join('direct:call-1', 'mallory');
+
+    await media.reconcile(new Map([['direct:call-1', ['anna', 'ben']]]));
+
+    expect(await within(mallory.disconnected, 5_000)).toBe(true);
+    expect(await gateway.listParticipants('direct:call-1')).toEqual(['anna']);
+  }, 60_000);
+
   it('closes rooms of conversations that ended', async () => {
     const dora = await join('conversation:c3', 'dora');
 

@@ -1,12 +1,14 @@
 import type {
   AvatarState as AvatarStateContract,
   ConversationContract,
+  DirectCallContract,
   RoomCallContract,
   ServerEvent,
 } from '@teamtown/contracts';
 import type {
   Conversation,
   ConversationEvent,
+  DirectCall,
   KnockAnswered,
   KnockRequested,
   RoomCall,
@@ -45,6 +47,12 @@ export const toConversationContract = (conversation: Conversation): Conversation
   conversationId: conversation.conversationId,
   participants: [...conversation.participants],
   locked: conversation.locked,
+});
+
+export const toCallContract = (call: DirectCall): DirectCallContract => ({
+  callId: call.callId,
+  participants: [...call.participants],
+  invitations: call.invitations.map((invitation) => ({ ...invitation })),
 });
 
 export const toRoomCallContract = (roomCall: RoomCall): RoomCallContract => ({
