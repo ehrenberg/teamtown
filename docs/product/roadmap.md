@@ -39,5 +39,8 @@ instrumentation of the server (the observability stack itself is running).
 from M0: Postman collection (`postman/`) and OpenTelemetry instrumentation (ADR-0030). Not yet on the showcase
 instance; deployment is part of M6.
 
+**M2 notes:** M2a proximity conversations done on 2026-10-30
+([feature spec](../features/meetings-proximity-conversations.md)). Next: M2b room calls, door modes and knock.
+
 M2 and M3 can be developed in parallel by different contributors because they are separate bounded
 contexts ([domain model](../architecture/domain-model.md)).

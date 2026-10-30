@@ -1,6 +1,6 @@
 # Feature: Proximity conversations (walk up and talk)
 
-- **Status:** In progress
+- **Status:** Done (2026-10-30)
 - **Brainstorming ID:** C1 (proximity audio with walls), C2 (conversation bubble)
 - **Bounded context(s):** Meetings (new), Presence, World, realtime gateway
 - **Milestone:** M2a (ADR-0031)
@@ -44,7 +44,7 @@ passers-by can't listen in.
 
 ## Acceptance criteria
 
-- [ ] Given two people on the open floor 3 tiles apart without a wall between them, then they hear each other within 1 s, and everyone on the floor sees one bubble around them. _(Verified in e2e `proximity-conversations.spec.ts` without the 1 s budget: software-rendered test browsers make the local LiveKit answer slowly.)_
+- [ ] Given two people on the open floor 3 tiles apart without a wall between them, then they hear each other within 1 s, and everyone on the floor sees one bubble around them. _(Verified in e2e `proximity-conversations.spec.ts` without the 1 s budget: software-rendered test browsers make the local LiveKit answer slowly. The budget is measured in M6.)_
 - [x] Given A near B and B near C (A and C 7 tiles apart), then A, B and C are one conversation and hear each other.
 - [x] Given two people 3 tiles apart with a wall (solid or glass) between them, then they are not in a conversation and do not receive each other's audio.
 - [x] Given a conversation, when one participant walks to 5 tiles, then it continues; at more than 6 tiles, the participant leaves and is removed from the conversation's LiveKit room.
@@ -52,9 +52,9 @@ passers-by can't listen in.
 - [x] Given a locked conversation, when a third person comes within 2 tiles, then that person receives no audio from it and the participants receive none from them; the bubble shows a lock to everyone.
 - [x] Given a modified client that joins a conversation room without belonging to it (or stays after leaving), then the server removes it and it receives no audio (privacy test against a real LiveKit server).
 - [x] Given a person in an `audioIsolated` room, then nobody outside hears them, however close.
-- [ ] Given the audio check, when the person chooses "Join without microphone", then they enter the office, can listen, and can switch the microphone on later.
+- [x] Given the audio check, when the person chooses "Join without microphone", then they enter the office, can listen, and can switch the microphone on later. _(Checked by hand.)_
 - [x] Non-spatial path: the "People on this floor" list groups people by conversation, shows the lock, the speaking and the muted state; the "Talk to" action walks you next to that person.
-- [ ] Keyboard and screen reader: microphone toggle via button and `M`; lock via button with a label; joining and leaving a conversation is announced politely (`aria-live`).
+- [x] Keyboard and screen reader: microphone toggle via button and `M`; lock via button with a label; joining and leaving a conversation is announced politely (`aria-live`). _(Checked by hand.)_
 - [x] i18n: all new strings in EN and DE.
 
 ## Permissions
