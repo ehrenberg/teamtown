@@ -16,6 +16,29 @@ describe('realtime codec', () => {
     expect(decodeServerEvent(encodeMessage(pong))).toEqual({ ok: true, value: pong });
   });
 
+  it('round-trips the conversation messages', () => {
+    const lock: ClientCommand = { t: 'LockConversation', id: 'c-2', p: { conversationId: 'conv-1' } };
+    const changed: ServerEvent = {
+      t: 'ConversationChanged',
+      p: {
+        floorId: 'ground-floor',
+        conversation: {
+          conversationId: 'conv-1',
+          participants: ['3f0e8a4c-9d1b-4c5e-8f2a-1b2c3d4e5f60', '7a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d'],
+          locked: true,
+        },
+      },
+    };
+    const access: ServerEvent = {
+      t: 'ConversationAccessGranted',
+      p: { conversationId: 'conv-1', url: 'ws://localhost:7880', token: 'jwt' },
+    };
+
+    expect(decodeClientCommand(encodeMessage(lock))).toEqual({ ok: true, value: lock });
+    expect(decodeServerEvent(encodeMessage(changed))).toEqual({ ok: true, value: changed });
+    expect(decodeServerEvent(encodeMessage(access))).toEqual({ ok: true, value: access });
+  });
+
   it('rejects bytes that are not MessagePack', () => {
     expect(decodeClientCommand(new Uint8Array([0xc1]))).toEqual({ ok: false, error: 'malformed' });
   });

@@ -109,6 +109,15 @@ export class FloorInstance {
     return [...this.#avatars.values()].map((avatar) => this.#settled(avatar, now));
   }
 
+  positions(
+    now: number,
+  ): { readonly personId: string; readonly position: { readonly x: number; readonly y: number } }[] {
+    return [...this.#avatars.values()].map((avatar) => {
+      const position = avatar.movement ? positionAt(avatar.movement, now) : avatar.tile;
+      return { personId: avatar.occupant.personId, position: { x: position.x, y: position.y } };
+    });
+  }
+
   /** Returns and clears the recorded events. */
   pullEvents(): readonly PresenceEvent[] {
     const events = this.#events;

@@ -7,6 +7,7 @@ const westRoom: RoomProps = {
   kind: 'open-space',
   areas: [{ x: 0, y: 0, width: 3, height: 3 }],
   doorMode: 'open',
+  audioIsolated: false,
 };
 
 const smallPlan: FloorPlanProps = {
@@ -21,7 +22,14 @@ const smallPlan: FloorPlanProps = {
   doors: [{ x: 3, y: 1, side: 'west' }],
   rooms: [
     westRoom,
-    { id: 'east', name: 'East', kind: 'meeting', areas: [{ x: 3, y: 0, width: 3, height: 3 }], doorMode: 'knock' },
+    {
+      id: 'east',
+      name: 'East',
+      kind: 'meeting',
+      areas: [{ x: 3, y: 0, width: 3, height: 3 }],
+      doorMode: 'knock',
+      audioIsolated: true,
+    },
   ],
   furniture: [{ id: 'plant-1', catalogItemId: 'plant', x: 5, y: 2, rotation: 0 }],
   spawnPoints: [{ x: 0, y: 0 }],

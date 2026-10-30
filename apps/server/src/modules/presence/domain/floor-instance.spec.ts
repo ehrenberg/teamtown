@@ -82,4 +82,13 @@ describe('FloorInstance', () => {
     expect(floor.pullEvents()).toEqual([{ type: 'AvatarLeft', floorId: 'ground-floor', personId: 'lena' }]);
     expect(floor.isEmpty).toBe(true);
   });
+
+  it('reports live positions, also halfway through a step', () => {
+    const floor = aFloor();
+    floor.join(lena, NOW);
+    floor.moveTo('lena', tile(0, 2), NOW);
+
+    // Walking speed is 3 tiles per second: after 500 ms Lena is 1.5 tiles down.
+    expect(floor.positions(NOW + 500)).toEqual([{ personId: 'lena', position: { x: 0, y: 1.5 } }]);
+  });
 });

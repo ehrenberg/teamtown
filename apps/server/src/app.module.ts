@@ -1,5 +1,6 @@
 import { Module, type DynamicModule } from '@nestjs/common';
 import { IdentityModule, type IdentityModuleOptions } from './modules/identity/public-api.ts';
+import { MeetingsModule } from './modules/meetings/public-api.ts';
 import { PeopleModule } from './modules/people/public-api.ts';
 import { PresenceModule } from './modules/presence/public-api.ts';
 import { RealtimeModule } from './modules/realtime/realtime.module.ts';
@@ -33,6 +34,7 @@ export class AppModule {
         PeopleModule,
         WorldModule,
         PresenceModule,
+        MeetingsModule,
         RealtimeModule,
       ],
     };

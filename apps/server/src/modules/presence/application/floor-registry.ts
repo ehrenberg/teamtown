@@ -20,6 +20,14 @@ export class FloorRegistry {
     return instance;
   }
 
+  running(floorId: string): FloorInstance | null {
+    return this.#floors.get(floorId) ?? null;
+  }
+
+  runningFloorIds(): string[] {
+    return [...this.#floors.keys()];
+  }
+
   floorOf(personId: string): FloorInstance | null {
     const floorId = this.#floorOfPerson.get(personId);
     return floorId ? (this.#floors.get(floorId) ?? null) : null;

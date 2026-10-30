@@ -200,7 +200,8 @@
           "height": 21
         }
       ],
-      "doorMode": "open"
+      "doorMode": "open",
+      "audioIsolated": false
     },
     {
       "id": "elbe",
@@ -214,7 +215,8 @@
           "height": 12
         }
       ],
-      "doorMode": "knock"
+      "doorMode": "knock",
+      "audioIsolated": true
     },
     {
       "id": "alster",
@@ -228,7 +230,8 @@
           "height": 12
         }
       ],
-      "doorMode": "open"
+      "doorMode": "open",
+      "audioIsolated": true
     },
     {
       "id": "kitchen",
@@ -242,7 +245,8 @@
           "height": 22
         }
       ],
-      "doorMode": "open"
+      "doorMode": "open",
+      "audioIsolated": false
     },
     {
       "id": "lounge",
@@ -256,7 +260,8 @@
           "height": 13
         }
       ],
-      "doorMode": "open"
+      "doorMode": "open",
+      "audioIsolated": false
     }
   ],
   "furniture": [

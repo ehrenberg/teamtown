@@ -4,5 +4,6 @@ export * from './furniture-catalogue.ts';
 export * from './iso.ts';
 export * from './movement.ts';
 export * from './pathfinding.ts';
+export * from './proximity.ts';
 export * from './reachability.ts';
 export * from './tile.ts';

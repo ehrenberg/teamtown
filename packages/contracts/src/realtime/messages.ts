@@ -1,6 +1,16 @@
 import { z } from 'zod';
 import { AvatarColor, PersonId } from '../people/me.ts';
 import { TileCoordSchema } from '../world/floor-plan.ts';
+import {
+  ConversationAccessGrantedEvent,
+  ConversationChangedEvent,
+  ConversationDissolvedEvent,
+  ConversationFormedEvent,
+  ConversationSchema,
+  LockConversationCommand,
+  RequestConversationTokenCommand,
+  UnlockConversationCommand,
+} from './conversations.ts';
 
 /**
  * Realtime protocol (ADR-0007, docs/architecture/world-and-realtime.md §5).
@@ -50,6 +60,9 @@ export const ClientCommand = z.discriminatedUnion('t', [
   PingCommand,
   JoinFloorCommand,
   MoveToCommand,
+  LockConversationCommand,
+  UnlockConversationCommand,
+  RequestConversationTokenCommand,
 ]);
 export type ClientCommand = z.infer<typeof ClientCommand>;
 
@@ -86,7 +99,11 @@ export const PongEvent = z.object({
 /** Full state of a floor, sent after joining it. */
 export const FloorSnapshotEvent = z.object({
   t: z.literal('FloorSnapshot'),
-  p: z.object({ floorId: FloorId, avatars: z.array(AvatarStateSchema) }),
+  p: z.object({
+    floorId: FloorId,
+    avatars: z.array(AvatarStateSchema),
+    conversations: z.array(ConversationSchema),
+  }),
 });
 
 export const AvatarJoinedEvent = z.object({
@@ -116,6 +133,10 @@ export const NackCode = z.enum([
   'unknown-floor',
   'not-on-floor',
   'unreachable',
+  'conversation-not-found',
+  'not-in-conversation',
+  /** Audio is not configured on this server (no LiveKit). */
+  'media-unavailable',
   'invalid-message',
   'internal-error',
 ]);
@@ -133,6 +154,10 @@ export const ServerEvent = z.discriminatedUnion('t', [
   AvatarJoinedEvent,
   AvatarLeftEvent,
   AvatarPathStartedEvent,
+  ConversationFormedEvent,
+  ConversationChangedEvent,
+  ConversationDissolvedEvent,
+  ConversationAccessGrantedEvent,
   AckEvent,
   NackEvent,
 ]);

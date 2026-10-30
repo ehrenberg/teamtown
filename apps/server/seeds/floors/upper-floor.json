@@ -135,7 +135,8 @@
           "height": 30
         }
       ],
-      "doorMode": "open"
+      "doorMode": "open",
+      "audioIsolated": false
     },
     {
       "id": "terrace",
@@ -149,7 +150,8 @@
           "height": 30
         }
       ],
-      "doorMode": "open"
+      "doorMode": "open",
+      "audioIsolated": false
     }
   ],
   "furniture": [

@@ -24,6 +24,7 @@ export interface RoomProps {
   readonly kind: RoomKind;
   readonly areas: readonly Rect[];
   readonly doorMode: DoorMode;
+  readonly audioIsolated: boolean;
 }
 
 export interface FloorPlanProps extends FloorLayout {

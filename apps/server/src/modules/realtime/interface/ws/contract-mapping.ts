@@ -1,4 +1,5 @@
-import type { AvatarState as AvatarStateContract, ServerEvent } from '@teamtown/contracts';
+import type { AvatarState as AvatarStateContract, ConversationContract, ServerEvent } from '@teamtown/contracts';
+import type { Conversation, ConversationEvent } from '../../../meetings/public-api.ts';
 import type { AvatarState, PresenceEvent } from '../../../presence/public-api.ts';
 
 export const toAvatarContract = (avatar: AvatarState): AvatarStateContract => ({
@@ -24,5 +25,28 @@ export function toServerEvent(event: PresenceEvent): ServerEvent {
           movement: { ...event.movement, path: [...event.movement.path] },
         },
       };
+  }
+}
+
+export const toConversationContract = (conversation: Conversation): ConversationContract => ({
+  conversationId: conversation.conversationId,
+  participants: [...conversation.participants],
+  locked: conversation.locked,
+});
+
+export function toConversationServerEvent(event: ConversationEvent): ServerEvent {
+  switch (event.type) {
+    case 'ConversationFormed':
+      return {
+        t: 'ConversationFormed',
+        p: { floorId: event.floorId, conversation: toConversationContract(event.conversation) },
+      };
+    case 'ConversationChanged':
+      return {
+        t: 'ConversationChanged',
+        p: { floorId: event.floorId, conversation: toConversationContract(event.conversation) },
+      };
+    case 'ConversationDissolved':
+      return { t: 'ConversationDissolved', p: { floorId: event.floorId, conversationId: event.conversationId } };
   }
 }

@@ -39,6 +39,8 @@ export const FloorPlan = z.object({
       kind: RoomKind,
       areas: z.array(Rect).min(1),
       doorMode: DoorMode,
+      /** Proximity audio doesn't reach into or out of the room; it has its own room call (ADR-0031). */
+      audioIsolated: z.boolean(),
     }),
   ),
   furniture: z.array(

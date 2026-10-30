@@ -10,8 +10,13 @@ import type { Clock } from '@teamtown/kernel';
 import type { WebSocket } from 'ws';
 import type { Authenticate } from '../../../identity/public-api.ts';
 import type { ResolvePerson } from '../../../people/public-api.ts';
+import type {
+  ConversationQueries,
+  RequestConversationToken,
+  SetConversationLock,
+} from '../../../meetings/public-api.ts';
 import type { JoinFloor, MoveTo, Occupant } from '../../../presence/public-api.ts';
-import { toAvatarContract } from './contract-mapping.ts';
+import { toAvatarContract, toConversationContract } from './contract-mapping.ts';
 import type { CommandOutcome, RealtimeTelemetry } from './realtime-telemetry.ts';
 
 export interface SessionDependencies {
@@ -21,6 +26,9 @@ export interface SessionDependencies {
   readonly moveTo: MoveTo;
   readonly clock: Clock;
   readonly telemetry: RealtimeTelemetry;
+  readonly conversations: ConversationQueries;
+  readonly setConversationLock: SetConversationLock;
+  readonly requestConversationToken: RequestConversationToken;
 }
 
 /** Disconnect if the socket's send buffer grows beyond this (slow or stuck client). */
@@ -128,7 +136,11 @@ export class RealtimeSession {
         this.floorId = command.p.floorId;
         this.send({
           t: 'FloorSnapshot',
-          p: { floorId: command.p.floorId, avatars: snapshot.value.map(toAvatarContract) },
+          p: {
+            floorId: command.p.floorId,
+            avatars: snapshot.value.map(toAvatarContract),
+            conversations: this.deps.conversations.onFloor(command.p.floorId).map(toConversationContract),
+          },
         });
         return undefined;
       }
@@ -136,6 +148,26 @@ export class RealtimeSession {
         if (!this.occupant) return 'not-authenticated';
         const moved = this.deps.moveTo.execute({ personId: this.occupant.personId, target: command.p.target });
         return moved.ok ? undefined : moved.error;
+      }
+      case 'LockConversation':
+      case 'UnlockConversation': {
+        if (!this.occupant) return 'not-authenticated';
+        const result = this.deps.setConversationLock.execute({
+          personId: this.occupant.personId,
+          conversationId: command.p.conversationId,
+          locked: command.t === 'LockConversation',
+        });
+        return result.ok ? undefined : result.error;
+      }
+      case 'RequestConversationToken': {
+        if (!this.occupant) return 'not-authenticated';
+        const access = await this.deps.requestConversationToken.execute({
+          personId: this.occupant.personId,
+          conversationId: command.p.conversationId,
+        });
+        if (!access.ok) return access.error;
+        this.send({ t: 'ConversationAccessGranted', p: { conversationId: command.p.conversationId, ...access.value } });
+        return undefined;
       }
     }
   }

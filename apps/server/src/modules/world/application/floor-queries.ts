@@ -1,4 +1,4 @@
-import type { FloorGrid, TileCoord } from '@teamtown/world-core';
+import type { FloorGrid, Rect, TileCoord } from '@teamtown/world-core';
 import type { FloorPlanProps } from '../domain/floor-plan.ts';
 import type { FloorPlanRepository } from './ports/floor-plan-repository.port.ts';
 
@@ -8,11 +8,12 @@ export interface FloorSummaryView {
   readonly level: number;
 }
 
-/** What the Presence context needs to run a floor: walkability and where people appear. */
+/** What other contexts need to run a floor: walkability, where people appear, where sound is isolated. */
 export interface PublishedFloorView {
   readonly floorId: string;
   readonly grid: FloorGrid;
   readonly spawnPoints: readonly TileCoord[];
+  readonly audioIsolatedAreas: readonly Rect[];
 }
 
 /** Read side of the World context. */
@@ -32,6 +33,12 @@ export class FloorQueries {
 
   async getPublishedFloor(floorId: string): Promise<PublishedFloorView | null> {
     const plan = await this.floorPlans.findById(floorId);
-    return plan ? { floorId: plan.floorId, grid: plan.grid, spawnPoints: plan.props.spawnPoints } : null;
+    if (!plan) return null;
+    return {
+      floorId: plan.floorId,
+      grid: plan.grid,
+      spawnPoints: plan.props.spawnPoints,
+      audioIsolatedAreas: plan.props.rooms.filter((room) => room.audioIsolated).flatMap((room) => room.areas),
+    };
   }
 }

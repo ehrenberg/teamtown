@@ -7,8 +7,15 @@ import { WebSocketServer, type RawData, type WebSocket } from 'ws';
 import { CLOCK } from '../../../../platform/config/config.module.ts';
 import { Authenticate } from '../../../identity/public-api.ts';
 import { ResolvePerson } from '../../../people/public-api.ts';
+import {
+  ConversationQueries,
+  MeetingsEventStream,
+  RequestConversationToken,
+  SetConversationLock,
+  type MeetingsEvent,
+} from '../../../meetings/public-api.ts';
 import { JoinFloor, LeavePresence, MoveTo, PresenceEventStream } from '../../../presence/public-api.ts';
-import { toServerEvent } from './contract-mapping.ts';
+import { toConversationServerEvent, toServerEvent } from './contract-mapping.ts';
 import { RealtimeSession } from './realtime-session.ts';
 import { RealtimeTelemetry } from './realtime-telemetry.ts';
 
@@ -36,7 +43,7 @@ export class RealtimeGateway implements OnApplicationBootstrap, OnApplicationShu
   readonly #telemetry = new RealtimeTelemetry();
   #server: WebSocketServer | undefined;
   #maintenance: NodeJS.Timeout | undefined;
-  #unsubscribe: (() => void) | undefined;
+  #unsubscribe: (() => void)[] = [];
 
   constructor(
     private readonly httpAdapterHost: HttpAdapterHost,
@@ -47,6 +54,10 @@ export class RealtimeGateway implements OnApplicationBootstrap, OnApplicationShu
     @Inject(LeavePresence) private readonly leavePresence: LeavePresence,
     @Inject(PresenceEventStream) private readonly presenceEvents: PresenceEventStream,
     @Inject(CLOCK) private readonly clock: Clock,
+    @Inject(MeetingsEventStream) private readonly meetingsEvents: MeetingsEventStream,
+    @Inject(ConversationQueries) private readonly conversations: ConversationQueries,
+    @Inject(SetConversationLock) private readonly setConversationLock: SetConversationLock,
+    @Inject(RequestConversationToken) private readonly requestConversationToken: RequestConversationToken,
   ) {}
 
   onApplicationBootstrap(): void {
@@ -66,12 +77,14 @@ export class RealtimeGateway implements OnApplicationBootstrap, OnApplicationShu
     this.#server.on('connection', (socket) => {
       this.#accept(socket);
     });
-    this.#unsubscribe = this.presenceEvents.subscribe((event) => {
-      const bytes = encodeMessage(toServerEvent(event));
-      for (const session of this.#sessions) {
-        if (session.floorId === event.floorId) session.sendEncoded(bytes);
-      }
-    });
+    this.#unsubscribe = [
+      this.presenceEvents.subscribe((event) => {
+        this.#sendToFloor(event.floorId, encodeMessage(toServerEvent(event)));
+      }),
+      this.meetingsEvents.subscribe((event) => {
+        this.#deliverMeetingsEvent(event);
+      }),
+    ];
     this.#maintenance = setInterval(() => {
       this.#maintain();
     }, HEARTBEAT_INTERVAL_MS);
@@ -80,7 +93,7 @@ export class RealtimeGateway implements OnApplicationBootstrap, OnApplicationShu
 
   onApplicationShutdown(): void {
     clearInterval(this.#maintenance);
-    this.#unsubscribe?.();
+    for (const unsubscribe of this.#unsubscribe) unsubscribe();
     for (const session of this.#sessions) session.socket.terminate();
     this.#server?.close();
   }
@@ -93,6 +106,9 @@ export class RealtimeGateway implements OnApplicationBootstrap, OnApplicationShu
       moveTo: this.moveTo,
       clock: this.clock,
       telemetry: this.#telemetry,
+      conversations: this.conversations,
+      setConversationLock: this.setConversationLock,
+      requestConversationToken: this.requestConversationToken,
     });
     this.#sessions.add(session);
     this.#telemetry.connectionOpened();
@@ -116,6 +132,27 @@ export class RealtimeGateway implements OnApplicationBootstrap, OnApplicationShu
     socket.on('error', () => {
       socket.terminate();
     });
+  }
+
+  #sendToFloor(floorId: string, bytes: Uint8Array): void {
+    for (const session of this.#sessions) {
+      if (session.floorId === floorId) session.sendEncoded(bytes);
+    }
+  }
+
+  /** Conversations are visible to the whole floor; a media token goes only to the person it is for. */
+  #deliverMeetingsEvent(event: MeetingsEvent): void {
+    if (event.type !== 'ConversationAccessGranted') {
+      this.#sendToFloor(event.floorId, encodeMessage(toConversationServerEvent(event)));
+      return;
+    }
+    const bytes = encodeMessage({
+      t: 'ConversationAccessGranted',
+      p: { conversationId: event.conversationId, url: event.url, token: event.token },
+    });
+    for (const session of this.#sessions) {
+      if (session.occupant?.personId === event.personId) session.sendEncoded(bytes);
+    }
   }
 
   /** Heartbeat and token expiry: drop dead connections and connections without a fresh token. */

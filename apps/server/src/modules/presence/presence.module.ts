@@ -8,6 +8,7 @@ import { LeavePresence } from './application/leave-presence.ts';
 import { MoveTo } from './application/move-to.ts';
 import { FLOOR_SOURCE, type FloorSource } from './application/ports/floor-source.port.ts';
 import { PresenceEventStream } from './application/presence-event-stream.ts';
+import { PresenceQueries } from './application/presence-queries.ts';
 import { WorldFloorSource } from './infrastructure/world-floor-source.ts';
 
 /** Live presence. Deliberately has no persistence adapter (ADR-0012, enforced by `pnpm arch`). */
@@ -38,7 +39,12 @@ import { WorldFloorSource } from './infrastructure/world-floor-source.ts';
       useFactory: (registry: FloorRegistry, events: PresenceEventStream) => new LeavePresence(registry, events),
       inject: [FloorRegistry, PresenceEventStream],
     },
+    {
+      provide: PresenceQueries,
+      useFactory: (registry: FloorRegistry, clock: Clock) => new PresenceQueries(registry, clock),
+      inject: [FloorRegistry, CLOCK],
+    },
   ],
-  exports: [JoinFloor, MoveTo, LeavePresence, PresenceEventStream],
+  exports: [JoinFloor, MoveTo, LeavePresence, PresenceEventStream, PresenceQueries],
 })
 export class PresenceModule {}
