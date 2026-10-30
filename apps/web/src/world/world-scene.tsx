@@ -28,6 +28,7 @@ export function WorldScene({
   label,
   onTileSelected,
   doorModeLabels,
+  loggedLabel,
   videoLabelOf,
   onWallScreenSelected,
 }: {
@@ -36,6 +37,7 @@ export function WorldScene({
   readonly onTileSelected: (tile: TileCoord) => void;
   /** Translated door mode names for the door signs. */
   readonly doorModeLabels: Record<DoorMode, string>;
+  readonly loggedLabel: string;
   /** Accessible label of a video bubble, given the person's name. */
   readonly videoLabelOf: (name: string) => string;
   /** A click on a wall screen showing a share. */
@@ -89,7 +91,7 @@ export function WorldScene({
         <LabelProjector />
         <VideoBubbleProjector />
       </Canvas>
-      <DoorSigns plan={plan} labels={doorModeLabels} />
+      <DoorSigns plan={plan} labels={doorModeLabels} loggedLabel={loggedLabel} />
       <AvatarLabels />
       <VideoBubbles labelOf={videoLabelOf} />
     </div>

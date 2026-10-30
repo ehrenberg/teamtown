@@ -9,6 +9,7 @@ describe('room store', () => {
       'ground',
       [{ roomId: 'elbe', doorMode: 'knock' }],
       [{ roomId: 'elbe', participants: ['ben'] }],
+      [],
     );
   });
 
@@ -40,5 +41,16 @@ describe('room store', () => {
   it('finds the room call a person is in', () => {
     expect(roomCallOf(store().roomCalls, 'ben')).toBe('elbe');
     expect(roomCallOf(store().roomCalls, 'lena')).toBeNull();
+  });
+
+  it('follows logged meetings and asks for consent', () => {
+    store().applyEvent({ t: 'MeetingLogChanged', p: { floorId: 'ground', roomId: 'elbe', active: true } });
+    store().applyEvent({ t: 'MeetingLogConsentRequested', p: { roomId: 'elbe', title: 'Retro' } });
+    expect(store().loggedRooms).toEqual(['elbe']);
+    expect(store().consentRequest).toEqual({ roomId: 'elbe', title: 'Retro' });
+
+    store().applyEvent({ t: 'MeetingLogChanged', p: { floorId: 'ground', roomId: 'elbe', active: false } });
+    expect(store().loggedRooms).toEqual([]);
+    expect(store().consentRequest).toBeNull();
   });
 });

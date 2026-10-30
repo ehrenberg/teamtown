@@ -54,6 +54,7 @@ export function RoomsList({
   const myPersonId = usePresenceStore((state) => state.myPersonId);
   const iAmHere = usePresenceStore((state) => state.myPersonId !== null && state.myPersonId in state.avatars);
   const doorModes = useRoomStore((state) => state.doorModes);
+  const loggedRooms = useRoomStore((state) => state.loggedRooms);
   const waitingFor = useRoomStore((state) => myKnock(state.knocks, myPersonId));
   const occupancy = useOccupancy(roomMap);
   const sorted = [...rooms].sort((a, b) => a.name.localeCompare(b.name));
@@ -85,6 +86,9 @@ export function RoomsList({
                   </span>
                 )}
               </div>
+              {loggedRooms.includes(room.roomId) && (
+                <p className="text-xs font-semibold text-terracotta-900">{t('log.logged')}</p>
+              )}
               <p className="truncate text-xs text-text-secondary">
                 {names.length > 0 ? names.join(', ') : t('room.occupants', { count: 0 })}
               </p>

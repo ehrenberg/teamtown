@@ -145,6 +145,18 @@ export class RealtimeClient {
     return this.#command({ t: 'StopScreenShare', p: {} });
   }
 
+  startMeetingLog(title: string): Promise<CommandResult> {
+    return this.#command({ t: 'StartMeetingLog', p: { title } });
+  }
+
+  endMeetingLog(): Promise<CommandResult> {
+    return this.#command({ t: 'EndMeetingLog', p: {} });
+  }
+
+  answerMeetingLog(roomId: string, join: boolean): Promise<CommandResult> {
+    return this.#command({ t: 'AnswerMeetingLog', p: { roomId, join } });
+  }
+
   /** The answer arrives as `OnlinePeople` in the call store. */
   listOnlinePeople(): Promise<CommandResult> {
     return this.#command({ t: 'ListOnlinePeople', p: {} });
@@ -224,7 +236,9 @@ export class RealtimeClient {
       case 'FloorSnapshot':
         store.applySnapshot(event.p.floorId, event.p.avatars);
         useConversationStore.getState().applySnapshot(event.p.floorId, event.p.conversations);
-        useRoomStore.getState().applySnapshot(event.p.floorId, event.p.doorModes, event.p.roomCalls);
+        useRoomStore
+          .getState()
+          .applySnapshot(event.p.floorId, event.p.doorModes, event.p.roomCalls, event.p.loggedRooms);
         useCallStore.getState().applySnapshot(event.p.floorId, event.p.onCall);
         useMediaStore.getState().setCameraOn(event.p.cameraOn);
         return;
@@ -237,6 +251,9 @@ export class RealtimeClient {
       case 'RoomCallChanged':
       case 'KnockRequested':
       case 'KnockAnswered':
+      case 'MeetingLogChanged':
+      case 'MeetingLogDetails':
+      case 'MeetingLogConsentRequested':
         useRoomStore.getState().applyEvent(event);
         return;
       case 'ConversationAccessGranted':

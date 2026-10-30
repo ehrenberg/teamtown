@@ -58,8 +58,6 @@ const NO_ROOMS: FloorRooms = {
   settings: [],
 };
 
-const distance = (a: TileCoord, b: TileCoord): number => Math.hypot(a.x - b.x, a.y - b.y);
-
 const fromKey = (key: string): TileCoord => {
   const [x = 0, y = 0] = key.split(',').map(Number);
   return { x, y };
@@ -157,11 +155,11 @@ export class FloorInstance {
         .filter((other) => other.occupant.personId !== personId)
         .map((other) => tileKey(other.movement?.path.at(-1) ?? other.tile)),
     );
+    // Breadth-first order: the first match is the nearest by walking, not as the crow flies.
     const target = [...reachableTiles(this.grid, from, this.#entryGuard(personId, now))]
       .filter((key) => !taken.has(key))
       .map(fromKey)
-      .filter((coord) => this.rooms.roomMap.roomAt(coord) === roomId)
-      .sort((a, b) => distance(from, a) - distance(from, b))[0];
+      .find((coord) => this.rooms.roomMap.roomAt(coord) === roomId);
     if (!target) return err('unreachable');
 
     const moved = this.moveTo(personId, target, now);
@@ -186,11 +184,11 @@ export class FloorInstance {
         .filter((other) => other.occupant.personId !== personId)
         .map((other) => tileKey(other.movement?.path.at(-1) ?? other.tile)),
     );
+    // Breadth-first order: the nearest tile outside by walking, i.e. just past the door.
     const target = [...reachableTiles(this.grid, from, this.#entryGuard(personId, now))]
       .filter((key) => !taken.has(key))
       .map(fromKey)
-      .filter((coord) => this.rooms.roomMap.roomAt(coord) !== roomId)
-      .sort((a, b) => distance(from, a) - distance(from, b))[0];
+      .find((coord) => this.rooms.roomMap.roomAt(coord) !== roomId);
     if (!target) return err('unreachable');
     const moved = this.moveTo(personId, target, now);
     return moved.ok ? moved : err('unreachable');

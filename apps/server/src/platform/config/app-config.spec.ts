@@ -18,6 +18,7 @@ describe('loadAppConfig', () => {
         DATABASE_MIGRATE_ON_START: true,
         OIDC_AUDIENCE: 'teamtown-api',
         LOG_LEVEL: 'info',
+        MEETING_LOG_RETENTION_DAYS: 90,
       },
     });
   });

@@ -158,6 +158,18 @@ describe('FloorInstance rooms', () => {
     expect(floor.walkOut('lena', 'meeting', LATER)).toEqual({ ok: true, value: null });
   });
 
+  it('walks people out through the door, not to a room behind the wall that only looks close', () => {
+    const floor = aFloor();
+    floor.join(lena, NOW);
+    unwrap(floor.moveTo('lena', tile(6, 1), NOW));
+    floor.updateRooms(LATER);
+
+    // The meeting room is right next to the annex, the hall far away by air; but the door leads to the meeting room.
+    floor.walkOut('lena', 'annex', LATER);
+
+    expect(floor.roomOf('lena', LATER + 10_000)).toBe('meeting');
+  });
+
   it('resets the door mode when the room empties', () => {
     const floor = withBenInTheMeetingRoom();
     floor.setDoorMode('ben', 'meeting', 'locked', LATER);

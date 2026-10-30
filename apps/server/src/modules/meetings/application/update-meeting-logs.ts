@@ -21,7 +21,7 @@ export class UpdateMeetingLogs {
   ) {}
 
   async execute(): Promise<void> {
-    for (const { log, pending } of this.active.all()) {
+    for (const { log, pending, declined } of this.active.all()) {
       const { floorId, roomId } = log.props;
       const occupants = this.presence.occupantsOf(floorId, roomId);
       if (occupants.length === 0) {
@@ -33,7 +33,10 @@ export class UpdateMeetingLogs {
         continue;
       }
       for (const personId of [...pending]) if (!occupants.includes(personId)) pending.delete(personId);
-      const asked = occupants.filter((personId) => !log.isParticipant(personId) && !pending.has(personId));
+      for (const personId of [...declined]) if (!occupants.includes(personId)) declined.delete(personId);
+      const asked = occupants.filter(
+        (personId) => !log.isParticipant(personId) && !pending.has(personId) && !declined.has(personId),
+      );
       for (const personId of asked) pending.add(personId);
       if (asked.length > 0) {
         this.events.publish([

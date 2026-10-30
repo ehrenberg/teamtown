@@ -18,6 +18,20 @@ export interface KnockResult {
   readonly outcome: KnockOutcome;
 }
 
+/** The logged meeting one is in (after consenting or as its host). */
+export interface MyMeetingLog {
+  readonly roomId: string;
+  readonly meetingId: string;
+  readonly title: string;
+  readonly hostId: string;
+}
+
+/** A logged meeting asks for consent: from inside the room, or before walking in (`title` unknown outside). */
+export interface ConsentRequest {
+  readonly roomId: string;
+  readonly title: string | null;
+}
+
 interface RoomState {
   readonly floorId: string | null;
   readonly doorModes: Readonly<Record<string, DoorMode>>;
@@ -26,10 +40,16 @@ interface RoomState {
   /** Open knocks this person can see: their own and those on the room they are in. */
   readonly knocks: Readonly<Record<string, Knock>>;
   readonly lastKnockResult: KnockResult | null;
+  /** Rooms on this floor whose meeting is logged right now. */
+  readonly loggedRooms: readonly string[];
+  readonly myMeetingLog: MyMeetingLog | null;
+  readonly consentRequest: ConsentRequest | null;
+  readonly requestConsent: (request: ConsentRequest | null) => void;
   readonly applySnapshot: (
     floorId: string,
     doorModes: readonly { roomId: string; doorMode: DoorMode }[],
     roomCalls: readonly { roomId: string; participants: readonly string[] }[],
+    loggedRooms: readonly string[],
   ) => void;
   readonly applyEvent: (event: ServerEvent) => void;
 }
@@ -40,12 +60,19 @@ export const useRoomStore = create<RoomState>()((set) => ({
   roomCalls: {},
   knocks: {},
   lastKnockResult: null,
-  applySnapshot: (floorId, doorModes, roomCalls) => {
+  loggedRooms: [],
+  myMeetingLog: null,
+  consentRequest: null,
+  requestConsent: (consentRequest) => {
+    set({ consentRequest });
+  },
+  applySnapshot: (floorId, doorModes, roomCalls, loggedRooms) => {
     set({
       floorId,
       doorModes: Object.fromEntries(doorModes.map((room) => [room.roomId, room.doorMode])),
       roomCalls: Object.fromEntries(roomCalls.map((call) => [call.roomId, call.participants])),
       knocks: {},
+      loggedRooms: [...loggedRooms],
     });
   },
   applyEvent: (event) => {
@@ -76,6 +103,20 @@ export const useRoomStore = create<RoomState>()((set) => ({
               : state.lastKnockResult,
           };
         }
+        case 'MeetingLogChanged': {
+          if (event.p.floorId !== state.floorId) return {};
+          const others = state.loggedRooms.filter((roomId) => roomId !== event.p.roomId);
+          const ended = !event.p.active;
+          return {
+            loggedRooms: event.p.active ? [...others, event.p.roomId] : others,
+            myMeetingLog: ended && state.myMeetingLog?.roomId === event.p.roomId ? null : state.myMeetingLog,
+            consentRequest: ended && state.consentRequest?.roomId === event.p.roomId ? null : state.consentRequest,
+          };
+        }
+        case 'MeetingLogDetails':
+          return { myMeetingLog: event.p.details ? { roomId: event.p.roomId, ...event.p.details } : null };
+        case 'MeetingLogConsentRequested':
+          return { consentRequest: { roomId: event.p.roomId, title: event.p.title } };
         default:
           return {};
       }

@@ -13,7 +13,10 @@ const NEIGHBOUR_STEPS: readonly TileCoord[] = [
   { x: -1, y: -1 },
 ];
 
-/** All tiles reachable from `start` (breadth-first), as tile keys. Empty if the start is not walkable. */
+/**
+ * All tiles reachable from `start` as tile keys, in breadth-first order (nearest by steps first). Empty if the
+ * start is not walkable.
+ */
 export function reachableTiles(grid: FloorGrid, start: TileCoord, guard?: StepGuard): ReadonlySet<string> {
   const reached = new Set<string>();
   if (!grid.isWalkable(start)) return reached;

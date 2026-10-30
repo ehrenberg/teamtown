@@ -12,6 +12,8 @@ import { usePresenceStore } from '../../stores/presence-store.ts';
 import { Phone } from 'lucide-react';
 import { useCallStore } from '../../stores/call-store.ts';
 import { CallAnnouncer, CallPanel, CallSomeoneDialog, IncomingCallDialog } from './calls.tsx';
+import { MeetingLogConsentDialog, MeetingLogControls, MyMeetingsButton } from './meeting-log.tsx';
+import { useRoomStore } from '../../stores/room-store.ts';
 import { useMediaStore } from '../../stores/media-store.ts';
 import { CameraToggle, ScreenShareAnnouncer, ScreenShareToggle, VideoGrid } from './video.tsx';
 import { ConnectionBadge } from './connection-badge.tsx';
@@ -92,7 +94,12 @@ export function OfficePage() {
   const walkTo = useCallback(
     (tile: TileCoord) => {
       void realtime.moveTo(tile).then((result) => {
-        setClosedDoorRoomId(!result.ok && result.code === 'door-closed' ? (rooms?.roomMap.roomAt(tile) ?? null) : null);
+        const roomId = rooms?.roomMap.roomAt(tile) ?? null;
+        setClosedDoorRoomId(!result.ok && result.code === 'door-closed' ? roomId : null);
+        // A logged meeting: ask before walking in; "Join" lets the server walk one in (ADR-0027).
+        if (!result.ok && result.code === 'consent-required' && roomId) {
+          useRoomStore.getState().requestConsent({ roomId, title: null });
+        }
       });
     },
     [realtime, rooms],
@@ -179,7 +186,10 @@ export function OfficePage() {
         <ConversationAnnouncer />
         <RoomAnnouncer myRoomId={myRoomId} roomNames={roomNames} />
         <CallAnnouncer />
-        <p className="mt-6 text-xs text-text-secondary">{t('office.walkHint')}</p>
+        <div className="mt-6">
+          <MyMeetingsButton roomNames={roomNames} />
+        </div>
+        <p className="mt-4 text-xs text-text-secondary">{t('office.walkHint')}</p>
       </aside>
 
       <main className="relative overflow-hidden bg-[radial-gradient(ellipse_at_50%_40%,var(--color-surface-raised)_0%,var(--color-cream)_55%,var(--color-neutral-100)_100%)]">
@@ -194,6 +204,7 @@ export function OfficePage() {
               label={t('app.worldLabel')}
               onTileSelected={walkTo}
               doorModeLabels={doorModeLabels}
+              loggedLabel={t('log.logged')}
               videoLabelOf={videoLabelOf}
               onWallScreenSelected={requestFullScreen}
             />
@@ -212,6 +223,7 @@ export function OfficePage() {
           <CameraToggle />
           <ScreenShareToggle />
           <ConversationLockToggle />
+          <MeetingLogControls room={myRoom} />
         </div>
         {closedDoorRoom && (
           <DoorNotice
@@ -224,6 +236,7 @@ export function OfficePage() {
       </main>
       <CallSomeoneDialog open={callDialogOpen} onOpenChange={setCallDialogOpen} />
       <IncomingCallDialog />
+      <MeetingLogConsentDialog roomNames={roomNames} />
     </div>
   );
 }

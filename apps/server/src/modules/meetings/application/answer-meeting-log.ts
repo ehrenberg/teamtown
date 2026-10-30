@@ -26,7 +26,10 @@ export class AnswerMeetingLog {
 
     if (!input.join) {
       // Declining keeps the person out of the room; nothing about them is stored.
-      if (inside) this.admission.walkOut(input.personId, floorId, input.roomId);
+      if (inside) {
+        running.declined.add(input.personId);
+        this.admission.walkOut(input.personId, floorId, input.roomId);
+      }
       return ok(undefined);
     }
     running.log.consent(input.personId, this.clock.now());

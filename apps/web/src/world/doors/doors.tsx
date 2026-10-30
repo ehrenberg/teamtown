@@ -1,6 +1,6 @@
 import { useFrame } from '@react-three/fiber';
 import type { FloorPlan } from '@teamtown/contracts';
-import { DoorOpen, Hand, Lock } from 'lucide-react';
+import { CircleDot, DoorOpen, Hand, Lock } from 'lucide-react';
 import { useMemo } from 'react';
 import { Vector3 } from 'three';
 import { useRoomStore, type DoorMode } from '../../stores/room-store.ts';
@@ -73,10 +73,20 @@ export function DoorLeaves({ plan }: { readonly plan: FloorPlan }) {
  * Door signs as plain DOM above the canvas: the door mode as colour, icon and text. Hidden from assistive
  * technology: the rooms list is the accessible equivalent.
  */
-export function DoorSigns({ plan, labels }: { readonly plan: FloorPlan; readonly labels: Record<DoorMode, string> }) {
+export function DoorSigns({
+  plan,
+  labels,
+  loggedLabel,
+}: {
+  readonly plan: FloorPlan;
+  readonly labels: Record<DoorMode, string>;
+  /** Text for rooms whose meeting is logged (ADR-0026: clearly indicated on the door sign). */
+  readonly loggedLabel: string;
+}) {
   const groups = useMemo(() => adjustableRoomDoors(plan), [plan]);
   const doorModes = useRoomStore((state) => state.doorModes);
   const knocks = useRoomStore((state) => state.knocks);
+  const loggedRooms = useRoomStore((state) => state.loggedRooms);
   const knockedRooms = new Set(Object.values(knocks).map((knock) => knock.roomId));
   const names = useMemo(() => new Map(plan.rooms.map((room) => [room.id, room.name])), [plan]);
 
@@ -105,6 +115,13 @@ export function DoorSigns({ plan, labels }: { readonly plan: FloorPlan; readonly
               <Icon className="size-3" />
             </span>
             {names.get(roomId)} · {labels[mode]}
+            {loggedRooms.includes(roomId) && (
+              <>
+                {' · '}
+                <CircleDot className="size-3" />
+                {loggedLabel}
+              </>
+            )}
           </span>
         );
       })}

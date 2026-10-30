@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { FloorListResponse, FloorPlan, HealthResponse, MeResponse } from '@teamtown/contracts';
+import { FloorListResponse, FloorPlan, HealthResponse, MeResponse, MeetingLogListResponse } from '@teamtown/contracts';
 import { apiGet } from './api-client.ts';
 
 const HEALTH_POLL_INTERVAL_MS = 15_000;
@@ -23,4 +23,12 @@ export const useFloorPlan = (floorId: string | null) =>
     queryFn: () => apiGet(`/floors/${encodeURIComponent(floorId ?? '')}/plan`, FloorPlan),
     enabled: floorId !== null,
     staleTime: Number.POSITIVE_INFINITY,
+  });
+
+/** Logged meetings one took part in (ADR-0026/0027); fetched when the dialog opens. */
+export const useMyMeetingLogs = (enabled: boolean) =>
+  useQuery({
+    queryKey: ['meeting-logs'],
+    queryFn: () => apiGet('/meeting-logs', MeetingLogListResponse),
+    enabled,
   });

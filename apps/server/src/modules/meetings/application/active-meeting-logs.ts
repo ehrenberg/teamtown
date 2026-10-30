@@ -4,6 +4,8 @@ interface ActiveLog {
   readonly log: MeetingLog;
   /** People inside the room who still have to answer the consent dialog. */
   readonly pending: Set<string>;
+  /** People who declined and are walking out; they are not asked again before they have left. */
+  readonly declined: Set<string>;
 }
 
 const key = (floorId: string, roomId: string): string => `${floorId}:${roomId}`;
@@ -17,7 +19,7 @@ export class ActiveMeetingLogs {
   }
 
   add(log: MeetingLog): void {
-    this.#byRoom.set(key(log.props.floorId, log.props.roomId), { log, pending: new Set() });
+    this.#byRoom.set(key(log.props.floorId, log.props.roomId), { log, pending: new Set(), declined: new Set() });
   }
 
   remove(floorId: string, roomId: string): void {

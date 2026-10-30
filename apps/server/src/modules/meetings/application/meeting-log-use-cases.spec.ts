@@ -149,6 +149,23 @@ describe('logged meeting use cases', () => {
     expect(s.admission.walkedOut).toEqual(['carl']);
   });
 
+  it('does not ask again while someone who declined is still walking out', async () => {
+    await s.start.execute({ personId: 'anna', title: 'Sprint review' });
+    await s.update.execute();
+    await s.answer.execute({ personId: 'ben', roomId: 'elbe', join: false });
+    const asked = () => s.published.filter((e) => e.type === 'MeetingLogConsentRequested').length;
+    const before = asked();
+
+    await s.update.execute();
+    expect(asked()).toBe(before);
+
+    s.people.set('ben', null);
+    await s.update.execute();
+    s.people.set('ben', 'elbe');
+    await s.update.execute();
+    expect(asked()).toBe(before + 1);
+  });
+
   it('lets people outside in only after they join', async () => {
     await s.start.execute({ personId: 'anna', title: 'Sprint review' });
 

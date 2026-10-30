@@ -1,6 +1,6 @@
 # Feature: Logged meetings
 
-- **Status:** Ready
+- **Status:** Done (2026-10-30)
 - **Brainstorming ID:** — (MVP scope "Meetings": opt-in logged meetings, `mvp-scope.md`)
 - **Bounded context(s):** Meetings, Presence, realtime gateway, REST
 - **Milestone:** M2d (ADR-0026, ADR-0027, ADR-0031)
@@ -14,7 +14,7 @@ As a participant, I want to know before I join that I will appear in that record
 
 1. **Nothing is stored by default.** A room call stays unlogged unless someone starts a logged meeting
    (ADR-0026).
-2. **Starting.** Until M4, anyone inside a room with a room call can start a logged meeting from the header; they
+2. **Starting.** Until M4, anyone inside a room with a room call can start a logged meeting from the media bar; they
    become its **host** (decided 2026-10-30). The host gives a title (default "Meeting in {room}") and starts it;
    starting counts as the host's consent.
 3. **Visible.** While a meeting is logged, the room's door sign shows "Logged meeting" (icon **and** text), and the
@@ -36,21 +36,23 @@ As a participant, I want to know before I join that I will appear in that record
 
 ## Acceptance criteria
 
-- [ ] Given a room call, when nobody starts a logged meeting, then nothing about the call is stored.
-- [ ] Given someone inside a room with a room call, when they start a logged meeting with a title, then a log with
+- [x] Given a room call, when nobody starts a logged meeting, then nothing about the call is stored.
+- [x] Given someone inside a room with a room call, when they start a logged meeting with a title, then a log with
       title, host, start time and the host's consent is stored, and the door sign shows "Logged meeting".
-- [ ] Given a person already in the room, when the meeting is logged, then they are out of the call until they
+- [x] Given a person already in the room, when the meeting is logged, then they are out of the call until they
       answer; **Join** puts them back in and in the log, **Don't join** walks them out of the room.
-- [ ] Given a logged meeting, when someone walks into the room, then they see the consent dialog first and only
-      enter after **Join**; a modified client cannot walk in without consenting (server-side check).
-- [ ] Given a logged meeting, when the host ends it or the room becomes empty, then the end time is stored.
-- [ ] Given past logged meetings, then "My meetings" lists those one took part in; the host can delete a log;
+- [x] Given a logged meeting, when someone walks into the room, then they see the consent dialog first and only
+      enter after **Join**; a modified client cannot walk in without consenting (server-side check, covered by the
+      server integration test against PostgreSQL).
+- [x] Given a logged meeting, when the host ends it or the room becomes empty, then the end time is stored.
+- [x] Given past logged meetings, then "My meetings" lists those one took part in; the host can delete a log;
       nobody else (no admin either) can read it.
-- [ ] Given a log older than the retention period, then it is deleted automatically.
-- [ ] Non-spatial path: starting, consenting, ending and "My meetings" work without the 3D view, by keyboard.
-- [ ] Accessibility: the consent dialog is a labelled dialog (Radix) with focus on **Join**; the logged state has
-      text, not just colour.
-- [ ] i18n: all new strings in EN and DE.
+- [x] Given a log older than the retention period, then it is deleted automatically. _(Unit test; the hourly job
+      runs at start-up too.)_
+- [x] Non-spatial path: starting, consenting, ending and "My meetings" work without the 3D view, by keyboard.
+- [x] Accessibility: the consent dialog is a labelled dialog (Radix) with focus on **Join**; the logged state has
+      text, not just colour. _(Not yet checked with a screen reader.)_
+- [x] i18n: all new strings in EN and DE.
 
 ## Permissions
 
@@ -89,11 +91,15 @@ log requires having taken part in it (or being its host); there is no admin perm
 
 ## UI / design
 
-- Header (inside a room with a room call): "Log meeting" opens a small dialog (title, explanation, Start); while
-  logged: "Logged: {title}" badge and, for the host, "End log".
+- Media bar (inside a room with a room call): "Log meeting" opens a small dialog (title, explanation, Start);
+  while logged: "Logged: {title}" badge and, for the host, "End log".
 - Consent dialog (Radix): what is stored, **Join** / **Don't join**.
 - Door sign: a "Logged meeting" marker (icon and text) next to the door mode.
-- "My meetings" dialog from the header: list with title, room, times, participants; "Delete" for the host.
+- "My meetings" dialog from the sidebar: list with title, room, times, participants; "Delete" for the host.
+
+## Not yet covered by automated tests
+
+- Screen-reader announcements; a reload while inside a logged room shows "Logged meeting" without the title.
 
 ## Open questions
 

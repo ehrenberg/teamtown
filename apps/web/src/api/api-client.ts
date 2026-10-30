@@ -22,3 +22,15 @@ export async function apiGet<Schema extends z.ZodType>(
   }
   return schema.parse(await response.json());
 }
+
+/** DELETE a resource of the TeamTown API. */
+export async function apiDelete(path: string, fetchImpl: typeof fetch = fetch): Promise<void> {
+  const token = currentAccessToken();
+  const response = await fetchImpl(`/api${path}`, {
+    method: 'DELETE',
+    headers: token ? { authorization: `Bearer ${token}` } : {},
+  });
+  if (!response.ok) {
+    throw new ApiError(response.status);
+  }
+}

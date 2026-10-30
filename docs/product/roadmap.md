@@ -25,7 +25,7 @@ gantt
 | -------------------------- | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **M0 Foundation** ✅       | Repo is ready for contributors                       | Monorepo (pnpm + Turborepo), lint, boundaries and test setup, GitHub Actions, Docker Compose dev stack (Postgres, Keycloak, LiveKit), design tokens, CLAUDE.md, contributing guide |
 | **M1 Walking skeleton** ✅ | Log in, see the office, walk, see others             | OIDC login, a hard-coded demo office (two floors, floor switcher), avatar movement (server-authoritative), presence via WebSocket, Electron shell starts the web app               |
-| **M2 Talk**                | Proximity audio and room meetings                    | LiveKit integration, proximity groups, room meetings, knock, door states, screen share, direct call                                                                                |
+| **M2 Talk** ✅             | Proximity audio and room meetings                    | LiveKit integration, proximity groups, room meetings, knock, door states, screen share, direct call                                                                                |
 | **M3 Write**               | Channels and DMs                                     | Messaging context, threads, mentions, reactions, room walls, files, search                                                                                                         |
 | **M4 Govern**              | Rights and roles                                     | Scoped RBAC, custom roles, room and channel policies, guest links, audit log                                                                                                       |
 | **M5 Build your office**   | Self-service office                                  | Tile-grid editor, furniture catalogue, tracing image, setup wizard                                                                                                                 |
@@ -44,7 +44,8 @@ instance; deployment is part of M6.
 ([feature spec](../features/meetings-room-calls-and-knock.md)). M2c part 1, direct calls, done on 2026-10-30
 ([feature spec](../features/meetings-direct-calls.md)). M2c part 2, camera, done on 2026-10-30
 ([feature spec](../features/meetings-camera.md)). M2c part 3, screen share, done on 2026-10-30
-([feature spec](../features/meetings-screen-share.md)). Next: M2d logged meetings.
+([feature spec](../features/meetings-screen-share.md)). M2d logged meetings done on 2026-10-30
+([feature spec](../features/meetings-logged-meetings.md)). **M2 Talk is complete.**
 
 M2 and M3 can be developed in parallel by different contributors because they are separate bounded
 contexts ([domain model](../architecture/domain-model.md)).
