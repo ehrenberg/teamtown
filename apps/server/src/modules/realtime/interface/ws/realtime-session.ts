@@ -24,6 +24,8 @@ import type {
   SetCamera,
   SetConversationLock,
   StartCall,
+  StartScreenShare,
+  StopScreenShare,
 } from '../../../meetings/public-api.ts';
 import type { JoinFloor, MoveTo, Occupant, PresenceQueries, SetDoorMode } from '../../../presence/public-api.ts';
 import { toAvatarContract, toConversationContract, toRoomCallContract } from './contract-mapping.ts';
@@ -51,6 +53,8 @@ export interface SessionDependencies {
   readonly leaveCall: LeaveCall;
   readonly requestDirectCallToken: RequestDirectCallToken;
   readonly setCamera: SetCamera;
+  readonly startScreenShare: StartScreenShare;
+  readonly stopScreenShare: StopScreenShare;
 }
 
 /** Disconnect if the socket's send buffer grows beyond this (slow or stuck client). */
@@ -270,6 +274,16 @@ export class RealtimeSession {
         if (!this.occupant) return 'not-authenticated';
         const result = this.deps.setCamera.execute({ personId: this.occupant.personId, on: command.p.on });
         return result.ok ? undefined : result.error;
+      }
+      case 'StartScreenShare': {
+        if (!this.occupant) return 'not-authenticated';
+        const result = this.deps.startScreenShare.execute({ personId: this.occupant.personId });
+        return result.ok ? undefined : result.error;
+      }
+      case 'StopScreenShare': {
+        if (!this.occupant) return 'not-authenticated';
+        this.deps.stopScreenShare.execute({ personId: this.occupant.personId });
+        return undefined;
       }
       case 'ListOnlinePeople': {
         if (!this.occupant) return 'not-authenticated';

@@ -20,6 +20,13 @@ export interface DirectCallAccessGranted {
   readonly token: string;
 }
 
+/** Goes to the people in the call and to the previous sharer. */
+export interface ScreenShareChanged {
+  readonly type: 'ScreenShareChanged';
+  readonly sharer: string | null;
+  readonly recipients: readonly string[];
+}
+
 export interface RoomCallAccessGranted {
   readonly type: 'RoomCallAccessGranted';
   readonly personId: string;
@@ -51,7 +58,8 @@ export type MeetingsEvent =
   | KnockAnswered
   | DirectCallEvent
   | DirectCallAccessGranted
-  | CameraChanged;
+  | CameraChanged
+  | ScreenShareChanged;
 export type MeetingsEventListener = (event: MeetingsEvent) => void;
 
 export class MeetingsEventStream {

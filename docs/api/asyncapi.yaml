@@ -537,6 +537,46 @@ channels:
           required:
             - t
             - p
+      StartScreenShare:
+        name: StartScreenShare
+        title: StartScreenShare
+        summary: Shares the own screen in a room call or direct call; takes over from the previous sharer.
+        payload:
+          type: object
+          properties:
+            t:
+              type: string
+              const: StartScreenShare
+            id:
+              type: string
+              minLength: 1
+              maxLength: 64
+            p:
+              type: object
+              properties: {}
+          required:
+            - t
+            - p
+      StopScreenShare:
+        name: StopScreenShare
+        title: StopScreenShare
+        summary: Stops sharing the own screen.
+        payload:
+          type: object
+          properties:
+            t:
+              type: string
+              const: StopScreenShare
+            id:
+              type: string
+              minLength: 1
+              maxLength: 64
+            p:
+              type: object
+              properties: {}
+          required:
+            - t
+            - p
       Authenticated:
         name: Authenticated
         title: Authenticated
@@ -1590,6 +1630,32 @@ channels:
             - t
             - p
           additionalProperties: false
+      ScreenShareChanged:
+        name: ScreenShareChanged
+        title: ScreenShareChanged
+        summary: Who shares the screen in the own call now. Sent to the call and the previous sharer.
+        payload:
+          type: object
+          properties:
+            t:
+              type: string
+              const: ScreenShareChanged
+            p:
+              type: object
+              properties:
+                sharer:
+                  anyOf:
+                    - type: string
+                      format: uuid
+                      pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                    - type: "null"
+              required:
+                - sharer
+              additionalProperties: false
+          required:
+            - t
+            - p
+          additionalProperties: false
       Ack:
         name: Ack
         title: Ack
@@ -1657,6 +1723,7 @@ channels:
                     - call-not-found
                     - not-in-call
                     - call-full
+                    - screen-share-not-here
                     - media-unavailable
                     - invalid-message
                     - internal-error
@@ -1694,6 +1761,8 @@ operations:
       - $ref: "#/channels/realtime/messages/RequestDirectCallToken"
       - $ref: "#/channels/realtime/messages/ListOnlinePeople"
       - $ref: "#/channels/realtime/messages/SetCamera"
+      - $ref: "#/channels/realtime/messages/StartScreenShare"
+      - $ref: "#/channels/realtime/messages/StopScreenShare"
   sendEvents:
     action: send
     channel:
@@ -1722,5 +1791,6 @@ operations:
       - $ref: "#/channels/realtime/messages/OnCallChanged"
       - $ref: "#/channels/realtime/messages/OnlinePeople"
       - $ref: "#/channels/realtime/messages/CameraChanged"
+      - $ref: "#/channels/realtime/messages/ScreenShareChanged"
       - $ref: "#/channels/realtime/messages/Ack"
       - $ref: "#/channels/realtime/messages/Nack"

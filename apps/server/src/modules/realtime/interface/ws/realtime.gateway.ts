@@ -22,6 +22,8 @@ import {
   SetCamera,
   SetConversationLock,
   StartCall,
+  StartScreenShare,
+  StopScreenShare,
   type MeetingsEvent,
 } from '../../../meetings/public-api.ts';
 import {
@@ -93,6 +95,8 @@ export class RealtimeGateway implements OnApplicationBootstrap, OnApplicationShu
     @Inject(LeaveCall) private readonly leaveCall: LeaveCall,
     @Inject(RequestDirectCallToken) private readonly requestDirectCallToken: RequestDirectCallToken,
     @Inject(SetCamera) private readonly setCamera: SetCamera,
+    @Inject(StartScreenShare) private readonly startScreenShare: StartScreenShare,
+    @Inject(StopScreenShare) private readonly stopScreenShare: StopScreenShare,
   ) {}
 
   onApplicationBootstrap(): void {
@@ -163,6 +167,8 @@ export class RealtimeGateway implements OnApplicationBootstrap, OnApplicationShu
       leaveCall: this.leaveCall,
       requestDirectCallToken: this.requestDirectCallToken,
       setCamera: this.setCamera,
+      startScreenShare: this.startScreenShare,
+      stopScreenShare: this.stopScreenShare,
     });
     this.#sessions.add(session);
     this.#telemetry.connectionOpened();
@@ -260,6 +266,9 @@ export class RealtimeGateway implements OnApplicationBootstrap, OnApplicationShu
             p: { callId: event.callId, personId: event.personId, outcome: event.outcome },
           }),
         );
+        return;
+      case 'ScreenShareChanged':
+        this.#sendToPeople(event.recipients, encodeMessage({ t: 'ScreenShareChanged', p: { sharer: event.sharer } }));
         return;
       case 'CameraChanged':
         this.#announceCamera(event.personId, event.on);

@@ -25,6 +25,7 @@ import { ROOM_ADMISSION, type RoomAdmission } from './application/ports/room-adm
 import { RequestConversationToken } from './application/request-conversation-token.ts';
 import { RequestDirectCallToken } from './application/request-direct-call-token.ts';
 import { RequestRoomCallToken } from './application/request-room-call-token.ts';
+import { StartScreenShare, StopScreenShare, SyncScreenShares } from './application/screen-share-use-cases.ts';
 import { SetCamera } from './application/set-camera.ts';
 import { StartCall } from './application/start-call.ts';
 import { SyncCameras } from './application/sync-cameras.ts';
@@ -32,6 +33,7 @@ import { SetConversationLock } from './application/set-conversation-lock.ts';
 import { UpdateConversations } from './application/update-conversations.ts';
 import { UpdateDirectCalls } from './application/update-direct-calls.ts';
 import { Cameras } from './domain/cameras.ts';
+import { ScreenShares } from './domain/screen-shares.ts';
 import { DirectCalls } from './domain/direct-calls.ts';
 import { Knocks } from './domain/knocks.ts';
 import { LiveKitMediaGateway } from './infrastructure/livekit-media-gateway.ts';
@@ -70,6 +72,25 @@ const mediaGateway = (config: AppConfig): MediaGateway | null => {
     { provide: LIVE_PRESENCE, useExisting: PresenceLivePositions },
     { provide: ROOM_ADMISSION, useExisting: PresenceLivePositions },
     { provide: Cameras, useValue: new Cameras() },
+    { provide: ScreenShares, useValue: new ScreenShares() },
+    {
+      provide: StartScreenShare,
+      useFactory: (shares: ScreenShares, membership: CallMembership, events: MeetingsEventStream) =>
+        new StartScreenShare(shares, membership, events),
+      inject: [ScreenShares, CallMembership, MeetingsEventStream],
+    },
+    {
+      provide: StopScreenShare,
+      useFactory: (shares: ScreenShares, membership: CallMembership, events: MeetingsEventStream) =>
+        new StopScreenShare(shares, membership, events),
+      inject: [ScreenShares, CallMembership, MeetingsEventStream],
+    },
+    {
+      provide: SyncScreenShares,
+      useFactory: (shares: ScreenShares, membership: CallMembership, events: MeetingsEventStream) =>
+        new SyncScreenShares(shares, membership, events),
+      inject: [ScreenShares, CallMembership, MeetingsEventStream],
+    },
     {
       provide: CallMembership,
       useFactory: (registry: ConversationRegistry, calls: DirectCalls) => new CallMembership(registry, calls),
@@ -237,8 +258,16 @@ const mediaGateway = (config: AppConfig): MediaGateway | null => {
         expire: ExpireKnocks,
         updateCalls: UpdateDirectCalls,
         syncCameras: SyncCameras,
-      ) => new ProximityTicker(update, reconcile, expire, updateCalls, syncCameras),
-      inject: [UpdateConversations, ReconcileMediaRooms, ExpireKnocks, UpdateDirectCalls, SyncCameras],
+        syncScreenShares: SyncScreenShares,
+      ) => new ProximityTicker(update, reconcile, expire, updateCalls, syncCameras, syncScreenShares),
+      inject: [
+        UpdateConversations,
+        ReconcileMediaRooms,
+        ExpireKnocks,
+        UpdateDirectCalls,
+        SyncCameras,
+        SyncScreenShares,
+      ],
     },
   ],
   exports: [
@@ -255,6 +284,8 @@ const mediaGateway = (config: AppConfig): MediaGateway | null => {
     LeaveCall,
     RequestDirectCallToken,
     SetCamera,
+    StartScreenShare,
+    StopScreenShare,
     ConversationQueries,
   ],
 })

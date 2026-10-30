@@ -22,4 +22,14 @@ export class CallMembership {
     }
     return null;
   }
+
+  participantsOf(callKey: CallKey): readonly string[] {
+    const [kind = '', ...rest] = callKey.split(':');
+    if (kind === 'direct') return this.calls.get(rest.join(':'))?.participants ?? [];
+    if (kind === 'room') {
+      const [floorId = '', roomId = ''] = rest;
+      return this.registry.get(floorId)?.roomCalls.get(roomId)?.participants ?? [];
+    }
+    return this.registry.find(rest.join(':'))?.conversation.participants ?? [];
+  }
 }

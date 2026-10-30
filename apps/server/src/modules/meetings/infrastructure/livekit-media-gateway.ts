@@ -34,7 +34,7 @@ export class LiveKitMediaGateway implements MediaGateway {
       canSubscribe: true,
       canPublish: true,
       canPublishData: false,
-      canPublishSources: [TrackSource.MICROPHONE, TrackSource.CAMERA],
+      canPublishSources: [TrackSource.MICROPHONE, TrackSource.CAMERA, TrackSource.SCREEN_SHARE],
     });
     return token.toJwt();
   }

@@ -26,6 +26,9 @@ import {
   SetCameraCommand,
   StartCallCommand,
   CameraChangedEvent,
+  ScreenShareChangedEvent,
+  StartScreenShareCommand,
+  StopScreenShareCommand,
 } from './calls.ts';
 import {
   AnswerKnockCommand,
@@ -105,6 +108,8 @@ export const ClientCommand = z.discriminatedUnion('t', [
   RequestDirectCallTokenCommand,
   ListOnlinePeopleCommand,
   SetCameraCommand,
+  StartScreenShareCommand,
+  StopScreenShareCommand,
 ]);
 export type ClientCommand = z.infer<typeof ClientCommand>;
 
@@ -206,6 +211,8 @@ export const NackCode = z.enum([
   'not-in-call',
   /** A call has at most 8 people, counting those being rung. */
   'call-full',
+  /** Screen sharing is for room calls and direct calls only. */
+  'screen-share-not-here',
   /** Audio is not configured on this server (no LiveKit). */
   'media-unavailable',
   'invalid-message',
@@ -241,6 +248,7 @@ export const ServerEvent = z.discriminatedUnion('t', [
   OnCallChangedEvent,
   OnlinePeopleEvent,
   CameraChangedEvent,
+  ScreenShareChangedEvent,
   AckEvent,
   NackEvent,
 ]);

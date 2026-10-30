@@ -117,3 +117,22 @@ export const CameraChangedEvent = z.object({
   t: z.literal('CameraChanged'),
   p: z.object({ floorId: FloorId, personId: PersonId, on: z.boolean() }),
 });
+
+/** Only in room calls and direct calls; whoever starts sharing takes over from the previous sharer. */
+export const StartScreenShareCommand = z.object({
+  t: z.literal('StartScreenShare'),
+  id: CorrelationId.optional(),
+  p: z.object({}),
+});
+
+export const StopScreenShareCommand = z.object({
+  t: z.literal('StopScreenShare'),
+  id: CorrelationId.optional(),
+  p: z.object({}),
+});
+
+/** Sent to the people in the own call, and to the previous sharer, whose app then stops sharing. */
+export const ScreenShareChangedEvent = z.object({
+  t: z.literal('ScreenShareChanged'),
+  p: z.object({ sharer: PersonId.nullable() }),
+});

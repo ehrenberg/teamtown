@@ -40,6 +40,8 @@ const summaries = {
   RequestDirectCallToken: 'Asks for a fresh media token for the own direct call, e.g. after a reconnect.',
   ListOnlinePeople: 'Asks for everyone who is online, on any floor; answered with OnlinePeople.',
   SetCamera: 'Switches the own camera on (only inside a conversation or call) or off.',
+  StartScreenShare: 'Shares the own screen in a room call or direct call; takes over from the previous sharer.',
+  StopScreenShare: 'Stops sharing the own screen.',
   Authenticated: 'The connection is authenticated.',
   Pong: 'Answer to Ping with the server time.',
   FloorSnapshot:
@@ -67,6 +69,7 @@ const summaries = {
   OnCallChanged: 'Someone started or stopped being in a direct call (not with whom). Sent to everyone on the floor.',
   OnlinePeople: 'Everyone who is online, with their floor. Sent only to the requester.',
   CameraChanged: 'Someone switched their camera on or off. Sent to everyone on the floor; no picture.',
+  ScreenShareChanged: 'Who shares the screen in the own call now. Sent to the call and the previous sharer.',
   Ack: 'The command with this correlation ID succeeded.',
   Nack: 'The command failed. Codes are stable and translated in the client.',
 };

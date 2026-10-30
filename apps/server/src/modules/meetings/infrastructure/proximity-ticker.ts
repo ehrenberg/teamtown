@@ -2,6 +2,7 @@ import { Logger, type OnApplicationBootstrap, type OnApplicationShutdown } from 
 import type { ExpireKnocks } from '../application/expire-knocks.ts';
 import type { UpdateDirectCalls } from '../application/update-direct-calls.ts';
 import type { ReconcileMediaRooms } from '../application/reconcile-media-rooms.ts';
+import type { SyncScreenShares } from '../application/screen-share-use-cases.ts';
 import type { SyncCameras } from '../application/sync-cameras.ts';
 import type { UpdateConversations } from '../application/update-conversations.ts';
 
@@ -35,6 +36,7 @@ export class ProximityTicker implements OnApplicationBootstrap, OnApplicationShu
     private readonly expireKnocks: ExpireKnocks,
     private readonly updateCalls: UpdateDirectCalls,
     private readonly syncCameras: SyncCameras,
+    private readonly syncScreenShares: SyncScreenShares,
   ) {}
 
   onApplicationBootstrap(): void {
@@ -47,6 +49,7 @@ export class ProximityTicker implements OnApplicationBootstrap, OnApplicationShu
       every(CONVERSATION_TICK_MS, 'Updating direct calls', () => this.updateCalls.execute()),
       every(CONVERSATION_TICK_MS, 'Syncing cameras', () => {
         this.syncCameras.execute();
+        this.syncScreenShares.execute();
         return Promise.resolve();
       }),
       every(RECONCILE_INTERVAL_MS, 'Reconciling media rooms', () => this.reconcile.execute()),
