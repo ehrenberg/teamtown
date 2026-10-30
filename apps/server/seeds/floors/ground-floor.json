@@ -1,0 +1,1006 @@
+{
+  "floorId": "ground-floor",
+  "name": "Office",
+  "level": 0,
+  "version": 1,
+  "width": 48,
+  "height": 34,
+  "floorAreas": [
+    {
+      "x": 0,
+      "y": 0,
+      "width": 48,
+      "height": 34,
+      "material": "wood"
+    },
+    {
+      "x": 28,
+      "y": 0,
+      "width": 10,
+      "height": 12,
+      "material": "carpet"
+    },
+    {
+      "x": 38,
+      "y": 0,
+      "width": 10,
+      "height": 12,
+      "material": "carpet"
+    },
+    {
+      "x": 28,
+      "y": 12,
+      "width": 20,
+      "height": 22,
+      "material": "tiles"
+    },
+    {
+      "x": 0,
+      "y": 21,
+      "width": 28,
+      "height": 13,
+      "material": "carpet"
+    }
+  ],
+  "walls": [
+    {
+      "from": {
+        "x": 0,
+        "y": 0
+      },
+      "to": {
+        "x": 8,
+        "y": 0
+      },
+      "material": "solid"
+    },
+    {
+      "from": {
+        "x": 8,
+        "y": 0
+      },
+      "to": {
+        "x": 14,
+        "y": 0
+      },
+      "material": "accent"
+    },
+    {
+      "from": {
+        "x": 14,
+        "y": 0
+      },
+      "to": {
+        "x": 48,
+        "y": 0
+      },
+      "material": "solid"
+    },
+    {
+      "from": {
+        "x": 0,
+        "y": 0
+      },
+      "to": {
+        "x": 0,
+        "y": 34
+      },
+      "material": "solid"
+    },
+    {
+      "from": {
+        "x": 0,
+        "y": 34
+      },
+      "to": {
+        "x": 48,
+        "y": 34
+      },
+      "material": "solid"
+    },
+    {
+      "from": {
+        "x": 48,
+        "y": 0
+      },
+      "to": {
+        "x": 48,
+        "y": 34
+      },
+      "material": "solid"
+    },
+    {
+      "from": {
+        "x": 28,
+        "y": 0
+      },
+      "to": {
+        "x": 28,
+        "y": 12
+      },
+      "material": "glass"
+    },
+    {
+      "from": {
+        "x": 28,
+        "y": 12
+      },
+      "to": {
+        "x": 38,
+        "y": 12
+      },
+      "material": "glass"
+    },
+    {
+      "from": {
+        "x": 38,
+        "y": 0
+      },
+      "to": {
+        "x": 38,
+        "y": 12
+      },
+      "material": "glass"
+    },
+    {
+      "from": {
+        "x": 38,
+        "y": 12
+      },
+      "to": {
+        "x": 48,
+        "y": 12
+      },
+      "material": "glass"
+    },
+    {
+      "from": {
+        "x": 28,
+        "y": 24
+      },
+      "to": {
+        "x": 28,
+        "y": 34
+      },
+      "material": "solid"
+    }
+  ],
+  "doors": [
+    {
+      "x": 28,
+      "y": 6,
+      "side": "west"
+    },
+    {
+      "x": 28,
+      "y": 7,
+      "side": "west"
+    },
+    {
+      "x": 42,
+      "y": 11,
+      "side": "south"
+    },
+    {
+      "x": 43,
+      "y": 11,
+      "side": "south"
+    }
+  ],
+  "rooms": [
+    {
+      "id": "open-space",
+      "name": "Open space",
+      "kind": "open-space",
+      "areas": [
+        {
+          "x": 0,
+          "y": 0,
+          "width": 28,
+          "height": 21
+        }
+      ],
+      "doorMode": "open"
+    },
+    {
+      "id": "elbe",
+      "name": "Elbe",
+      "kind": "meeting",
+      "areas": [
+        {
+          "x": 28,
+          "y": 0,
+          "width": 10,
+          "height": 12
+        }
+      ],
+      "doorMode": "knock"
+    },
+    {
+      "id": "alster",
+      "name": "Alster",
+      "kind": "meeting",
+      "areas": [
+        {
+          "x": 38,
+          "y": 0,
+          "width": 10,
+          "height": 12
+        }
+      ],
+      "doorMode": "open"
+    },
+    {
+      "id": "kitchen",
+      "name": "Kitchen",
+      "kind": "kitchen",
+      "areas": [
+        {
+          "x": 28,
+          "y": 12,
+          "width": 20,
+          "height": 22
+        }
+      ],
+      "doorMode": "open"
+    },
+    {
+      "id": "lounge",
+      "name": "Lounge",
+      "kind": "lounge",
+      "areas": [
+        {
+          "x": 0,
+          "y": 21,
+          "width": 28,
+          "height": 13
+        }
+      ],
+      "doorMode": "open"
+    }
+  ],
+  "furniture": [
+    {
+      "id": "desk-straight-1",
+      "catalogItemId": "desk-straight",
+      "x": 3,
+      "y": 3,
+      "rotation": 0
+    },
+    {
+      "id": "desk-straight-2",
+      "catalogItemId": "desk-straight",
+      "x": 6,
+      "y": 3,
+      "rotation": 0
+    },
+    {
+      "id": "desk-straight-3",
+      "catalogItemId": "desk-straight",
+      "x": 3,
+      "y": 5,
+      "rotation": 0
+    },
+    {
+      "id": "desk-straight-4",
+      "catalogItemId": "desk-straight",
+      "x": 6,
+      "y": 5,
+      "rotation": 0
+    },
+    {
+      "id": "office-chair-1",
+      "catalogItemId": "office-chair",
+      "x": 4,
+      "y": 2,
+      "rotation": 0
+    },
+    {
+      "id": "office-chair-2",
+      "catalogItemId": "office-chair",
+      "x": 7,
+      "y": 2,
+      "rotation": 0
+    },
+    {
+      "id": "office-chair-3",
+      "catalogItemId": "office-chair",
+      "x": 4,
+      "y": 7,
+      "rotation": 0
+    },
+    {
+      "id": "office-chair-4",
+      "catalogItemId": "office-chair",
+      "x": 7,
+      "y": 7,
+      "rotation": 0
+    },
+    {
+      "id": "desk-straight-5",
+      "catalogItemId": "desk-straight",
+      "x": 13,
+      "y": 3,
+      "rotation": 0
+    },
+    {
+      "id": "desk-straight-6",
+      "catalogItemId": "desk-straight",
+      "x": 16,
+      "y": 3,
+      "rotation": 0
+    },
+    {
+      "id": "desk-straight-7",
+      "catalogItemId": "desk-straight",
+      "x": 13,
+      "y": 5,
+      "rotation": 0
+    },
+    {
+      "id": "desk-straight-8",
+      "catalogItemId": "desk-straight",
+      "x": 16,
+      "y": 5,
+      "rotation": 0
+    },
+    {
+      "id": "office-chair-5",
+      "catalogItemId": "office-chair",
+      "x": 14,
+      "y": 2,
+      "rotation": 0
+    },
+    {
+      "id": "office-chair-6",
+      "catalogItemId": "office-chair",
+      "x": 17,
+      "y": 2,
+      "rotation": 0
+    },
+    {
+      "id": "office-chair-7",
+      "catalogItemId": "office-chair",
+      "x": 14,
+      "y": 7,
+      "rotation": 0
+    },
+    {
+      "id": "office-chair-8",
+      "catalogItemId": "office-chair",
+      "x": 17,
+      "y": 7,
+      "rotation": 0
+    },
+    {
+      "id": "desk-straight-9",
+      "catalogItemId": "desk-straight",
+      "x": 21,
+      "y": 3,
+      "rotation": 0
+    },
+    {
+      "id": "desk-straight-10",
+      "catalogItemId": "desk-straight",
+      "x": 24,
+      "y": 3,
+      "rotation": 0
+    },
+    {
+      "id": "desk-straight-11",
+      "catalogItemId": "desk-straight",
+      "x": 21,
+      "y": 5,
+      "rotation": 0
+    },
+    {
+      "id": "desk-straight-12",
+      "catalogItemId": "desk-straight",
+      "x": 24,
+      "y": 5,
+      "rotation": 0
+    },
+    {
+      "id": "office-chair-9",
+      "catalogItemId": "office-chair",
+      "x": 22,
+      "y": 2,
+      "rotation": 0
+    },
+    {
+      "id": "office-chair-10",
+      "catalogItemId": "office-chair",
+      "x": 25,
+      "y": 2,
+      "rotation": 0
+    },
+    {
+      "id": "office-chair-11",
+      "catalogItemId": "office-chair",
+      "x": 22,
+      "y": 7,
+      "rotation": 0
+    },
+    {
+      "id": "office-chair-12",
+      "catalogItemId": "office-chair",
+      "x": 25,
+      "y": 7,
+      "rotation": 0
+    },
+    {
+      "id": "desk-straight-13",
+      "catalogItemId": "desk-straight",
+      "x": 3,
+      "y": 12,
+      "rotation": 0
+    },
+    {
+      "id": "desk-straight-14",
+      "catalogItemId": "desk-straight",
+      "x": 6,
+      "y": 12,
+      "rotation": 0
+    },
+    {
+      "id": "desk-straight-15",
+      "catalogItemId": "desk-straight",
+      "x": 3,
+      "y": 14,
+      "rotation": 0
+    },
+    {
+      "id": "desk-straight-16",
+      "catalogItemId": "desk-straight",
+      "x": 6,
+      "y": 14,
+      "rotation": 0
+    },
+    {
+      "id": "office-chair-13",
+      "catalogItemId": "office-chair",
+      "x": 4,
+      "y": 11,
+      "rotation": 0
+    },
+    {
+      "id": "office-chair-14",
+      "catalogItemId": "office-chair",
+      "x": 7,
+      "y": 11,
+      "rotation": 0
+    },
+    {
+      "id": "office-chair-15",
+      "catalogItemId": "office-chair",
+      "x": 4,
+      "y": 16,
+      "rotation": 0
+    },
+    {
+      "id": "office-chair-16",
+      "catalogItemId": "office-chair",
+      "x": 7,
+      "y": 16,
+      "rotation": 0
+    },
+    {
+      "id": "desk-straight-17",
+      "catalogItemId": "desk-straight",
+      "x": 13,
+      "y": 12,
+      "rotation": 0
+    },
+    {
+      "id": "desk-straight-18",
+      "catalogItemId": "desk-straight",
+      "x": 16,
+      "y": 12,
+      "rotation": 0
+    },
+    {
+      "id": "desk-straight-19",
+      "catalogItemId": "desk-straight",
+      "x": 13,
+      "y": 14,
+      "rotation": 0
+    },
+    {
+      "id": "desk-straight-20",
+      "catalogItemId": "desk-straight",
+      "x": 16,
+      "y": 14,
+      "rotation": 0
+    },
+    {
+      "id": "office-chair-17",
+      "catalogItemId": "office-chair",
+      "x": 14,
+      "y": 11,
+      "rotation": 0
+    },
+    {
+      "id": "office-chair-18",
+      "catalogItemId": "office-chair",
+      "x": 17,
+      "y": 11,
+      "rotation": 0
+    },
+    {
+      "id": "office-chair-19",
+      "catalogItemId": "office-chair",
+      "x": 14,
+      "y": 16,
+      "rotation": 0
+    },
+    {
+      "id": "office-chair-20",
+      "catalogItemId": "office-chair",
+      "x": 17,
+      "y": 16,
+      "rotation": 0
+    },
+    {
+      "id": "desk-straight-21",
+      "catalogItemId": "desk-straight",
+      "x": 21,
+      "y": 12,
+      "rotation": 0
+    },
+    {
+      "id": "desk-straight-22",
+      "catalogItemId": "desk-straight",
+      "x": 24,
+      "y": 12,
+      "rotation": 0
+    },
+    {
+      "id": "desk-straight-23",
+      "catalogItemId": "desk-straight",
+      "x": 21,
+      "y": 14,
+      "rotation": 0
+    },
+    {
+      "id": "desk-straight-24",
+      "catalogItemId": "desk-straight",
+      "x": 24,
+      "y": 14,
+      "rotation": 0
+    },
+    {
+      "id": "office-chair-21",
+      "catalogItemId": "office-chair",
+      "x": 22,
+      "y": 11,
+      "rotation": 0
+    },
+    {
+      "id": "office-chair-22",
+      "catalogItemId": "office-chair",
+      "x": 25,
+      "y": 11,
+      "rotation": 0
+    },
+    {
+      "id": "office-chair-23",
+      "catalogItemId": "office-chair",
+      "x": 22,
+      "y": 16,
+      "rotation": 0
+    },
+    {
+      "id": "office-chair-24",
+      "catalogItemId": "office-chair",
+      "x": 25,
+      "y": 16,
+      "rotation": 0
+    },
+    {
+      "id": "whiteboard-1",
+      "catalogItemId": "whiteboard",
+      "x": 8,
+      "y": 0,
+      "rotation": 0
+    },
+    {
+      "id": "bookshelf-1",
+      "catalogItemId": "bookshelf",
+      "x": 1,
+      "y": 20,
+      "rotation": 0
+    },
+    {
+      "id": "bookshelf-2",
+      "catalogItemId": "bookshelf",
+      "x": 4,
+      "y": 20,
+      "rotation": 0
+    },
+    {
+      "id": "bookshelf-3",
+      "catalogItemId": "bookshelf",
+      "x": 7,
+      "y": 20,
+      "rotation": 0
+    },
+    {
+      "id": "bookshelf-4",
+      "catalogItemId": "bookshelf",
+      "x": 17,
+      "y": 20,
+      "rotation": 0
+    },
+    {
+      "id": "bookshelf-5",
+      "catalogItemId": "bookshelf",
+      "x": 20,
+      "y": 20,
+      "rotation": 0
+    },
+    {
+      "id": "bookshelf-6",
+      "catalogItemId": "bookshelf",
+      "x": 23,
+      "y": 20,
+      "rotation": 0
+    },
+    {
+      "id": "plant-1",
+      "catalogItemId": "plant",
+      "x": 1,
+      "y": 1,
+      "rotation": 0
+    },
+    {
+      "id": "plant-2",
+      "catalogItemId": "plant",
+      "x": 1,
+      "y": 18,
+      "rotation": 0
+    },
+    {
+      "id": "plant-3",
+      "catalogItemId": "plant",
+      "x": 26,
+      "y": 18,
+      "rotation": 0
+    },
+    {
+      "id": "tv-wall-1",
+      "catalogItemId": "tv-wall",
+      "x": 31,
+      "y": 0,
+      "rotation": 0
+    },
+    {
+      "id": "meeting-table-8-1",
+      "catalogItemId": "meeting-table-8",
+      "x": 30,
+      "y": 4,
+      "rotation": 0
+    },
+    {
+      "id": "office-chair-25",
+      "catalogItemId": "office-chair",
+      "x": 31,
+      "y": 3,
+      "rotation": 0
+    },
+    {
+      "id": "office-chair-26",
+      "catalogItemId": "office-chair",
+      "x": 31,
+      "y": 7,
+      "rotation": 0
+    },
+    {
+      "id": "office-chair-27",
+      "catalogItemId": "office-chair",
+      "x": 33,
+      "y": 3,
+      "rotation": 0
+    },
+    {
+      "id": "office-chair-28",
+      "catalogItemId": "office-chair",
+      "x": 33,
+      "y": 7,
+      "rotation": 0
+    },
+    {
+      "id": "office-chair-29",
+      "catalogItemId": "office-chair",
+      "x": 35,
+      "y": 3,
+      "rotation": 0
+    },
+    {
+      "id": "office-chair-30",
+      "catalogItemId": "office-chair",
+      "x": 35,
+      "y": 7,
+      "rotation": 0
+    },
+    {
+      "id": "plant-4",
+      "catalogItemId": "plant",
+      "x": 37,
+      "y": 11,
+      "rotation": 0
+    },
+    {
+      "id": "tv-wall-2",
+      "catalogItemId": "tv-wall",
+      "x": 41,
+      "y": 0,
+      "rotation": 0
+    },
+    {
+      "id": "meeting-table-4-1",
+      "catalogItemId": "meeting-table-4",
+      "x": 42,
+      "y": 4,
+      "rotation": 0
+    },
+    {
+      "id": "office-chair-31",
+      "catalogItemId": "office-chair",
+      "x": 43,
+      "y": 3,
+      "rotation": 0
+    },
+    {
+      "id": "office-chair-32",
+      "catalogItemId": "office-chair",
+      "x": 43,
+      "y": 7,
+      "rotation": 0
+    },
+    {
+      "id": "office-chair-33",
+      "catalogItemId": "office-chair",
+      "x": 41,
+      "y": 5,
+      "rotation": 0
+    },
+    {
+      "id": "office-chair-34",
+      "catalogItemId": "office-chair",
+      "x": 45,
+      "y": 5,
+      "rotation": 0
+    },
+    {
+      "id": "plant-5",
+      "catalogItemId": "plant",
+      "x": 47,
+      "y": 1,
+      "rotation": 0
+    },
+    {
+      "id": "kitchen-counter-1",
+      "catalogItemId": "kitchen-counter",
+      "x": 31,
+      "y": 13,
+      "rotation": 0
+    },
+    {
+      "id": "fridge-1",
+      "catalogItemId": "fridge",
+      "x": 38,
+      "y": 13,
+      "rotation": 0
+    },
+    {
+      "id": "bar-table-1",
+      "catalogItemId": "bar-table",
+      "x": 32,
+      "y": 19,
+      "rotation": 0
+    },
+    {
+      "id": "bar-table-2",
+      "catalogItemId": "bar-table",
+      "x": 36,
+      "y": 19,
+      "rotation": 0
+    },
+    {
+      "id": "bar-table-3",
+      "catalogItemId": "bar-table",
+      "x": 40,
+      "y": 19,
+      "rotation": 0
+    },
+    {
+      "id": "dining-table-1",
+      "catalogItemId": "dining-table",
+      "x": 36,
+      "y": 26,
+      "rotation": 0
+    },
+    {
+      "id": "office-chair-35",
+      "catalogItemId": "office-chair",
+      "x": 36,
+      "y": 25,
+      "rotation": 0
+    },
+    {
+      "id": "office-chair-36",
+      "catalogItemId": "office-chair",
+      "x": 36,
+      "y": 28,
+      "rotation": 0
+    },
+    {
+      "id": "office-chair-37",
+      "catalogItemId": "office-chair",
+      "x": 38,
+      "y": 25,
+      "rotation": 0
+    },
+    {
+      "id": "office-chair-38",
+      "catalogItemId": "office-chair",
+      "x": 38,
+      "y": 28,
+      "rotation": 0
+    },
+    {
+      "id": "dining-table-2",
+      "catalogItemId": "dining-table",
+      "x": 42,
+      "y": 26,
+      "rotation": 0
+    },
+    {
+      "id": "office-chair-39",
+      "catalogItemId": "office-chair",
+      "x": 42,
+      "y": 25,
+      "rotation": 0
+    },
+    {
+      "id": "office-chair-40",
+      "catalogItemId": "office-chair",
+      "x": 42,
+      "y": 28,
+      "rotation": 0
+    },
+    {
+      "id": "office-chair-41",
+      "catalogItemId": "office-chair",
+      "x": 44,
+      "y": 25,
+      "rotation": 0
+    },
+    {
+      "id": "office-chair-42",
+      "catalogItemId": "office-chair",
+      "x": 44,
+      "y": 28,
+      "rotation": 0
+    },
+    {
+      "id": "plant-6",
+      "catalogItemId": "plant",
+      "x": 46,
+      "y": 13,
+      "rotation": 0
+    },
+    {
+      "id": "plant-7",
+      "catalogItemId": "plant",
+      "x": 46,
+      "y": 32,
+      "rotation": 0
+    },
+    {
+      "id": "plant-8",
+      "catalogItemId": "plant",
+      "x": 30,
+      "y": 32,
+      "rotation": 0
+    },
+    {
+      "id": "rug-1",
+      "catalogItemId": "rug",
+      "x": 4,
+      "y": 25,
+      "rotation": 0
+    },
+    {
+      "id": "sofa-1",
+      "catalogItemId": "sofa",
+      "x": 4,
+      "y": 23,
+      "rotation": 0
+    },
+    {
+      "id": "coffee-table-1",
+      "catalogItemId": "coffee-table",
+      "x": 6,
+      "y": 26,
+      "rotation": 0
+    },
+    {
+      "id": "armchair-1",
+      "catalogItemId": "armchair",
+      "x": 10,
+      "y": 26,
+      "rotation": 0
+    },
+    {
+      "id": "rug-2",
+      "catalogItemId": "rug",
+      "x": 15,
+      "y": 25,
+      "rotation": 0
+    },
+    {
+      "id": "sofa-2",
+      "catalogItemId": "sofa",
+      "x": 15,
+      "y": 23,
+      "rotation": 0
+    },
+    {
+      "id": "coffee-table-2",
+      "catalogItemId": "coffee-table",
+      "x": 17,
+      "y": 26,
+      "rotation": 0
+    },
+    {
+      "id": "armchair-2",
+      "catalogItemId": "armchair",
+      "x": 21,
+      "y": 26,
+      "rotation": 0
+    },
+    {
+      "id": "phone-booth-1",
+      "catalogItemId": "phone-booth",
+      "x": 24,
+      "y": 24,
+      "rotation": 0
+    },
+    {
+      "id": "phone-booth-2",
+      "catalogItemId": "phone-booth",
+      "x": 24,
+      "y": 28,
+      "rotation": 0
+    },
+    {
+      "id": "plant-9",
+      "catalogItemId": "plant",
+      "x": 1,
+      "y": 32,
+      "rotation": 0
+    },
+    {
+      "id": "plant-10",
+      "catalogItemId": "plant",
+      "x": 13,
+      "y": 32,
+      "rotation": 0
+    }
+  ],
+  "spawnPoints": [
+    {
+      "x": 10,
+      "y": 9
+    },
+    {
+      "x": 11,
+      "y": 9
+    },
+    {
+      "x": 12,
+      "y": 9
+    }
+  ]
+}

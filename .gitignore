@@ -11,6 +11,8 @@ coverage/
 .env
 .env.*
 !.env.example
+# Non-secret local development values (match docker/compose.dev.yml)
+!apps/server/.env.development
 
 # Logs
 *.log

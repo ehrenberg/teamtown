@@ -17,7 +17,23 @@
       "directAccessGrantsEnabled": false,
       "redirectUris": ["http://localhost:5173/*"],
       "webOrigins": ["http://localhost:5173"],
-      "attributes": { "pkce.code.challenge.method": "S256" }
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:5173/*"
+      },
+      "protocolMappers": [
+        {
+          "name": "teamtown-api-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.custom.audience": "teamtown-api",
+            "access.token.claim": "true",
+            "id.token.claim": "false",
+            "introspection.token.claim": "true"
+          }
+        }
+      ]
     },
     {
       "clientId": "teamtown-desktop",
@@ -27,7 +43,22 @@
       "standardFlowEnabled": true,
       "directAccessGrantsEnabled": false,
       "redirectUris": ["teamtown://auth/callback"],
-      "attributes": { "pkce.code.challenge.method": "S256" }
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      },
+      "protocolMappers": [
+        {
+          "name": "teamtown-api-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.custom.audience": "teamtown-api",
+            "access.token.claim": "true",
+            "id.token.claim": "false",
+            "introspection.token.claim": "true"
+          }
+        }
+      ]
     }
   ],
   "users": [
@@ -38,7 +69,28 @@
       "firstName": "Demo",
       "lastName": "User",
       "enabled": true,
-      "credentials": [{ "type": "password", "value": "demo", "temporary": false }]
+      "credentials": [
+        {
+          "type": "password",
+          "value": "demo",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "demo2",
+      "email": "demo2@teamtown.local",
+      "emailVerified": true,
+      "firstName": "Second",
+      "lastName": "Demo",
+      "enabled": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "demo2",
+          "temporary": false
+        }
+      ]
     }
   ]
 }

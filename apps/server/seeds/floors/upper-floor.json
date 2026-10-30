@@ -1,0 +1,353 @@
+{
+  "floorId": "upper-floor",
+  "name": "Lounge & Terrace",
+  "level": 1,
+  "version": 1,
+  "width": 40,
+  "height": 30,
+  "floorAreas": [
+    {
+      "x": 0,
+      "y": 0,
+      "width": 24,
+      "height": 30,
+      "material": "wood"
+    },
+    {
+      "x": 24,
+      "y": 0,
+      "width": 16,
+      "height": 30,
+      "material": "terrace"
+    }
+  ],
+  "walls": [
+    {
+      "from": {
+        "x": 0,
+        "y": 0
+      },
+      "to": {
+        "x": 24,
+        "y": 0
+      },
+      "material": "solid"
+    },
+    {
+      "from": {
+        "x": 0,
+        "y": 0
+      },
+      "to": {
+        "x": 0,
+        "y": 30
+      },
+      "material": "solid"
+    },
+    {
+      "from": {
+        "x": 0,
+        "y": 30
+      },
+      "to": {
+        "x": 24,
+        "y": 30
+      },
+      "material": "solid"
+    },
+    {
+      "from": {
+        "x": 24,
+        "y": 0
+      },
+      "to": {
+        "x": 40,
+        "y": 0
+      },
+      "material": "glass"
+    },
+    {
+      "from": {
+        "x": 40,
+        "y": 0
+      },
+      "to": {
+        "x": 40,
+        "y": 30
+      },
+      "material": "glass"
+    },
+    {
+      "from": {
+        "x": 24,
+        "y": 30
+      },
+      "to": {
+        "x": 40,
+        "y": 30
+      },
+      "material": "glass"
+    },
+    {
+      "from": {
+        "x": 24,
+        "y": 0
+      },
+      "to": {
+        "x": 24,
+        "y": 30
+      },
+      "material": "glass"
+    }
+  ],
+  "doors": [
+    {
+      "x": 24,
+      "y": 8,
+      "side": "west"
+    },
+    {
+      "x": 24,
+      "y": 9,
+      "side": "west"
+    },
+    {
+      "x": 24,
+      "y": 20,
+      "side": "west"
+    },
+    {
+      "x": 24,
+      "y": 21,
+      "side": "west"
+    }
+  ],
+  "rooms": [
+    {
+      "id": "lounge",
+      "name": "Lounge",
+      "kind": "lounge",
+      "areas": [
+        {
+          "x": 0,
+          "y": 0,
+          "width": 24,
+          "height": 30
+        }
+      ],
+      "doorMode": "open"
+    },
+    {
+      "id": "terrace",
+      "name": "Terrace",
+      "kind": "terrace",
+      "areas": [
+        {
+          "x": 24,
+          "y": 0,
+          "width": 16,
+          "height": 30
+        }
+      ],
+      "doorMode": "open"
+    }
+  ],
+  "furniture": [
+    {
+      "id": "stage-1",
+      "catalogItemId": "stage",
+      "x": 8,
+      "y": 2,
+      "rotation": 0
+    },
+    {
+      "id": "sofa-1",
+      "catalogItemId": "sofa",
+      "x": 5,
+      "y": 11,
+      "rotation": 0
+    },
+    {
+      "id": "sofa-2",
+      "catalogItemId": "sofa",
+      "x": 11,
+      "y": 11,
+      "rotation": 0
+    },
+    {
+      "id": "sofa-3",
+      "catalogItemId": "sofa",
+      "x": 17,
+      "y": 11,
+      "rotation": 0
+    },
+    {
+      "id": "sofa-4",
+      "catalogItemId": "sofa",
+      "x": 5,
+      "y": 15,
+      "rotation": 0
+    },
+    {
+      "id": "sofa-5",
+      "catalogItemId": "sofa",
+      "x": 11,
+      "y": 15,
+      "rotation": 0
+    },
+    {
+      "id": "sofa-6",
+      "catalogItemId": "sofa",
+      "x": 17,
+      "y": 15,
+      "rotation": 0
+    },
+    {
+      "id": "kitchen-counter-1",
+      "catalogItemId": "kitchen-counter",
+      "x": 14,
+      "y": 26,
+      "rotation": 0
+    },
+    {
+      "id": "bar-table-1",
+      "catalogItemId": "bar-table",
+      "x": 12,
+      "y": 22,
+      "rotation": 0
+    },
+    {
+      "id": "bar-table-2",
+      "catalogItemId": "bar-table",
+      "x": 16,
+      "y": 22,
+      "rotation": 0
+    },
+    {
+      "id": "bar-table-3",
+      "catalogItemId": "bar-table",
+      "x": 20,
+      "y": 22,
+      "rotation": 0
+    },
+    {
+      "id": "plant-1",
+      "catalogItemId": "plant",
+      "x": 1,
+      "y": 1,
+      "rotation": 0
+    },
+    {
+      "id": "plant-2",
+      "catalogItemId": "plant",
+      "x": 22,
+      "y": 1,
+      "rotation": 0
+    },
+    {
+      "id": "plant-3",
+      "catalogItemId": "plant",
+      "x": 1,
+      "y": 28,
+      "rotation": 0
+    },
+    {
+      "id": "plant-4",
+      "catalogItemId": "plant",
+      "x": 22,
+      "y": 28,
+      "rotation": 0
+    },
+    {
+      "id": "parasol-table-1",
+      "catalogItemId": "parasol-table",
+      "x": 27,
+      "y": 3,
+      "rotation": 0
+    },
+    {
+      "id": "parasol-table-2",
+      "catalogItemId": "parasol-table",
+      "x": 33,
+      "y": 3,
+      "rotation": 0
+    },
+    {
+      "id": "parasol-table-3",
+      "catalogItemId": "parasol-table",
+      "x": 27,
+      "y": 12,
+      "rotation": 0
+    },
+    {
+      "id": "parasol-table-4",
+      "catalogItemId": "parasol-table",
+      "x": 33,
+      "y": 12,
+      "rotation": 0
+    },
+    {
+      "id": "deck-chair-1",
+      "catalogItemId": "deck-chair",
+      "x": 27,
+      "y": 22,
+      "rotation": 0
+    },
+    {
+      "id": "deck-chair-2",
+      "catalogItemId": "deck-chair",
+      "x": 30,
+      "y": 22,
+      "rotation": 0
+    },
+    {
+      "id": "deck-chair-3",
+      "catalogItemId": "deck-chair",
+      "x": 33,
+      "y": 22,
+      "rotation": 0
+    },
+    {
+      "id": "deck-chair-4",
+      "catalogItemId": "deck-chair",
+      "x": 36,
+      "y": 22,
+      "rotation": 0
+    },
+    {
+      "id": "plant-5",
+      "catalogItemId": "plant",
+      "x": 38,
+      "y": 1,
+      "rotation": 0
+    },
+    {
+      "id": "plant-6",
+      "catalogItemId": "plant",
+      "x": 38,
+      "y": 28,
+      "rotation": 0
+    },
+    {
+      "id": "plant-7",
+      "catalogItemId": "plant",
+      "x": 25,
+      "y": 28,
+      "rotation": 0
+    }
+  ],
+  "spawnPoints": [
+    {
+      "x": 10,
+      "y": 24
+    },
+    {
+      "x": 11,
+      "y": 24
+    },
+    {
+      "x": 12,
+      "y": 24
+    }
+  ]
+}

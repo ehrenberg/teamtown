@@ -8,3 +8,7 @@ allowBuilds:
   electron: true
   esbuild: true
   lefthook: true
+  # Optional native add-ons of testcontainers' SSH/Docker client; not needed, so never run.
+  cpu-features: false
+  protobufjs: false
+  ssh2: false

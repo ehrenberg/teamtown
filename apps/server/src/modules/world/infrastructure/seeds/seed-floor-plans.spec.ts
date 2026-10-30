@@ -1,0 +1,15 @@
+import { unwrap } from '@teamtown/kernel';
+import { describe, expect, it } from 'vitest';
+import { FloorPlan } from '../../domain/floor-plan.ts';
+import { loadSeedFloorPlans } from './seed-floor-plans.ts';
+
+describe('seed floor plans', () => {
+  it.each(loadSeedFloorPlans().map((seed) => [seed.floorId, seed] as const))(
+    '"%s" matches the contract and satisfies all domain invariants',
+    (_, seed) => {
+      const plan = unwrap(FloorPlan.create(seed));
+
+      expect(plan.props.spawnPoints.every((spawn) => plan.grid.isWalkable(spawn))).toBe(true);
+    },
+  );
+});

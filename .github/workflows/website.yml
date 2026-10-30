@@ -54,6 +54,9 @@ jobs:
           protocol: ftps
           local-dir: apps/website/dist/
           server-dir: ${{ secrets.FTP_SERVER_DIR }}
+          # Shared hosting can be slow; the action resumes from its sync state file on the next run.
+          timeout: 120000
+          log-level: verbose
 
       - name: Deployment skipped
         if: env.FTP_SERVER == ''
