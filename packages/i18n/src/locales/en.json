@@ -2,12 +2,31 @@
   "app": {
     "name": "TeamTown",
     "tagline": "Where teams live.",
-    "worldLabel": "Isometric office. A list view will follow."
+    "worldLabel": "Isometric office. The people list on the left shows everyone on this floor."
   },
-  "server": {
-    "checking": "Connecting to TeamTown…",
-    "online": "Server online · v{{version}}",
-    "offline": "Server unreachable. Start it with “pnpm dev”."
+  "auth": {
+    "welcome": "Welcome to TeamTown",
+    "intro": "Sign in with your company account to walk into the office.",
+    "signIn": "Sign in",
+    "signOut": "Sign out",
+    "opening": "Opening the door…"
+  },
+  "office": {
+    "loading": "Loading the office…",
+    "loadError": "The office could not be loaded. Please try again in a moment.",
+    "floors": "Floors",
+    "level_zero": "Ground floor",
+    "level_other": "Floor {{level}}",
+    "people": "People on this floor",
+    "peopleCount_one": "{{count}} person here",
+    "peopleCount_other": "{{count}} people here",
+    "you": "you",
+    "walkHint": "Click a tile or use WASD / arrow keys to walk."
+  },
+  "connection": {
+    "connecting": "Connecting…",
+    "online": "Live",
+    "offline": "Offline, reconnecting…"
   },
   "status": {
     "available": "Available",

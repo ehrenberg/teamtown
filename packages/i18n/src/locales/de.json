@@ -2,12 +2,31 @@
   "app": {
     "name": "TeamTown",
     "tagline": "Wo Teams zuhause sind.",
-    "worldLabel": "Isometrisches Büro. Eine Listenansicht folgt."
+    "worldLabel": "Isometrisches Büro. Die Personenliste links zeigt alle auf dieser Etage."
   },
-  "server": {
-    "checking": "Verbinde mit TeamTown…",
-    "online": "Server online · v{{version}}",
-    "offline": "Server nicht erreichbar. Starte ihn mit „pnpm dev“."
+  "auth": {
+    "welcome": "Willkommen bei TeamTown",
+    "intro": "Melde dich mit deinem Firmenkonto an und komm ins Büro.",
+    "signIn": "Anmelden",
+    "signOut": "Abmelden",
+    "opening": "Die Tür geht auf…"
+  },
+  "office": {
+    "loading": "Das Büro wird geladen…",
+    "loadError": "Das Büro konnte nicht geladen werden. Versuch es gleich noch einmal.",
+    "floors": "Etagen",
+    "level_zero": "Erdgeschoss",
+    "level_other": "{{level}}. OG",
+    "people": "Auf dieser Etage",
+    "peopleCount_one": "{{count}} Person hier",
+    "peopleCount_other": "{{count}} Personen hier",
+    "you": "du",
+    "walkHint": "Klick auf eine Kachel oder nutze WASD / Pfeiltasten zum Gehen."
+  },
+  "connection": {
+    "connecting": "Verbinde…",
+    "online": "Live",
+    "offline": "Offline, verbinde neu…"
   },
   "status": {
     "available": "Verfügbar",

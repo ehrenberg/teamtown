@@ -27,13 +27,13 @@ office, so that I can feel who is around.
 
 ## Acceptance criteria
 
-- [ ] Given two logged-in people on the same floor, when one clicks a reachable tile, then the other sees the avatar walk there within 150 ms (local network).
-- [ ] Given a wall between two tiles, when someone clicks behind it, then the avatar walks around it (never through).
-- [ ] Given an unreachable tile, then nothing moves and the client shows no error noise (Nack `unreachable`).
-- [ ] Given a person switches floors, then they disappear from the old floor and appear on the new one for everyone.
-- [ ] Non-spatial path: a "People on this floor" list shows everyone by name, keyboard-accessible.
-- [ ] Keyboard: the avatar can be moved with WASD/arrow keys; focus is visible.
-- [ ] i18n: all new UI strings exist in EN and DE.
+- [ ] Given two logged-in people on the same floor, when one clicks a reachable tile, then the other sees the avatar walk there within 150 ms (local network). _(Walking is visible to others: e2e `walking-skeleton.spec.ts`; the 150 ms budget is not measured yet.)_
+- [x] Given a wall between two tiles, when someone clicks behind it, then the avatar walks around it (never through).
+- [x] Given an unreachable tile, then nothing moves and the client shows no error noise (Nack `unreachable`).
+- [x] Given a person switches floors, then they disappear from the old floor and appear on the new one for everyone.
+- [x] Non-spatial path: a "People on this floor" list shows everyone by name, keyboard-accessible.
+- [x] Keyboard: the avatar can be moved with WASD/arrow keys; focus is visible.
+- [x] i18n: all new UI strings exist in EN and DE.
 
 ## Permissions
 

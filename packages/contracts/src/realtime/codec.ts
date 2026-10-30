@@ -5,7 +5,9 @@ import { ClientCommand, ServerEvent } from './messages.ts';
 
 export type DecodeError = 'malformed' | 'invalid';
 
-export const encodeMessage = (message: ClientCommand | ServerEvent): Uint8Array => encode(message);
+/** Returns a plain ArrayBuffer-backed array, as browser `WebSocket.send` requires. */
+export const encodeMessage = (message: ClientCommand | ServerEvent): Uint8Array<ArrayBuffer> =>
+  new Uint8Array(encode(message));
 
 function decodeWith<Schema extends z.ZodType>(schema: Schema, bytes: Uint8Array): Result<z.infer<Schema>, DecodeError> {
   let raw: unknown;

@@ -31,3 +31,7 @@ Thumbs.db
 apps/website/src/content/docs/
 apps/website/src/assets/brand/
 .astro/
+
+# Playwright output
+tests/e2e/test-results/
+tests/e2e/playwright-report/

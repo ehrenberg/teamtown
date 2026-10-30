@@ -1,6 +1,7 @@
 packages:
   - apps/*
   - packages/*
+  - tests/*
 
 # pnpm blocks dependency install scripts by default; allow only what needs them.
 allowBuilds:

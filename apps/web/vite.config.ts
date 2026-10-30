@@ -16,6 +16,7 @@ export default defineConfig({
     strictPort: true,
     proxy: {
       '/api': SERVER_URL,
+      '/realtime': { target: SERVER_URL, ws: true },
     },
   },
   test: {

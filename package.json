@@ -25,6 +25,7 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "test:watch": "vitest",
+    "e2e": "pnpm --filter @teamtown/e2e e2e",
     "arch": "depcruise apps packages --config .dependency-cruiser.cjs",
     "check:licenses": "node scripts/check-licenses.mjs",
     "check:dco": "node scripts/check-dco.mjs",
