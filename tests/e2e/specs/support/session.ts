@@ -50,6 +50,8 @@ export async function signIn(browser: Browser, username: string, password: strin
   await expect(page.getByRole('meter', { name: 'Microphone level' })).toBeVisible();
   await page.getByRole('button', { name: 'Enter the office' }).click();
   await expect(page.getByRole('status').filter({ hasText: 'Live' })).toBeVisible();
+  // The own avatar is on the floor: walking and calling work from here on.
+  await expect(page.getByRole('region', { name: 'People on this floor' })).toContainText('(you)');
   return { page, frames };
 }
 

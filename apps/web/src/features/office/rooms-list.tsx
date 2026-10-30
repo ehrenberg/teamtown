@@ -9,7 +9,8 @@ import { DOOR_MODE_ICONS } from './room-controls.tsx';
 import type { RoomInfo } from './rooms.ts';
 
 const POLL_MS = 500;
-const LINK_BUTTON = 'min-h-6 rounded-sm px-1.5 py-0.5 text-xs font-medium text-text-link hover:bg-neutral-100';
+const LINK_BUTTON =
+  'min-h-6 rounded-sm px-1.5 py-0.5 text-xs font-medium text-text-link hover:bg-neutral-100 disabled:opacity-50';
 
 /** Who is in which room, polled, because walking changes rooms without any event. */
 function useOccupancy(roomMap: RoomMap): Readonly<Record<string, readonly string[]>> {
@@ -51,6 +52,7 @@ export function RoomsList({
   const realtime = useRealtime();
   const avatars = usePresenceStore((state) => state.avatars);
   const myPersonId = usePresenceStore((state) => state.myPersonId);
+  const iAmHere = usePresenceStore((state) => state.myPersonId !== null && state.myPersonId in state.avatars);
   const doorModes = useRoomStore((state) => state.doorModes);
   const waitingFor = useRoomStore((state) => myKnock(state.knocks, myPersonId));
   const occupancy = useOccupancy(roomMap);
@@ -92,6 +94,7 @@ export function RoomsList({
                   <button
                     type="button"
                     aria-label={t('room.goTo', { room: room.name })}
+                    disabled={!iAmHere}
                     onClick={() => {
                       onGoTo(room.roomId);
                     }}

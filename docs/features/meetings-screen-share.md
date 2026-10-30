@@ -72,7 +72,7 @@ direct call may share. No new permissions.
 
 ## UI / design
 
-- Toolbar (room and direct calls): "Share screen" toggle (icon **and** text).
+- Media bar (room and direct calls): "Share screen" toggle (icon **and** text).
 - Video panel: a large share tile above the camera tiles, with the sharer's name and "Full screen".
 - World: the `tv-wall` in the call's room shows the share as a live picture for participants; a pointer cursor and
   a click open full screen.

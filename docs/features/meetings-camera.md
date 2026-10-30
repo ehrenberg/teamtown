@@ -78,7 +78,7 @@ their camera on. No new permissions.
 
 ## UI / design
 
-- Toolbar: "Camera" toggle next to the microphone (icon **and** text; "No camera" when unavailable), with a small
+- Media bar (floating at the bottom of the world view, decided 2026-10-30): "Camera" toggle next to the microphone (icon **and** text; "No camera" when unavailable), with a small
   self-preview while on.
 - World: round video bubbles above avatars (DOM overlay like the name labels), size and opacity by distance; a
   camera icon in the name label for people with the camera on.

@@ -50,7 +50,8 @@
     "microphoneOn": "Mikro an",
     "microphoneOff": "Mikro aus",
     "microphoneUnavailable": "Kein Mikro",
-    "microphoneShortcut": "Mikrofon ein- oder ausschalten (M)"
+    "microphoneShortcut": "Mikrofon ein- oder ausschalten (M)",
+    "controls": "Mikrofon, Kamera und Bildschirm"
   },
   "conversation": {
     "title": "Gespräch",

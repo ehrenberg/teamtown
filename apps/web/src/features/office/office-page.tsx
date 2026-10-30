@@ -150,10 +150,6 @@ export function OfficePage() {
             <Phone aria-hidden="true" className="size-4" />
             {t('call.callSomeone')}
           </Button>
-          <ConversationLockToggle />
-          <MicrophoneToggle />
-          <CameraToggle />
-          <ScreenShareToggle />
           <ConnectionBadge />
           {me.data && (
             <span
@@ -206,6 +202,17 @@ export function OfficePage() {
           <p className="p-8 text-text-secondary">{t('office.loading')}</p>
         )}
         <VideoGrid />
+        {/* Media controls float above the world, like in meeting apps; the header keeps navigation. */}
+        <div
+          role="group"
+          aria-label={t('media.controls')}
+          className="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1 rounded-md bg-surface-raised/95 p-1.5 whitespace-nowrap shadow-raised"
+        >
+          <MicrophoneToggle />
+          <CameraToggle />
+          <ScreenShareToggle />
+          <ConversationLockToggle />
+        </div>
         {closedDoorRoom && (
           <DoorNotice
             room={closedDoorRoom}
