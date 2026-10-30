@@ -18,6 +18,7 @@
     "dev": "turbo run dev --filter=@teamtown/server --filter=@teamtown/web",
     "dev:desktop": "turbo run dev --filter=@teamtown/desktop",
     "dev:website": "turbo run dev --filter=@teamtown/website",
+    "dev:echo": "pnpm --filter @teamtown/server exec node src/dev/echo-colleague.ts",
     "build": "turbo run build",
     "typecheck": "turbo run typecheck",
     "lint": "eslint . --max-warnings=0",

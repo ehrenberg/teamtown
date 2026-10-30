@@ -23,3 +23,8 @@ server itself (needs an exporter) follow later.
 The OpenTelemetry collector drops presence and message attributes as a privacy safety net (ADR-0012, ADR-0019).
 
 The production Compose setup (Caddy, hostnames, secrets) is part of milestone M6.
+
+## Testing audio alone
+
+`pnpm dev:echo` starts an "echo colleague": it signs in as `demo2`, follows whoever is on the floor (sign in as
+`demo` yourself) and plays back what you say one second later. Use headphones.

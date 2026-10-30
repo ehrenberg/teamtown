@@ -58,6 +58,7 @@ room meetings (open/knock/locked), channels and DMs with scoped roles.
 | Backing services (Postgres, Keycloak, LiveKit, observability) | `pnpm stack:up` / `pnpm stack:down`                                                          |
 | Server + web client in dev mode                               | `pnpm dev` (web on :5173, API on :3000)                                                      |
 | Desktop shell / website                                       | `pnpm dev:desktop` / `pnpm dev:website`                                                      |
+| Test audio alone: a colleague who follows you and echoes you  | `pnpm dev:echo` (signs in as `demo2`; you use `demo`)                                        |
 | Everything CI checks                                          | `pnpm check`                                                                                 |
 | Single checks                                                 | `pnpm lint`, `pnpm typecheck`, `pnpm arch`, `pnpm test`, `pnpm build`, `pnpm check:licenses` |
 | Tests of one project                                          | `pnpm vitest run --project @teamtown/<name>`                                                 |
