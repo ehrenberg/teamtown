@@ -26,6 +26,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "e2e": "pnpm --filter @teamtown/e2e e2e",
+    "api:test": "postman collection run \"postman/collections/TeamTown API\" -e postman/environments/Local.environment.yaml",
     "arch": "depcruise apps packages --config .dependency-cruiser.cjs",
     "check:licenses": "node scripts/check-licenses.mjs",
     "check:dco": "node scripts/check-dco.mjs",

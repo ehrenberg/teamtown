@@ -1,0 +1,11 @@
+$kind: http-request
+method: GET
+url: '{{baseUrl}}/me'
+order: 3000
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test('rejects requests without a token with 401', () => pm.response.to.have.status(401));

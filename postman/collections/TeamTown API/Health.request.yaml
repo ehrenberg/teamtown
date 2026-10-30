@@ -1,0 +1,17 @@
+$kind: http-request
+method: GET
+url: '{{baseUrl}}/health'
+order: 1000
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test('responds 200', () => pm.response.to.have.status(200));
+      pm.test('matches HealthResponse', () => {
+        const body = pm.response.json();
+        pm.expect(body.status).to.equal('ok');
+        pm.expect(body.version).to.be.a('string');
+        pm.expect(body.uptimeSeconds).to.be.a('number').and.at.least(0);
+      });

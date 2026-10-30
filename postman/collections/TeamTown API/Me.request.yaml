@@ -1,0 +1,18 @@
+$kind: http-request
+method: GET
+url: '{{baseUrl}}/me'
+order: 2000
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test('responds 200', () => pm.response.to.have.status(200));
+      pm.test('matches MeResponse', () => {
+        const body = pm.response.json();
+        pm.expect(body.personId).to.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
+        pm.expect(body.displayName).to.be.a('string').and.not.empty;
+        pm.expect(body.avatarColor).to.match(/^#[0-9a-f]{6}$/i);
+      });
+      pm.test('exposes only the fields of the contract', () => {
+        pm.expect(Object.keys(pm.response.json()).sort()).to.eql(['avatarColor', 'displayName', 'personId']);
+      });

@@ -59,6 +59,7 @@ room meetings (open/knock/locked), channels and DMs with scoped roles.
 | Everything CI checks                                          | `pnpm check`                                                                                 |
 | Single checks                                                 | `pnpm lint`, `pnpm typecheck`, `pnpm arch`, `pnpm test`, `pnpm build`, `pnpm check:licenses` |
 | Tests of one project                                          | `pnpm vitest run --project @teamtown/<name>`                                                 |
+| End-to-end and REST contract tests (need stack + `pnpm dev`)  | `pnpm e2e` (Playwright), `pnpm api:test` (Postman CLI, `postman/`)                           |
 | Regenerate Tailwind theme after editing tokens                | `pnpm tokens`                                                                                |
 
 Tooling facts (ADR-0028): pnpm 12, Node 24 via `devEngines`, TypeScript 6.0 (not 7), ESLint 9 (not 10),

@@ -22,7 +22,7 @@ teamtown/
 │   └── mockups/             HTML/SVG design mockups
 ├── docs/                    Product, architecture (incl. ADRs), engineering, design
 ├── docker/                  Compose files, Caddyfile, Keycloak realm, LiveKit and observability config
-├── postman/                 Postman CLI collections for REST API tests (planned, M1)
+├── postman/                 Postman CLI collections and environments for REST API tests
 ├── scripts/                 Repository checks: licences, DCO sign-off
 ├── .claude/skills/          Project skills for Claude Code
 ├── .github/                 Workflows, issue and PR templates

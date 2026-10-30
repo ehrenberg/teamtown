@@ -1,0 +1,28 @@
+$kind: http-request
+method: GET
+url: '{{baseUrl}}/floors/:floorId/plan'
+order: 5000
+pathVariables:
+  - key: floorId
+    value: '{{floorId}}'
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test('responds 200', () => pm.response.to.have.status(200));
+      const plan = pm.response.json();
+      pm.test('returns the requested floor in the canonical floor-plan format', () => {
+        pm.expect(plan.floorId).to.equal(pm.collectionVariables.get('floorId'));
+        pm.expect(plan.version).to.be.a('number').and.above(0);
+        pm.expect(plan.width).to.be.a('number').and.above(0);
+        pm.expect(plan.height).to.be.a('number').and.above(0);
+        pm.expect(plan.floorAreas).to.be.an('array').and.not.empty;
+        pm.expect(plan.spawnPoints).to.be.an('array').and.not.empty;
+        for (const key of ['walls', 'doors', 'rooms', 'furniture']) pm.expect(plan[key], key).to.be.an('array');
+      });
+      pm.test('spawn points lie inside the floor', () => {
+        for (const point of plan.spawnPoints) {
+          pm.expect(point.x).to.be.within(0, plan.width - 1);
+          pm.expect(point.y).to.be.within(0, plan.height - 1);
+        }
+      });

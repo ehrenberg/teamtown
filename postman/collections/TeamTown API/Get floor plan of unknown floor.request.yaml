@@ -1,0 +1,12 @@
+$kind: http-request
+method: GET
+url: '{{baseUrl}}/floors/:floorId/plan'
+order: 6000
+pathVariables:
+  - key: floorId
+    value: no-such-floor
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test('responds 404 for an unknown floor', () => pm.response.to.have.status(404));

@@ -1,0 +1,27 @@
+name: Local
+values:
+  - key: baseUrl
+    value: 'http://localhost:3000/api'
+    enabled: true
+    type: default
+    description: TeamTown server started with `pnpm dev`.
+  - key: oidcTokenUrl
+    value: 'http://localhost:8080/realms/teamtown/protocol/openid-connect/token'
+    enabled: true
+    type: default
+    description: Keycloak of `pnpm stack:up`.
+  - key: oidcClientId
+    value: teamtown-api-tests
+    enabled: true
+    type: default
+    description: Dev-realm-only client with password grant (docker/keycloak/realm-teamtown.json).
+  - key: username
+    value: demo
+    enabled: true
+    type: default
+    description: Demo user of the dev realm (docker/README.md).
+  - key: password
+    value: demo
+    enabled: true
+    type: secret
+    description: Public dev-only demo password (docker/README.md); use real secrets for other environments.

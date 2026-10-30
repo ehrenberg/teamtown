@@ -59,6 +59,28 @@
           }
         }
       ]
+    },
+    {
+      "clientId": "teamtown-api-tests",
+      "name": "TeamTown API tests (Postman CLI, dev realm only - never in production)",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "redirectUris": [],
+      "protocolMappers": [
+        {
+          "name": "teamtown-api-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.custom.audience": "teamtown-api",
+            "access.token.claim": "true",
+            "id.token.claim": "false",
+            "introspection.token.claim": "true"
+          }
+        }
+      ]
     }
   ],
   "users": [

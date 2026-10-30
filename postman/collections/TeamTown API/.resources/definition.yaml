@@ -1,0 +1,52 @@
+$kind: collection
+name: TeamTown API
+description: |-
+  REST API of the TeamTown server (contracts: packages/contracts). Run it against the local dev stack
+  with `pnpm api:test` (see postman/README.md). Realtime messages are covered by Vitest, not by this collection.
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{accessToken}}'
+variables:
+  - key: accessToken
+    value: ''
+    description: Set by the collection script; never commit a value.
+  - key: accessTokenExpiresAt
+    value: '0'
+    description: ms since the epoch; set by the collection script.
+  - key: floorId
+    value: ground-floor
+    description: Set by "List floors" to the first floor of the office.
+scripts:
+  - type: http:beforeRequest
+    language: text/javascript
+    code: |-
+      // Fetches an access token for the demo user from the dev realm (client teamtown-api-tests, docker/keycloak).
+      const expiresAt = Number(pm.collectionVariables.get('accessTokenExpiresAt') || 0);
+      if (!pm.collectionVariables.get('accessToken') || Date.now() > expiresAt - 30000) {
+        pm.sendRequest(
+          {
+            url: pm.variables.get('oidcTokenUrl'),
+            method: 'POST',
+            header: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: {
+              mode: 'urlencoded',
+              urlencoded: [
+                { key: 'grant_type', value: 'password' },
+                { key: 'client_id', value: pm.variables.get('oidcClientId') },
+                { key: 'username', value: pm.variables.get('username') },
+                { key: 'password', value: pm.variables.get('password') },
+                { key: 'scope', value: 'openid' },
+              ],
+            },
+          },
+          (error, response) => {
+            if (error) throw error;
+            if (response.code !== 200) throw new Error(`Token request failed with ${response.code}`);
+            const body = response.json();
+            pm.collectionVariables.set('accessToken', body.access_token);
+            pm.collectionVariables.set('accessTokenExpiresAt', String(Date.now() + body.expires_in * 1000));
+          },
+        );
+      }

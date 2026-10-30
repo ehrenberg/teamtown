@@ -1,0 +1,22 @@
+$kind: http-request
+method: GET
+url: '{{baseUrl}}/floors'
+order: 4000
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test('responds 200', () => pm.response.to.have.status(200));
+      const { floors } = pm.response.json();
+      pm.test('matches FloorListResponse', () => {
+        pm.expect(floors).to.be.an('array').and.not.empty;
+        for (const floor of floors) {
+          pm.expect(floor.floorId).to.match(/^[a-z0-9][a-z0-9-]{0,62}$/);
+          pm.expect(floor.name).to.be.a('string').and.not.empty;
+          pm.expect(floor.level).to.be.a('number');
+        }
+      });
+      pm.test('lists the seeded demo office with ground and upper floor', () => {
+        pm.expect(floors.map((floor) => floor.level)).to.include.members([0, 1]);
+      });
+      if (floors && floors.length > 0) pm.collectionVariables.set('floorId', floors[0].floorId);
