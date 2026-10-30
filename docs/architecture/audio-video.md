@@ -4,27 +4,28 @@ Decided: **LiveKit** as WebRTC SFU, including its built-in TURN ([ADR-0008](adr/
 TeamTown never handles media streams itself. It decides **who may hear and see whom**, and LiveKit
 enforces it. The mapping below is decided ([ADR-0022](adr/0022-realtime-and-media-topology.md)).
 
-## 1. Principle: the server controls subscriptions
+## 1. Principle: the server controls who is in which room
 
-LiveKit lets the server set per-participant **track subscription permissions**. Clients cannot
-subscribe to tracks they were not granted, even with a modified client. That is the backbone of privacy
-for locked rooms and private conversations.
+LiveKit can't grant subscriptions per track from the server (spike, ADR-0032). TeamTown therefore decides who
+hears whom by **room membership**: the server issues LiveKit tokens only to the people who belong in a LiveKit
+room, removes people who leave, and reconciles each room's participants. A modified client can't join a room
+it has no token for.
 
 ## 2. Mapping TeamTown concepts to LiveKit rooms
 
-| TeamTown concept                 | LiveKit room                                            | Who can hear whom                                                                                                                   |
-| -------------------------------- | ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| **Open floor space** (proximity) | One LiveKit room per **floor**: `floor:{floorId}`       | The Meetings module computes proximity groups (distance + line of sight through walls) and grants subscriptions only within a group |
-| **Room call** (meeting room)     | One LiveKit room per **TeamTown room**: `room:{roomId}` | Everyone in the room. Entering or leaving the room = joining or leaving the LiveKit room.                                           |
-| **Direct call**                  | `direct:{callId}`                                       | Caller and callee                                                                                                                   |
-| **Town hall** (later)            | `stage:{roomId}`                                        | Speakers publish, audience subscribes only                                                                                          |
+| TeamTown concept             | LiveKit room                                                                      | Who can hear whom                                                                                          |
+| ---------------------------- | --------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| **Proximity conversation**   | One LiveKit room per **conversation**: `conversation:{conversationId}` (ADR-0032) | The Meetings module computes conversations (distance + walls) and issues tokens only to their participants |
+| **Room call** (meeting room) | One LiveKit room per **TeamTown room**: `room:{roomId}`                           | Everyone in the room. Entering or leaving the room = joining or leaving the LiveKit room.                  |
+| **Direct call**              | `direct:{callId}`                                                                 | Caller and callee                                                                                          |
+| **Town hall** (later)        | `stage:{roomId}`                                                                  | Speakers publish, audience subscribes only                                                                 |
 
 Why separate LiveKit rooms for meeting rooms: clean isolation, independent recording later, and
 participants in a meeting never accidentally hear the floor.
 
 ## 3. Spatial audio _(decided, ADR-0031)_
 
-- **Server side:** decides _whether_ a track is audible (group membership, walls, locks).
+- **Server side:** decides _whether_ someone is audible (conversation membership, walls, locks) via LiveKit room membership.
 - **Groups:** a conversation forms at a distance ≤ 4 tiles and dissolves at > 6 tiles (hysteresis, so audio
   doesn't flicker at the edge). Groups are transitive: if A is near B and B near C, all three hear each other.
   Every wall blocks sound, glass included; doors are openings. People in a conversation can lock it.

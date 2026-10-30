@@ -1,6 +1,6 @@
 # ADR-0022: Realtime gateway in-process; LiveKit room mapping
 
-- **Status:** Accepted
+- **Status:** Accepted; the proximity mapping (one room per floor) is superseded by [ADR-0032](0032-livekit-room-per-conversation.md)
 - **Date:** 2026-10-29
 - **Deciders:** Product owner
 

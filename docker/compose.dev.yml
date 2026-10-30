@@ -38,8 +38,9 @@ services:
 
   livekit:
     image: livekit/livekit-server:v1.13.11
-    # --dev uses the API key "devkey" with secret "secret".
-    command: ['--dev', '--bind', '0.0.0.0']
+    # --dev uses the API key "devkey" with secret "secret". --node-ip: browsers on the host must get
+    # 127.0.0.1 as the media address, not the container IP (Docker Desktop can't route to it).
+    command: ['--dev', '--bind', '0.0.0.0', '--node-ip', '127.0.0.1']
     ports:
       - '7880:7880'
       - '7881:7881'
