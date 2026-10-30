@@ -7,4 +7,5 @@ LICENSE
 CODE_OF_CONDUCT.md
 design/mockups/
 packages/ui/src/styles/tokens.css
+docs/api/asyncapi.yaml
 apps/website/src/content/docs/

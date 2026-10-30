@@ -17,6 +17,7 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
-    "@teamtown/config": "workspace:*"
+    "@teamtown/config": "workspace:*",
+    "yaml": "^2.9.1"
   }
 }

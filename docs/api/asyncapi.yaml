@@ -1,0 +1,861 @@
+asyncapi: 3.0.0
+info:
+  title: TeamTown realtime protocol
+  version: "1"
+  description: |-
+    One WebSocket per client. Every message is a MessagePack-encoded envelope `{ t, id?, p }`:
+    `t` is the message type, `id` an optional correlation ID, `p` the payload.
+    Commands go client → server and are answered with `Ack` or `Nack` when they carry an `id`.
+    Events go server → client.
+
+    The protocol version is negotiated with the WebSocket subprotocol `teamtown.v1`.
+
+    Generated from `packages/contracts` by `pnpm asyncapi`. Do not edit by hand.
+  license:
+    name: AGPL-3.0-only
+    url: https://www.gnu.org/licenses/agpl-3.0.html
+defaultContentType: application/msgpack
+servers:
+  local:
+    host: localhost:3000
+    protocol: ws
+    pathname: /realtime
+    description: Local development
+channels:
+  realtime:
+    address: /realtime
+    messages:
+      Authenticate:
+        name: Authenticate
+        title: Authenticate
+        summary: Authenticates the connection with the OIDC access token. Must be the first command; send again with a refreshed token.
+        payload:
+          type: object
+          properties:
+            t:
+              type: string
+              const: Authenticate
+            id:
+              type: string
+              minLength: 1
+              maxLength: 64
+            p:
+              type: object
+              properties:
+                accessToken:
+                  type: string
+                  minLength: 1
+                  maxLength: 8192
+              required:
+                - accessToken
+          required:
+            - t
+            - p
+      Ping:
+        name: Ping
+        title: Ping
+        summary: "Clock sync: sends the local time and receives the server time back (Pong)."
+        payload:
+          type: object
+          properties:
+            t:
+              type: string
+              const: Ping
+            id:
+              type: string
+              minLength: 1
+              maxLength: 64
+            p:
+              type: object
+              properties:
+                clientTime:
+                  type: number
+              required:
+                - clientTime
+          required:
+            - t
+            - p
+      JoinFloor:
+        name: JoinFloor
+        title: JoinFloor
+        summary: Enters a floor or switches floors. The server places the avatar at a spawn point and sends a FloorSnapshot.
+        payload:
+          type: object
+          properties:
+            t:
+              type: string
+              const: JoinFloor
+            id:
+              type: string
+              minLength: 1
+              maxLength: 64
+            p:
+              type: object
+              properties:
+                floorId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+              required:
+                - floorId
+          required:
+            - t
+            - p
+      MoveTo:
+        name: MoveTo
+        title: MoveTo
+        summary: Walks to a tile on the current floor. The server computes and validates the path.
+        payload:
+          type: object
+          properties:
+            t:
+              type: string
+              const: MoveTo
+            id:
+              type: string
+              minLength: 1
+              maxLength: 64
+            p:
+              type: object
+              properties:
+                target:
+                  type: object
+                  properties:
+                    x:
+                      type: integer
+                      minimum: 0
+                      maximum: 9007199254740991
+                    y:
+                      type: integer
+                      minimum: 0
+                      maximum: 9007199254740991
+                  required:
+                    - x
+                    - y
+              required:
+                - target
+          required:
+            - t
+            - p
+      LockConversation:
+        name: LockConversation
+        title: LockConversation
+        summary: "Locks the own conversation: it takes in no new people. Any participant may lock it."
+        payload:
+          type: object
+          properties:
+            t:
+              type: string
+              const: LockConversation
+            id:
+              type: string
+              minLength: 1
+              maxLength: 64
+            p:
+              type: object
+              properties:
+                conversationId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+              required:
+                - conversationId
+          required:
+            - t
+            - p
+      UnlockConversation:
+        name: UnlockConversation
+        title: UnlockConversation
+        summary: Unlocks the own conversation.
+        payload:
+          type: object
+          properties:
+            t:
+              type: string
+              const: UnlockConversation
+            id:
+              type: string
+              minLength: 1
+              maxLength: 64
+            p:
+              type: object
+              properties:
+                conversationId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+              required:
+                - conversationId
+          required:
+            - t
+            - p
+      RequestConversationToken:
+        name: RequestConversationToken
+        title: RequestConversationToken
+        summary: Asks for a fresh media token for the own conversation, e.g. after a reconnect.
+        payload:
+          type: object
+          properties:
+            t:
+              type: string
+              const: RequestConversationToken
+            id:
+              type: string
+              minLength: 1
+              maxLength: 64
+            p:
+              type: object
+              properties:
+                conversationId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+              required:
+                - conversationId
+          required:
+            - t
+            - p
+      Authenticated:
+        name: Authenticated
+        title: Authenticated
+        summary: The connection is authenticated.
+        payload:
+          type: object
+          properties:
+            t:
+              type: string
+              const: Authenticated
+            p:
+              type: object
+              properties:
+                personId:
+                  type: string
+                  format: uuid
+                  pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                serverTime:
+                  type: number
+              required:
+                - personId
+                - serverTime
+              additionalProperties: false
+          required:
+            - t
+            - p
+          additionalProperties: false
+      Pong:
+        name: Pong
+        title: Pong
+        summary: Answer to Ping with the server time.
+        payload:
+          type: object
+          properties:
+            t:
+              type: string
+              const: Pong
+            p:
+              type: object
+              properties:
+                clientTime:
+                  type: number
+                serverTime:
+                  type: number
+              required:
+                - clientTime
+                - serverTime
+              additionalProperties: false
+          required:
+            - t
+            - p
+          additionalProperties: false
+      FloorSnapshot:
+        name: FloorSnapshot
+        title: FloorSnapshot
+        summary: Full state of a floor (avatars and conversations), sent after joining it.
+        payload:
+          type: object
+          properties:
+            t:
+              type: string
+              const: FloorSnapshot
+            p:
+              type: object
+              properties:
+                floorId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                avatars:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      personId:
+                        type: string
+                        format: uuid
+                        pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                      displayName:
+                        type: string
+                      avatarColor:
+                        type: string
+                        pattern: ^#[0-9a-f]{6}$
+                      tile:
+                        type: object
+                        properties:
+                          x:
+                            type: integer
+                            minimum: 0
+                            maximum: 9007199254740991
+                          y:
+                            type: integer
+                            minimum: 0
+                            maximum: 9007199254740991
+                        required:
+                          - x
+                          - y
+                        additionalProperties: false
+                      movement:
+                        anyOf:
+                          - type: object
+                            properties:
+                              from:
+                                type: object
+                                properties:
+                                  x:
+                                    type: integer
+                                    minimum: 0
+                                    maximum: 9007199254740991
+                                  y:
+                                    type: integer
+                                    minimum: 0
+                                    maximum: 9007199254740991
+                                required:
+                                  - x
+                                  - y
+                                additionalProperties: false
+                              path:
+                                type: array
+                                items:
+                                  type: object
+                                  properties:
+                                    x:
+                                      type: integer
+                                      minimum: 0
+                                      maximum: 9007199254740991
+                                    y:
+                                      type: integer
+                                      minimum: 0
+                                      maximum: 9007199254740991
+                                  required:
+                                    - x
+                                    - y
+                                  additionalProperties: false
+                              startedAt:
+                                type: number
+                              speedTilesPerSecond:
+                                type: number
+                                exclusiveMinimum: 0
+                            required:
+                              - from
+                              - path
+                              - startedAt
+                              - speedTilesPerSecond
+                            additionalProperties: false
+                          - type: "null"
+                    required:
+                      - personId
+                      - displayName
+                      - avatarColor
+                      - tile
+                      - movement
+                    additionalProperties: false
+                conversations:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      conversationId:
+                        type: string
+                        minLength: 1
+                        maxLength: 64
+                      participants:
+                        type: array
+                        items:
+                          type: string
+                          format: uuid
+                          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                      locked:
+                        type: boolean
+                    required:
+                      - conversationId
+                      - participants
+                      - locked
+                    additionalProperties: false
+              required:
+                - floorId
+                - avatars
+                - conversations
+              additionalProperties: false
+          required:
+            - t
+            - p
+          additionalProperties: false
+      AvatarJoined:
+        name: AvatarJoined
+        title: AvatarJoined
+        summary: Someone entered the floor. Sent to everyone on the floor.
+        payload:
+          type: object
+          properties:
+            t:
+              type: string
+              const: AvatarJoined
+            p:
+              type: object
+              properties:
+                floorId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                avatar:
+                  type: object
+                  properties:
+                    personId:
+                      type: string
+                      format: uuid
+                      pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                    displayName:
+                      type: string
+                    avatarColor:
+                      type: string
+                      pattern: ^#[0-9a-f]{6}$
+                    tile:
+                      type: object
+                      properties:
+                        x:
+                          type: integer
+                          minimum: 0
+                          maximum: 9007199254740991
+                        y:
+                          type: integer
+                          minimum: 0
+                          maximum: 9007199254740991
+                      required:
+                        - x
+                        - y
+                      additionalProperties: false
+                    movement:
+                      anyOf:
+                        - type: object
+                          properties:
+                            from:
+                              type: object
+                              properties:
+                                x:
+                                  type: integer
+                                  minimum: 0
+                                  maximum: 9007199254740991
+                                y:
+                                  type: integer
+                                  minimum: 0
+                                  maximum: 9007199254740991
+                              required:
+                                - x
+                                - y
+                              additionalProperties: false
+                            path:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  x:
+                                    type: integer
+                                    minimum: 0
+                                    maximum: 9007199254740991
+                                  y:
+                                    type: integer
+                                    minimum: 0
+                                    maximum: 9007199254740991
+                                required:
+                                  - x
+                                  - y
+                                additionalProperties: false
+                            startedAt:
+                              type: number
+                            speedTilesPerSecond:
+                              type: number
+                              exclusiveMinimum: 0
+                          required:
+                            - from
+                            - path
+                            - startedAt
+                            - speedTilesPerSecond
+                          additionalProperties: false
+                        - type: "null"
+                  required:
+                    - personId
+                    - displayName
+                    - avatarColor
+                    - tile
+                    - movement
+                  additionalProperties: false
+              required:
+                - floorId
+                - avatar
+              additionalProperties: false
+          required:
+            - t
+            - p
+          additionalProperties: false
+      AvatarLeft:
+        name: AvatarLeft
+        title: AvatarLeft
+        summary: Someone left the floor. Sent to everyone on the floor.
+        payload:
+          type: object
+          properties:
+            t:
+              type: string
+              const: AvatarLeft
+            p:
+              type: object
+              properties:
+                floorId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                personId:
+                  type: string
+                  format: uuid
+                  pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+              required:
+                - floorId
+                - personId
+              additionalProperties: false
+          required:
+            - t
+            - p
+          additionalProperties: false
+      AvatarPathStarted:
+        name: AvatarPathStarted
+        title: AvatarPathStarted
+        summary: Someone started walking along a server-validated path. Sent to everyone on the floor.
+        payload:
+          type: object
+          properties:
+            t:
+              type: string
+              const: AvatarPathStarted
+            p:
+              type: object
+              properties:
+                floorId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                personId:
+                  type: string
+                  format: uuid
+                  pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                movement:
+                  type: object
+                  properties:
+                    from:
+                      type: object
+                      properties:
+                        x:
+                          type: integer
+                          minimum: 0
+                          maximum: 9007199254740991
+                        y:
+                          type: integer
+                          minimum: 0
+                          maximum: 9007199254740991
+                      required:
+                        - x
+                        - y
+                      additionalProperties: false
+                    path:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          x:
+                            type: integer
+                            minimum: 0
+                            maximum: 9007199254740991
+                          y:
+                            type: integer
+                            minimum: 0
+                            maximum: 9007199254740991
+                        required:
+                          - x
+                          - y
+                        additionalProperties: false
+                    startedAt:
+                      type: number
+                    speedTilesPerSecond:
+                      type: number
+                      exclusiveMinimum: 0
+                  required:
+                    - from
+                    - path
+                    - startedAt
+                    - speedTilesPerSecond
+                  additionalProperties: false
+              required:
+                - floorId
+                - personId
+                - movement
+              additionalProperties: false
+          required:
+            - t
+            - p
+          additionalProperties: false
+      ConversationFormed:
+        name: ConversationFormed
+        title: ConversationFormed
+        summary: A proximity conversation formed. Sent to everyone on the floor.
+        payload:
+          type: object
+          properties:
+            t:
+              type: string
+              const: ConversationFormed
+            p:
+              type: object
+              properties:
+                floorId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                conversation:
+                  type: object
+                  properties:
+                    conversationId:
+                      type: string
+                      minLength: 1
+                      maxLength: 64
+                    participants:
+                      type: array
+                      items:
+                        type: string
+                        format: uuid
+                        pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                    locked:
+                      type: boolean
+                  required:
+                    - conversationId
+                    - participants
+                    - locked
+                  additionalProperties: false
+              required:
+                - floorId
+                - conversation
+              additionalProperties: false
+          required:
+            - t
+            - p
+          additionalProperties: false
+      ConversationChanged:
+        name: ConversationChanged
+        title: ConversationChanged
+        summary: Participants or the lock of a conversation changed. Sent to everyone on the floor.
+        payload:
+          type: object
+          properties:
+            t:
+              type: string
+              const: ConversationChanged
+            p:
+              type: object
+              properties:
+                floorId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                conversation:
+                  type: object
+                  properties:
+                    conversationId:
+                      type: string
+                      minLength: 1
+                      maxLength: 64
+                    participants:
+                      type: array
+                      items:
+                        type: string
+                        format: uuid
+                        pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                    locked:
+                      type: boolean
+                  required:
+                    - conversationId
+                    - participants
+                    - locked
+                  additionalProperties: false
+              required:
+                - floorId
+                - conversation
+              additionalProperties: false
+          required:
+            - t
+            - p
+          additionalProperties: false
+      ConversationDissolved:
+        name: ConversationDissolved
+        title: ConversationDissolved
+        summary: A conversation ended. Sent to everyone on the floor.
+        payload:
+          type: object
+          properties:
+            t:
+              type: string
+              const: ConversationDissolved
+            p:
+              type: object
+              properties:
+                floorId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                conversationId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+              required:
+                - floorId
+                - conversationId
+              additionalProperties: false
+          required:
+            - t
+            - p
+          additionalProperties: false
+      ConversationAccessGranted:
+        name: ConversationAccessGranted
+        title: ConversationAccessGranted
+        summary: "Media access to a conversation: LiveKit URL and a token valid for 30 s. Sent only to the participant it is for."
+        payload:
+          type: object
+          properties:
+            t:
+              type: string
+              const: ConversationAccessGranted
+            p:
+              type: object
+              properties:
+                conversationId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                url:
+                  type: string
+                  minLength: 1
+                token:
+                  type: string
+                  minLength: 1
+                  maxLength: 8192
+              required:
+                - conversationId
+                - url
+                - token
+              additionalProperties: false
+          required:
+            - t
+            - p
+          additionalProperties: false
+      Ack:
+        name: Ack
+        title: Ack
+        summary: The command with this correlation ID succeeded.
+        payload:
+          type: object
+          properties:
+            t:
+              type: string
+              const: Ack
+            p:
+              type: object
+              properties:
+                id:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+              required:
+                - id
+              additionalProperties: false
+          required:
+            - t
+            - p
+          additionalProperties: false
+      Nack:
+        name: Nack
+        title: Nack
+        summary: The command failed. Codes are stable and translated in the client.
+        payload:
+          type: object
+          properties:
+            t:
+              type: string
+              const: Nack
+            p:
+              type: object
+              properties:
+                id:
+                  anyOf:
+                    - type: string
+                      minLength: 1
+                      maxLength: 64
+                    - type: "null"
+                code:
+                  type: string
+                  enum:
+                    - not-authenticated
+                    - invalid-token
+                    - unknown-floor
+                    - not-on-floor
+                    - unreachable
+                    - conversation-not-found
+                    - not-in-conversation
+                    - media-unavailable
+                    - invalid-message
+                    - internal-error
+              required:
+                - id
+                - code
+              additionalProperties: false
+          required:
+            - t
+            - p
+          additionalProperties: false
+operations:
+  receiveCommands:
+    action: receive
+    channel:
+      $ref: "#/channels/realtime"
+    summary: Commands the server accepts from a client.
+    messages:
+      - $ref: "#/channels/realtime/messages/Authenticate"
+      - $ref: "#/channels/realtime/messages/Ping"
+      - $ref: "#/channels/realtime/messages/JoinFloor"
+      - $ref: "#/channels/realtime/messages/MoveTo"
+      - $ref: "#/channels/realtime/messages/LockConversation"
+      - $ref: "#/channels/realtime/messages/UnlockConversation"
+      - $ref: "#/channels/realtime/messages/RequestConversationToken"
+  sendEvents:
+    action: send
+    channel:
+      $ref: "#/channels/realtime"
+    summary: Events the server sends to a client.
+    messages:
+      - $ref: "#/channels/realtime/messages/Authenticated"
+      - $ref: "#/channels/realtime/messages/Pong"
+      - $ref: "#/channels/realtime/messages/FloorSnapshot"
+      - $ref: "#/channels/realtime/messages/AvatarJoined"
+      - $ref: "#/channels/realtime/messages/AvatarLeft"
+      - $ref: "#/channels/realtime/messages/AvatarPathStarted"
+      - $ref: "#/channels/realtime/messages/ConversationFormed"
+      - $ref: "#/channels/realtime/messages/ConversationChanged"
+      - $ref: "#/channels/realtime/messages/ConversationDissolved"
+      - $ref: "#/channels/realtime/messages/ConversationAccessGranted"
+      - $ref: "#/channels/realtime/messages/Ack"
+      - $ref: "#/channels/realtime/messages/Nack"

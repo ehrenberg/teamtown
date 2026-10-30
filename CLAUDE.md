@@ -64,6 +64,7 @@ room meetings (open/knock/locked), channels and DMs with scoped roles.
 | Tests of one project                                          | `pnpm vitest run --project @teamtown/<name>`                                                 |
 | End-to-end and REST contract tests (need stack + `pnpm dev`)  | `pnpm e2e` (Playwright), `pnpm api:test` (Postman CLI, `postman/`)                           |
 | Regenerate Tailwind theme after editing tokens                | `pnpm tokens`                                                                                |
+| Regenerate the AsyncAPI doc after changing realtime contracts | `pnpm asyncapi`                                                                              |
 
 Tooling facts (ADR-0028): pnpm 12, Node 24 via `devEngines`, TypeScript 6.0 (not 7), ESLint 9 (not 10),
 internal packages ship TS source, relative imports use the `.ts` extension, commits need `git commit -s`.

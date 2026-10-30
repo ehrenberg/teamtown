@@ -43,6 +43,7 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm arch
       - run: pnpm tokens:check
+      - run: pnpm asyncapi:check
       - run: pnpm test
       - run: pnpm build
       - run: pnpm check:licenses

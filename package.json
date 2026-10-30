@@ -33,9 +33,11 @@
     "check:dco": "node scripts/check-dco.mjs",
     "tokens:check": "node packages/ui/scripts/generate-tokens.mjs --check",
     "tokens": "node packages/ui/scripts/generate-tokens.mjs",
+    "asyncapi:check": "node packages/contracts/scripts/generate-asyncapi.mjs --check",
+    "asyncapi": "node packages/contracts/scripts/generate-asyncapi.mjs",
     "stack:up": "docker compose -f docker/compose.dev.yml up -d",
     "stack:down": "docker compose -f docker/compose.dev.yml down",
-    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm arch && pnpm tokens:check && pnpm test && pnpm check:licenses",
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm arch && pnpm tokens:check && pnpm asyncapi:check && pnpm test && pnpm check:licenses",
     "prepare": "lefthook install"
   },
   "devDependencies": {

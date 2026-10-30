@@ -106,8 +106,6 @@ may lock or unlock it. No new permissions.
 - The 1 s budget for hearing each other (to be measured on real hardware or in the load test, M6).
 - "Join without microphone", the `M` shortcut and the screen reader announcements are implemented but only checked
   by hand.
-- The AsyncAPI document (`docs/api/asyncapi.yaml`) does not exist yet; the realtime messages are documented in
-  `packages/contracts` only.
 
 ## Open questions
 

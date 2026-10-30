@@ -19,7 +19,8 @@ Envelope `{ t, id?, p }`, MessagePack-encoded.
 
 1. **Contract:** add the Zod schema to `packages/contracts/src/realtime/<context>.ts` and register it in
    the command or event union. Use shared primitives (`TileCoord`, typed IDs). Payload fields are optional only when truly optional.
-2. **Docs:** regenerate or update the AsyncAPI document and mention the message in the related feature spec.
+2. **Docs:** add a one-line summary to `packages/contracts/scripts/generate-asyncapi.mjs`, run `pnpm asyncapi`
+   (CI checks that `docs/api/asyncapi.yaml` is up to date) and mention the message in the related feature spec.
 3. **Server:** add a handler in `apps/server/src/modules/<context>/interface/realtime/`. It validates the
    payload (the schema already parsed it), maps it to an application command, and replies `Ack{id}` or
    `Nack{id, code}`. Authorization happens in the use case through `AccessPolicy`.
