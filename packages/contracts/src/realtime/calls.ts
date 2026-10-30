@@ -104,3 +104,16 @@ export const OnlinePeopleEvent = z.object({
   t: z.literal('OnlinePeople'),
   p: z.object({ people: z.array(OnlinePersonSchema) }),
 });
+
+/** Only inside a conversation or call; the camera goes off when that ends (ADR-0031). */
+export const SetCameraCommand = z.object({
+  t: z.literal('SetCamera'),
+  id: CorrelationId.optional(),
+  p: z.object({ on: z.boolean() }),
+});
+
+/** Sent to everyone on the person's floor; the picture itself only reaches the same call. */
+export const CameraChangedEvent = z.object({
+  t: z.literal('CameraChanged'),
+  p: z.object({ floorId: FloorId, personId: PersonId, on: z.boolean() }),
+});

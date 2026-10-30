@@ -39,6 +39,7 @@ const summaries = {
   LeaveCall: 'Hangs up. A call ends when fewer than two participants are left.',
   RequestDirectCallToken: 'Asks for a fresh media token for the own direct call, e.g. after a reconnect.',
   ListOnlinePeople: 'Asks for everyone who is online, on any floor; answered with OnlinePeople.',
+  SetCamera: 'Switches the own camera on (only inside a conversation or call) or off.',
   Authenticated: 'The connection is authenticated.',
   Pong: 'Answer to Ping with the server time.',
   FloorSnapshot:
@@ -65,6 +66,7 @@ const summaries = {
     'Media access to a direct call: LiveKit URL and a token valid for 30 s. Sent only to the participant it is for.',
   OnCallChanged: 'Someone started or stopped being in a direct call (not with whom). Sent to everyone on the floor.',
   OnlinePeople: 'Everyone who is online, with their floor. Sent only to the requester.',
+  CameraChanged: 'Someone switched their camera on or off. Sent to everyone on the floor; no picture.',
   Ack: 'The command with this correlation ID succeeded.',
   Nack: 'The command failed. Codes are stable and translated in the client.',
 };

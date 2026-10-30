@@ -21,6 +21,7 @@ import type {
   RequestConversationToken,
   RequestDirectCallToken,
   RequestRoomCallToken,
+  SetCamera,
   SetConversationLock,
   StartCall,
 } from '../../../meetings/public-api.ts';
@@ -49,6 +50,7 @@ export interface SessionDependencies {
   readonly answerCall: AnswerCall;
   readonly leaveCall: LeaveCall;
   readonly requestDirectCallToken: RequestDirectCallToken;
+  readonly setCamera: SetCamera;
 }
 
 /** Disconnect if the socket's send buffer grows beyond this (slow or stuck client). */
@@ -165,6 +167,9 @@ export class RealtimeSession {
             onCall: snapshot.value
               .map((avatar) => avatar.occupant.personId)
               .filter((personId) => this.deps.conversations.isInCall(personId)),
+            cameraOn: snapshot.value
+              .map((avatar) => avatar.occupant.personId)
+              .filter((personId) => this.deps.conversations.isCameraOn(personId)),
           },
         });
         return undefined;
@@ -260,6 +265,11 @@ export class RealtimeSession {
         if (!access.ok) return access.error;
         this.send({ t: 'DirectCallAccessGranted', p: { callId: command.p.callId, ...access.value } });
         return undefined;
+      }
+      case 'SetCamera': {
+        if (!this.occupant) return 'not-authenticated';
+        const result = this.deps.setCamera.execute({ personId: this.occupant.personId, on: command.p.on });
+        return result.ok ? undefined : result.error;
       }
       case 'ListOnlinePeople': {
         if (!this.occupant) return 'not-authenticated';

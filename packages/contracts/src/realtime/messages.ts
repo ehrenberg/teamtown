@@ -23,7 +23,9 @@ import {
   OnCallChangedEvent,
   OnlinePeopleEvent,
   RequestDirectCallTokenCommand,
+  SetCameraCommand,
   StartCallCommand,
+  CameraChangedEvent,
 } from './calls.ts';
 import {
   AnswerKnockCommand,
@@ -102,6 +104,7 @@ export const ClientCommand = z.discriminatedUnion('t', [
   LeaveCallCommand,
   RequestDirectCallTokenCommand,
   ListOnlinePeopleCommand,
+  SetCameraCommand,
 ]);
 export type ClientCommand = z.infer<typeof ClientCommand>;
 
@@ -148,6 +151,8 @@ export const FloorSnapshotEvent = z.object({
     roomCalls: z.array(RoomCallSchema),
     /** People on this floor who are in a direct call (not with whom). */
     onCall: z.array(PersonId),
+    /** People on this floor whose camera is on (the picture only reaches their call). */
+    cameraOn: z.array(PersonId),
   }),
 });
 
@@ -235,6 +240,7 @@ export const ServerEvent = z.discriminatedUnion('t', [
   DirectCallAccessGrantedEvent,
   OnCallChangedEvent,
   OnlinePeopleEvent,
+  CameraChangedEvent,
   AckEvent,
   NackEvent,
 ]);

@@ -20,6 +20,7 @@ export { RequestConversationToken, type ConversationTokenError } from './applica
 export { RequestDirectCallToken, type DirectCallTokenError } from './application/request-direct-call-token.ts';
 export { RequestRoomCallToken, type RoomCallTokenError } from './application/request-room-call-token.ts';
 export { StartCall, type StartCallError } from './application/start-call.ts';
+export { SetCamera } from './application/set-camera.ts';
 export { SetConversationLock } from './application/set-conversation-lock.ts';
 export type { DirectCall, DirectCallError, DirectCallEvent } from './domain/direct-calls.ts';
 export type { Conversation, ConversationEvent, LockError } from './domain/floor-conversations.ts';

@@ -513,6 +513,30 @@ channels:
           required:
             - t
             - p
+      SetCamera:
+        name: SetCamera
+        title: SetCamera
+        summary: Switches the own camera on (only inside a conversation or call) or off.
+        payload:
+          type: object
+          properties:
+            t:
+              type: string
+              const: SetCamera
+            id:
+              type: string
+              minLength: 1
+              maxLength: 64
+            p:
+              type: object
+              properties:
+                on:
+                  type: boolean
+              required:
+                - on
+          required:
+            - t
+            - p
       Authenticated:
         name: Authenticated
         title: Authenticated
@@ -732,6 +756,12 @@ channels:
                     type: string
                     format: uuid
                     pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                cameraOn:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                    pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
               required:
                 - floorId
                 - avatars
@@ -739,6 +769,7 @@ channels:
                 - doorModes
                 - roomCalls
                 - onCall
+                - cameraOn
               additionalProperties: false
           required:
             - t
@@ -1527,6 +1558,38 @@ channels:
             - t
             - p
           additionalProperties: false
+      CameraChanged:
+        name: CameraChanged
+        title: CameraChanged
+        summary: Someone switched their camera on or off. Sent to everyone on the floor; no picture.
+        payload:
+          type: object
+          properties:
+            t:
+              type: string
+              const: CameraChanged
+            p:
+              type: object
+              properties:
+                floorId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                personId:
+                  type: string
+                  format: uuid
+                  pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                on:
+                  type: boolean
+              required:
+                - floorId
+                - personId
+                - on
+              additionalProperties: false
+          required:
+            - t
+            - p
+          additionalProperties: false
       Ack:
         name: Ack
         title: Ack
@@ -1630,6 +1693,7 @@ operations:
       - $ref: "#/channels/realtime/messages/LeaveCall"
       - $ref: "#/channels/realtime/messages/RequestDirectCallToken"
       - $ref: "#/channels/realtime/messages/ListOnlinePeople"
+      - $ref: "#/channels/realtime/messages/SetCamera"
   sendEvents:
     action: send
     channel:
@@ -1657,5 +1721,6 @@ operations:
       - $ref: "#/channels/realtime/messages/DirectCallAccessGranted"
       - $ref: "#/channels/realtime/messages/OnCallChanged"
       - $ref: "#/channels/realtime/messages/OnlinePeople"
+      - $ref: "#/channels/realtime/messages/CameraChanged"
       - $ref: "#/channels/realtime/messages/Ack"
       - $ref: "#/channels/realtime/messages/Nack"

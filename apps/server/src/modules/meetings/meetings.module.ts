@@ -5,6 +5,7 @@ import { CLOCK, ID_GENERATOR } from '../../platform/config/config.module.ts';
 import { AdmitToRoom, PresenceModule, PresenceQueries } from '../presence/public-api.ts';
 import { FloorQueries, WorldModule } from '../world/public-api.ts';
 import { AnswerCall } from './application/answer-call.ts';
+import { CallMembership } from './application/call-membership.ts';
 import { AnswerKnock } from './application/answer-knock.ts';
 import { CancelKnock } from './application/cancel-knock.ts';
 import { ConversationMedia } from './application/conversation-media.ts';
@@ -24,10 +25,13 @@ import { ROOM_ADMISSION, type RoomAdmission } from './application/ports/room-adm
 import { RequestConversationToken } from './application/request-conversation-token.ts';
 import { RequestDirectCallToken } from './application/request-direct-call-token.ts';
 import { RequestRoomCallToken } from './application/request-room-call-token.ts';
+import { SetCamera } from './application/set-camera.ts';
 import { StartCall } from './application/start-call.ts';
+import { SyncCameras } from './application/sync-cameras.ts';
 import { SetConversationLock } from './application/set-conversation-lock.ts';
 import { UpdateConversations } from './application/update-conversations.ts';
 import { UpdateDirectCalls } from './application/update-direct-calls.ts';
+import { Cameras } from './domain/cameras.ts';
 import { DirectCalls } from './domain/direct-calls.ts';
 import { Knocks } from './domain/knocks.ts';
 import { LiveKitMediaGateway } from './infrastructure/livekit-media-gateway.ts';
@@ -65,6 +69,24 @@ const mediaGateway = (config: AppConfig): MediaGateway | null => {
     },
     { provide: LIVE_PRESENCE, useExisting: PresenceLivePositions },
     { provide: ROOM_ADMISSION, useExisting: PresenceLivePositions },
+    { provide: Cameras, useValue: new Cameras() },
+    {
+      provide: CallMembership,
+      useFactory: (registry: ConversationRegistry, calls: DirectCalls) => new CallMembership(registry, calls),
+      inject: [ConversationRegistry, DirectCalls],
+    },
+    {
+      provide: SetCamera,
+      useFactory: (cameras: Cameras, membership: CallMembership, events: MeetingsEventStream) =>
+        new SetCamera(cameras, membership, events),
+      inject: [Cameras, CallMembership, MeetingsEventStream],
+    },
+    {
+      provide: SyncCameras,
+      useFactory: (cameras: Cameras, membership: CallMembership, events: MeetingsEventStream) =>
+        new SyncCameras(cameras, membership, events),
+      inject: [Cameras, CallMembership, MeetingsEventStream],
+    },
     {
       provide: DirectCalls,
       useFactory: (ids: IdGenerator) => new DirectCalls(() => ids.next()),
@@ -203,8 +225,9 @@ const mediaGateway = (config: AppConfig): MediaGateway | null => {
     },
     {
       provide: ConversationQueries,
-      useFactory: (registry: ConversationRegistry, calls: DirectCalls) => new ConversationQueries(registry, calls),
-      inject: [ConversationRegistry, DirectCalls],
+      useFactory: (registry: ConversationRegistry, calls: DirectCalls, cameras: Cameras) =>
+        new ConversationQueries(registry, calls, cameras),
+      inject: [ConversationRegistry, DirectCalls, Cameras],
     },
     {
       provide: ProximityTicker,
@@ -213,8 +236,9 @@ const mediaGateway = (config: AppConfig): MediaGateway | null => {
         reconcile: ReconcileMediaRooms,
         expire: ExpireKnocks,
         updateCalls: UpdateDirectCalls,
-      ) => new ProximityTicker(update, reconcile, expire, updateCalls),
-      inject: [UpdateConversations, ReconcileMediaRooms, ExpireKnocks, UpdateDirectCalls],
+        syncCameras: SyncCameras,
+      ) => new ProximityTicker(update, reconcile, expire, updateCalls, syncCameras),
+      inject: [UpdateConversations, ReconcileMediaRooms, ExpireKnocks, UpdateDirectCalls, SyncCameras],
     },
   ],
   exports: [
@@ -230,6 +254,7 @@ const mediaGateway = (config: AppConfig): MediaGateway | null => {
     AnswerCall,
     LeaveCall,
     RequestDirectCallToken,
+    SetCamera,
     ConversationQueries,
   ],
 })

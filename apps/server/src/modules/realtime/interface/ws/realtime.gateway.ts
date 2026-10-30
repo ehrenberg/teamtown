@@ -19,6 +19,7 @@ import {
   RequestConversationToken,
   RequestDirectCallToken,
   RequestRoomCallToken,
+  SetCamera,
   SetConversationLock,
   StartCall,
   type MeetingsEvent,
@@ -91,6 +92,7 @@ export class RealtimeGateway implements OnApplicationBootstrap, OnApplicationShu
     @Inject(AnswerCall) private readonly answerCall: AnswerCall,
     @Inject(LeaveCall) private readonly leaveCall: LeaveCall,
     @Inject(RequestDirectCallToken) private readonly requestDirectCallToken: RequestDirectCallToken,
+    @Inject(SetCamera) private readonly setCamera: SetCamera,
   ) {}
 
   onApplicationBootstrap(): void {
@@ -116,6 +118,9 @@ export class RealtimeGateway implements OnApplicationBootstrap, OnApplicationShu
         // Someone in a call walks onto another floor: people there learn that they are in a call.
         if (event.type === 'AvatarJoined' && this.conversations.isInCall(event.avatar.occupant.personId)) {
           this.#announceOnCall([event.avatar.occupant.personId], true);
+        }
+        if (event.type === 'AvatarJoined' && this.conversations.isCameraOn(event.avatar.occupant.personId)) {
+          this.#announceCamera(event.avatar.occupant.personId, true);
         }
       }),
       this.meetingsEvents.subscribe((event) => {
@@ -157,6 +162,7 @@ export class RealtimeGateway implements OnApplicationBootstrap, OnApplicationShu
       answerCall: this.answerCall,
       leaveCall: this.leaveCall,
       requestDirectCallToken: this.requestDirectCallToken,
+      setCamera: this.setCamera,
     });
     this.#sessions.add(session);
     this.#telemetry.connectionOpened();
@@ -255,9 +261,17 @@ export class RealtimeGateway implements OnApplicationBootstrap, OnApplicationShu
           }),
         );
         return;
+      case 'CameraChanged':
+        this.#announceCamera(event.personId, event.on);
+        return;
       default:
         this.#sendToFloor(event.floorId, encodeMessage(toConversationServerEvent(event)));
     }
+  }
+
+  #announceCamera(personId: string, on: boolean): void {
+    const floorId = this.presence.floorOf(personId);
+    if (floorId) this.#sendToFloor(floorId, encodeMessage({ t: 'CameraChanged', p: { floorId, personId, on } }));
   }
 
   /** Tells each person's floor that they are (or no longer are) in a call, never with whom. */

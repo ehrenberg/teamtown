@@ -1,3 +1,4 @@
+import type { CameraChanged } from '../domain/cameras.ts';
 import type { DirectCallEvent } from '../domain/direct-calls.ts';
 import type { ConversationEvent } from '../domain/floor-conversations.ts';
 import type { KnockOutcome, KnockRequest } from '../domain/knocks.ts';
@@ -49,7 +50,8 @@ export type MeetingsEvent =
   | KnockRequested
   | KnockAnswered
   | DirectCallEvent
-  | DirectCallAccessGranted;
+  | DirectCallAccessGranted
+  | CameraChanged;
 export type MeetingsEventListener = (event: MeetingsEvent) => void;
 
 export class MeetingsEventStream {
