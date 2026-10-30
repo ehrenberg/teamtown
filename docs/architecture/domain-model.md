@@ -8,33 +8,35 @@
 
 Use these terms consistently in code, UI, docs and conversations. Code identifiers are in English.
 
-| Term               | Meaning                                                                                                  | Code name                                  |
-| ------------------ | -------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
-| **Town**           | One TeamTown instance = one company (single tenant)                                                      | `Town` (config/settings, not an aggregate) |
-| **Floor**          | A level of the office, rendered as an isometric tile grid                                                | `Floor`                                    |
-| **Floor plan**     | The layout of a floor: tiles, walls, doors, furniture, room areas. Has _draft_ and _published_ versions. | `FloorPlan`                                |
-| **Tile**           | One cell of the floor grid; the unit for walking, placing and pathfinding                                | `TileCoord {x, y}`                         |
-| **Room**           | A named area of a floor with its own policy (door mode, capacity, audio isolation)                       | `Room`                                     |
-| **Door mode**      | A room's access mode: `open`, `knock` or `locked`                                                        | `DoorMode`                                 |
-| **Spawn point**    | A tile where people appear when they enter a floor                                                       | `spawnPoints[]` in `FloorPlan`             |
-| **Desk**           | A furniture item that can be assigned to a person; their spawn point                                     | `Desk`                                     |
-| **Avatar**         | A person's figure in the world                                                                           | `Avatar`                                   |
-| **Presence**       | A person's live state: where they are, status, visibility. **Never persisted.**                          | `PresenceState`                            |
-| **Status**         | `available`, `busy`, `in-meeting`, `focus`, `away`, `offline`                                            | `PresenceStatus`                           |
-| **Focus mode**     | Status that suppresses proximity audio and non-urgent notifications                                      | `focus`                                    |
-| **Ghost mode**     | Online but invisible in the world                                                                        | `visibility: hidden`                       |
-| **Conversation**   | An ad-hoc proximity group of avatars that can hear each other (shown as a _bubble_)                      | `Conversation`                             |
-| **Room call**      | The audio/video session bound to a room. You join it by entering the room.                               | `RoomCall`                                 |
-| **Direct call**    | A call to a person independent of location                                                               | `DirectCall`                               |
-| **Logged meeting** | A room call the host explicitly started as logged: title, participants and times are stored              | `MeetingLog`                               |
-| **Knock**          | A request to enter a `knock`-mode room                                                                   | `KnockRequest`                             |
-| **Channel**        | A persistent message stream: `public`, `private`, `announcement`, `room` or `direct`                     | `Channel`                                  |
-| **Room wall**      | The channel linked to a room                                                                             | `Channel{kind: room}`                      |
-| **Thread**         | Replies to one message                                                                                   | `Thread`                                   |
-| **Person**         | A member's profile (name, avatar look, locale, desk)                                                     | `Person`                                   |
-| **Guest**          | An external person with access limited to explicitly shared resources                                    | `role: guest`                              |
-| **Role**           | A named set of permissions                                                                               | `Role`                                     |
-| **Scope**          | Where a role assignment applies: town, floor, room or channel                                            | `Scope`                                    |
+| Term                | Meaning                                                                                                  | Code name                                  |
+| ------------------- | -------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| **Town**            | One TeamTown instance = one company (single tenant)                                                      | `Town` (config/settings, not an aggregate) |
+| **Floor**           | A level of the office, rendered as an isometric tile grid                                                | `Floor`                                    |
+| **Floor plan**      | The layout of a floor: tiles, walls, doors, furniture, room areas. Has _draft_ and _published_ versions. | `FloorPlan`                                |
+| **Tile**            | One cell of the floor grid; the unit for walking, placing and pathfinding                                | `TileCoord {x, y}`                         |
+| **Room**            | A named area of a floor with its own policy (door mode, capacity, audio isolation)                       | `Room`                                     |
+| **Door mode**       | A room's access mode: `open`, `knock` or `locked`                                                        | `DoorMode`                                 |
+| **Spawn point**     | A tile where people appear when they enter a floor                                                       | `spawnPoints[]` in `FloorPlan`             |
+| **Desk**            | A furniture item that can be assigned to a person; their spawn point                                     | `Desk`                                     |
+| **Avatar**          | A person's figure in the world                                                                           | `Avatar`                                   |
+| **Presence**        | A person's live state: where they are, status, visibility. **Never persisted.**                          | `PresenceState`                            |
+| **Status**          | `available`, `busy`, `in-meeting`, `focus`, `away`, `offline`                                            | `PresenceStatus`                           |
+| **Focus mode**      | Status that suppresses proximity audio and non-urgent notifications                                      | `focus`                                    |
+| **Ghost mode**      | Online but invisible in the world                                                                        | `visibility: hidden`                       |
+| **Conversation**    | An ad-hoc proximity group of avatars that can hear each other (shown as a _bubble_)                      | `Conversation`                             |
+| **Audio isolation** | A room property: proximity audio does not reach into or out of the room; it has its own room call        | `audioIsolated`                            |
+| **Audio check**     | The step before entering the office: microphone permission, level meter and speaker test                 | `AudioCheck`                               |
+| **Room call**       | The audio/video session bound to a room. You join it by entering the room.                               | `RoomCall`                                 |
+| **Direct call**     | A call to a person independent of location                                                               | `DirectCall`                               |
+| **Logged meeting**  | A room call the host explicitly started as logged: title, participants and times are stored              | `MeetingLog`                               |
+| **Knock**           | A request to enter a `knock`-mode room                                                                   | `KnockRequest`                             |
+| **Channel**         | A persistent message stream: `public`, `private`, `announcement`, `room` or `direct`                     | `Channel`                                  |
+| **Room wall**       | The channel linked to a room                                                                             | `Channel{kind: room}`                      |
+| **Thread**          | Replies to one message                                                                                   | `Thread`                                   |
+| **Person**          | A member's profile (name, avatar look, locale, desk)                                                     | `Person`                                   |
+| **Guest**           | An external person with access limited to explicitly shared resources                                    | `role: guest`                              |
+| **Role**            | A named set of permissions                                                                               | `Role`                                     |
+| **Scope**           | Where a role assignment applies: town, floor, room or channel                                            | `Scope`                                    |
 
 ## 2. Bounded contexts
 

@@ -22,19 +22,22 @@ for locked rooms and private conversations.
 Why separate LiveKit rooms for meeting rooms: clean isolation, independent recording later, and
 participants in a meeting never accidentally hear the floor.
 
-## 3. Spatial audio
+## 3. Spatial audio _(decided, ADR-0031)_
 
 - **Server side:** decides _whether_ a track is audible (group membership, walls, locks).
-- **Client side:** decides _how loud_. Volume follows the distance with a smooth falloff
-  (proposal: full volume ≤ 2 tiles, silence at 6 tiles). Optional stereo panning via WebAudio `PannerNode`.
-- **Hysteresis:** a conversation forms at distance ≤ 4 tiles and dissolves at > 6 tiles, so audio doesn't flicker at the edge.
+- **Groups:** a conversation forms at a distance ≤ 4 tiles and dissolves at > 6 tiles (hysteresis, so audio
+  doesn't flicker at the edge). Groups are transitive: if A is near B and B near C, all three hear each other.
+  Every wall blocks sound, glass included; doors are openings. People in a conversation can lock it.
+- **Client side:** decides _how loud_. Full volume ≤ 2 tiles, silence at 6 tiles with a smooth falloff,
+  plus stereo panning via WebAudio `PannerNode` by the speaker's position on screen.
+- **Isolated rooms:** rooms with `audioIsolated` have their own room call; proximity does not reach into them.
 
-## 4. Media defaults (proposal unless marked decided)
+## 4. Media defaults (decided unless marked proposal)
 
 | Setting                                 | Default                                                                                                                                                                                          |
 | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Microphone when entering a conversation | Per-person setting, default **on** _(decided)_                                                                                                                                                   |
-| Camera                                  | **off**, opt-in per conversation                                                                                                                                                                 |
+| Microphone when entering a conversation | Per-person setting, default **on**; permission asked when entering the office, with an audio check (ADR-0031)                                                                                    |
+| Camera                                  | **off**, opt-in per conversation (ADR-0031)                                                                                                                                                      |
 | Video layout                            | Small video bubbles above avatars in proximity; a grid view in room calls                                                                                                                        |
 | Screen share                            | Room calls and direct calls; shows on the room's wall screen in the world                                                                                                                        |
 | Simulcast / adaptive stream             | On (LiveKit), so bandwidth scales with what is visible                                                                                                                                           |
