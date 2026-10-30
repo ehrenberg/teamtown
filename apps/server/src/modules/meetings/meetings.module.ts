@@ -23,6 +23,7 @@ import { SetConversationLock } from './application/set-conversation-lock.ts';
 import { UpdateConversations } from './application/update-conversations.ts';
 import { Knocks } from './domain/knocks.ts';
 import { LiveKitMediaGateway } from './infrastructure/livekit-media-gateway.ts';
+import { MeetingsTelemetry } from './infrastructure/meetings-telemetry.ts';
 import { PresenceLivePositions } from './infrastructure/presence-live-positions.ts';
 import { ProximityTicker } from './infrastructure/proximity-ticker.ts';
 import { WorldFloorAcoustics } from './infrastructure/world-floor-acoustics.ts';
@@ -57,6 +58,11 @@ const mediaGateway = (config: AppConfig): MediaGateway | null => {
     { provide: LIVE_PRESENCE, useExisting: PresenceLivePositions },
     { provide: ROOM_ADMISSION, useExisting: PresenceLivePositions },
     { provide: Knocks, useFactory: (ids: IdGenerator) => new Knocks(() => ids.next()), inject: [ID_GENERATOR] },
+    {
+      provide: MeetingsTelemetry,
+      useFactory: (registry: ConversationRegistry, knocks: Knocks) => new MeetingsTelemetry(registry, knocks),
+      inject: [ConversationRegistry, Knocks],
+    },
     {
       provide: KnockOnRoom,
       useFactory: (presence: LivePresence, knocks: Knocks, events: MeetingsEventStream, clock: Clock) =>

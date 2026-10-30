@@ -16,7 +16,7 @@ it has no token for.
 | TeamTown concept             | LiveKit room                                                                      | Who can hear whom                                                                                          |
 | ---------------------------- | --------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
 | **Proximity conversation**   | One LiveKit room per **conversation**: `conversation:{conversationId}` (ADR-0032) | The Meetings module computes conversations (distance + walls) and issues tokens only to their participants |
-| **Room call** (meeting room) | One LiveKit room per **TeamTown room**: `room:{roomId}`                           | Everyone in the room. Entering or leaving the room = joining or leaving the LiveKit room.                  |
+| **Room call** (meeting room) | One LiveKit room per **TeamTown room**: `room:{floorId}:{roomId}`                 | Everyone in the room. Entering or leaving the room = joining or leaving the LiveKit room.                  |
 | **Direct call**              | `direct:{callId}`                                                                 | Caller and callee                                                                                          |
 | **Town hall** (later)        | `stage:{roomId}`                                                                  | Speakers publish, audience subscribes only                                                                 |
 

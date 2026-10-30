@@ -124,13 +124,13 @@ flowchart TB
 
 ## 5. Domain events (initial catalogue)
 
-| Context   | Event                                                                                                                                      | Main consumers                         |
-| --------- | ------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------- |
-| Identity  | `PersonAuthenticated`                                                                                                                      | People (create profile on first login) |
-| World     | `FloorPlanPublished`, `RoomCreated`, `RoomPolicyChanged`, `RoomDeleted`, `DeskAssigned`                                                    | Presence, Messaging, Audit             |
-| Presence  | `AvatarMoved`, `AvatarEnteredRoom`, `AvatarLeftRoom`, `StatusChanged`, `PersonWentOnline/Offline`                                          | Meetings, gateway                      |
-| Meetings  | `ConversationFormed/Changed/Dissolved`, `RoomCallJoined/Left`, `KnockRequested/Answered`, `DirectCallRequested`, `MeetingLogStarted/Ended` | Notifications, gateway                 |
-| Messaging | `MessagePosted`, `MessageEdited`, `MessageDeleted`, `PersonMentioned`, `ChannelCreated`                                                    | Notifications, gateway, Audit          |
-| Access    | `RoleCreated/Changed`, `RoleAssigned/Revoked`                                                                                              | Audit, permission cache invalidation   |
+| Context   | Event                                                                                                                                  | Main consumers                         |
+| --------- | -------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| Identity  | `PersonAuthenticated`                                                                                                                  | People (create profile on first login) |
+| World     | `FloorPlanPublished`, `RoomCreated`, `RoomPolicyChanged`, `RoomDeleted`, `DeskAssigned`                                                | Presence, Messaging, Audit             |
+| Presence  | `AvatarMoved`, `AvatarEnteredRoom`, `AvatarLeftRoom`, `DoorModeChanged`, `StatusChanged`, `PersonWentOnline/Offline`                   | Meetings, gateway                      |
+| Meetings  | `ConversationFormed/Changed/Dissolved`, `RoomCallChanged`, `KnockRequested/Answered`, `DirectCallRequested`, `MeetingLogStarted/Ended` | Notifications, gateway                 |
+| Messaging | `MessagePosted`, `MessageEdited`, `MessageDeleted`, `PersonMentioned`, `ChannelCreated`                                                | Notifications, gateway, Audit          |
+| Access    | `RoleCreated/Changed`, `RoleAssigned/Revoked`                                                                                          | Audit, permission cache invalidation   |
 
 Naming rule: past tense, the context name implied by the module, payload with IDs plus the minimum data consumers need.

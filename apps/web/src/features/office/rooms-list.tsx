@@ -9,7 +9,7 @@ import { DOOR_MODE_ICONS } from './room-controls.tsx';
 import type { RoomInfo } from './rooms.ts';
 
 const POLL_MS = 500;
-const LINK_BUTTON = 'rounded-sm px-1.5 py-0.5 text-xs font-medium text-text-link hover:bg-neutral-100';
+const LINK_BUTTON = 'min-h-6 rounded-sm px-1.5 py-0.5 text-xs font-medium text-text-link hover:bg-neutral-100';
 
 /** Who is in which room, polled, because walking changes rooms without any event. */
 function useOccupancy(roomMap: RoomMap): Readonly<Record<string, readonly string[]>> {

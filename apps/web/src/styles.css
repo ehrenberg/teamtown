@@ -7,6 +7,24 @@
 @theme {
   --font-display: 'Outfit Variable', Outfit, system-ui, sans-serif;
   --font-body: 'Inter Variable', Inter, system-ui, sans-serif;
+
+  /* A soft knock on a door sign; only used with motion-safe. */
+  --animate-knock: knock 1.4s ease-in-out infinite;
+  @keyframes knock {
+    0%,
+    50%,
+    100% {
+      transform: rotate(0deg);
+    }
+    10%,
+    30% {
+      transform: rotate(-14deg);
+    }
+    20%,
+    40% {
+      transform: rotate(10deg);
+    }
+  }
 }
 
 @layer base {

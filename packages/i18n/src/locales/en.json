@@ -88,7 +88,7 @@
     "admit": "Let in",
     "admitPerson": "Let {{name}} in",
     "decline": "Not now",
-    "declinePerson": "Not now for {{name}}",
+    "declinePerson": "Don't let {{name}} in now",
     "result_admitted": "You may come in. Walking in…",
     "result_declined": "Not right now. Try again later.",
     "result_expired": "Nobody answered.",

@@ -18,9 +18,9 @@ const signAnchors = new Map<string, Vector3>();
 const point = new Vector3();
 
 const SIGN_STYLE: Readonly<Record<DoorMode, { readonly icon: typeof Lock; readonly className: string }>> = {
-  open: { icon: DoorOpen, className: 'bg-status-available text-white' },
+  open: { icon: DoorOpen, className: 'bg-sage-700 text-white' },
   knock: { icon: Hand, className: 'bg-status-away text-espresso' },
-  locked: { icon: Lock, className: 'bg-status-busy text-white' },
+  locked: { icon: Lock, className: 'bg-terracotta-700 text-white' },
 };
 
 function DoorPanel({ opening, locked }: { readonly opening: DoorOpening; readonly locked: boolean }) {
@@ -76,6 +76,8 @@ export function DoorLeaves({ plan }: { readonly plan: FloorPlan }) {
 export function DoorSigns({ plan, labels }: { readonly plan: FloorPlan; readonly labels: Record<DoorMode, string> }) {
   const groups = useMemo(() => adjustableRoomDoors(plan), [plan]);
   const doorModes = useRoomStore((state) => state.doorModes);
+  const knocks = useRoomStore((state) => state.knocks);
+  const knockedRooms = new Set(Object.values(knocks).map((knock) => knock.roomId));
   const names = useMemo(() => new Map(plan.rooms.map((room) => [room.id, room.name])), [plan]);
 
   return (
@@ -99,7 +101,9 @@ export function DoorSigns({ plan, labels }: { readonly plan: FloorPlan; readonly
             style={{ visibility: 'hidden' }}
             className={`absolute top-0 left-0 inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-xs font-semibold whitespace-nowrap shadow-raised ${className}`}
           >
-            <Icon className="size-3" />
+            <span className={knockedRooms.has(roomId) ? 'inline-flex motion-safe:animate-knock' : 'inline-flex'}>
+              <Icon className="size-3" />
+            </span>
             {names.get(roomId)} · {labels[mode]}
           </span>
         );
