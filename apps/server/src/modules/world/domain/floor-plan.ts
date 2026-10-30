@@ -101,14 +101,8 @@ export class FloorPlan {
     return ok(plan);
   }
 
-  /**
-   * Only rooms that can be entered through doors alone and have no spawn point may be closed, so nobody
-   * is placed inside a closed room or locked out of the floor (M2b).
-   */
   isDoorModeAdjustable(roomId: string): boolean {
-    return (
-      this.roomMap.isEnclosed(roomId) && !this.props.spawnPoints.some((spawn) => this.roomMap.roomAt(spawn) === roomId)
-    );
+    return this.roomMap.isDoorModeAdjustable(roomId, this.props.spawnPoints);
   }
 
   get floorId(): string {

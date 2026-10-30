@@ -10,6 +10,7 @@ import {
 import type { TileCoord } from '@teamtown/world-core';
 import { useConversationStore } from '../stores/conversation-store.ts';
 import { usePresenceStore } from '../stores/presence-store.ts';
+import { useRoomStore, type DoorMode } from '../stores/room-store.ts';
 import type { ServerClock } from '../shared/server-clock.ts';
 
 export type CommandResult = { readonly ok: true } | { readonly ok: false; readonly code: NackCode | 'timeout' };
@@ -20,12 +21,17 @@ const MAX_RECONNECT_DELAY_MS = 15_000;
 
 type PendingCommand = (result: CommandResult) => void;
 
-export interface ConversationAccess {
-  readonly conversationId: string;
+/** A call is either a proximity conversation or a room call; a person is in at most one at a time. */
+export type CallId = `conversation:${string}` | `room:${string}`;
+export const conversationCallId = (conversationId: string): CallId => `conversation:${conversationId}`;
+export const roomCallId = (roomId: string): CallId => `room:${roomId}`;
+
+export interface CallAccess {
+  readonly callId: CallId;
   readonly url: string;
   readonly token: string;
 }
-export type ConversationAccessListener = (access: ConversationAccess) => void;
+export type CallAccessListener = (access: CallAccess) => void;
 type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never;
 
 /**
@@ -41,7 +47,7 @@ export class RealtimeClient {
   #stopped = false;
   #desiredFloorId: string | null = null;
   readonly #pingSentAt = new Map<number, number>();
-  readonly #accessListeners = new Set<ConversationAccessListener>();
+  readonly #accessListeners = new Set<CallAccessListener>();
 
   constructor(
     private readonly options: {
@@ -78,11 +84,30 @@ export class RealtimeClient {
     return this.#command({ t: locked ? 'LockConversation' : 'UnlockConversation', p: { conversationId } });
   }
 
-  requestConversationToken(conversationId: string): Promise<CommandResult> {
-    return this.#command({ t: 'RequestConversationToken', p: { conversationId } });
+  /** Asks for a fresh media token for a conversation or room call, e.g. after a reconnect. */
+  requestCallToken(callId: CallId): Promise<CommandResult> {
+    return callId.startsWith('room:')
+      ? this.#command({ t: 'RequestRoomCallToken', p: { roomId: callId.slice('room:'.length) } })
+      : this.#command({ t: 'RequestConversationToken', p: { conversationId: callId.slice('conversation:'.length) } });
   }
 
-  onConversationAccess(listener: ConversationAccessListener): () => void {
+  setDoorMode(roomId: string, doorMode: DoorMode): Promise<CommandResult> {
+    return this.#command({ t: 'SetDoorMode', p: { roomId, doorMode } });
+  }
+
+  knockOnRoom(roomId: string): Promise<CommandResult> {
+    return this.#command({ t: 'KnockOnRoom', p: { roomId } });
+  }
+
+  cancelKnock(knockId: string): Promise<CommandResult> {
+    return this.#command({ t: 'CancelKnock', p: { knockId } });
+  }
+
+  answerKnock(knockId: string, admit: boolean): Promise<CommandResult> {
+    return this.#command({ t: 'AnswerKnock', p: { knockId, admit } });
+  }
+
+  onCallAccess(listener: CallAccessListener): () => void {
     this.#accessListeners.add(listener);
     return () => this.#accessListeners.delete(listener);
   }
@@ -156,18 +181,32 @@ export class RealtimeClient {
       case 'FloorSnapshot':
         store.applySnapshot(event.p.floorId, event.p.avatars);
         useConversationStore.getState().applySnapshot(event.p.floorId, event.p.conversations);
+        useRoomStore.getState().applySnapshot(event.p.floorId, event.p.doorModes, event.p.roomCalls);
         return;
       case 'ConversationFormed':
       case 'ConversationChanged':
       case 'ConversationDissolved':
         useConversationStore.getState().applyEvent(event);
         return;
+      case 'DoorModeChanged':
+      case 'RoomCallChanged':
+      case 'KnockRequested':
+      case 'KnockAnswered':
+        useRoomStore.getState().applyEvent(event);
+        return;
       case 'ConversationAccessGranted':
-        for (const listener of this.#accessListeners) listener(event.p);
+        this.#grantAccess({ callId: conversationCallId(event.p.conversationId), ...event.p });
+        return;
+      case 'RoomCallAccessGranted':
+        this.#grantAccess({ callId: roomCallId(event.p.roomId), ...event.p });
         return;
       default:
         store.applyEvent(event);
     }
+  }
+
+  #grantAccess({ callId, url, token }: CallAccess): void {
+    for (const listener of this.#accessListeners) listener({ callId, url, token });
   }
 
   #onClose(): void {

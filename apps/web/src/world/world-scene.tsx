@@ -14,6 +14,8 @@ import { WORLD_PALETTE } from './palette.ts';
 import { TilePicker } from './tile-picker.tsx';
 import { AvatarLabels } from './labels/avatar-labels.tsx';
 import { LabelProjector } from './labels/label-projector.tsx';
+import { DoorLeaves, DoorSigns } from './doors/doors.tsx';
+import type { DoorMode } from '../stores/room-store.ts';
 
 /**
  * The isometric office (ADR-0006). Renders state only: the floor plan from props and avatars from the
@@ -23,10 +25,13 @@ export function WorldScene({
   plan,
   label,
   onTileSelected,
+  doorModeLabels,
 }: {
   readonly plan: FloorPlan;
   readonly label: string;
   readonly onTileSelected: (tile: TileCoord) => void;
+  /** Translated door mode names for the door signs. */
+  readonly doorModeLabels: Record<DoorMode, string>;
 }) {
   const [width, depth] = gridToWorld(plan.width, plan.height);
   const spawn = plan.spawnPoints[0] ?? { x: plan.width / 2, y: plan.height / 2 };
@@ -65,6 +70,7 @@ export function WorldScene({
         <FloorSurface plan={plan} />
         <Walls plan={plan} />
         <Furniture plan={plan} />
+        <DoorLeaves plan={plan} />
         <TilePicker width={plan.width} height={plan.height} onTileSelected={onTileSelected} />
         <ConversationBubbles />
         <Suspense fallback={null}>
@@ -73,6 +79,7 @@ export function WorldScene({
         <CameraRig fallbackTarget={fallbackTarget} />
         <LabelProjector />
       </Canvas>
+      <DoorSigns plan={plan} labels={doorModeLabels} />
       <AvatarLabels />
     </div>
   );

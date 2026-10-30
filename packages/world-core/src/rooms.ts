@@ -56,6 +56,14 @@ export class RoomMap {
     return this.enclosed.has(roomId);
   }
 
+  /**
+   * Only rooms that can be entered through doors alone and have no spawn point may be closed, so nobody is
+   * placed inside a closed room or locked out of the floor (M2b).
+   */
+  isDoorModeAdjustable(roomId: string, spawnPoints: readonly TileCoord[]): boolean {
+    return this.isEnclosed(roomId) && !spawnPoints.some((spawn) => this.roomAt(spawn) === roomId);
+  }
+
   /** Forbids steps into another room unless `mayEnter` allows it. Moving inside a room or leaving it is always allowed. */
   entryGuard(mayEnter: (roomId: string) => boolean): StepGuard {
     return (from, to) => {

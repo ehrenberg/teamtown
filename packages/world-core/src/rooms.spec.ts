@@ -56,6 +56,12 @@ describe('RoomMap', () => {
     expect(roomMap.isEnclosed('unknown')).toBe(false);
   });
 
+  it('lets only enclosed rooms without a spawn point change their door mode', () => {
+    expect(roomMap.isDoorModeAdjustable('meeting', [tile(0, 0)])).toBe(true);
+    expect(roomMap.isDoorModeAdjustable('meeting', [tile(4, 1)])).toBe(false);
+    expect(roomMap.isDoorModeAdjustable('hall', [tile(7, 1)])).toBe(false);
+  });
+
   it('counts a missing wall segment as an open border', () => {
     const leaky = RoomMap.build({ ...layout, walls: [{ from: { x: 3, y: 0 }, to: { x: 3, y: 2 } }, annexWall] }, rooms);
 

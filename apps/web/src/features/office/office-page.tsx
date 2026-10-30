@@ -1,11 +1,11 @@
 import { Button } from '@teamtown/ui';
-import { buildFloorGrid, tileAt } from '@teamtown/world-core';
+import { buildFloorGrid, tileAt, type TileCoord } from '@teamtown/world-core';
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import logoMark from '../../../../../design/brand/logo-mark.svg';
 import { useFloorPlan, useFloors, useMe } from '../../api/queries.ts';
 import { useAuthClient } from '../../app/auth-context.tsx';
-import { useConversationAudio } from '../../media/use-conversation-audio.ts';
+import { useCallAudio } from '../../media/use-call-audio.ts';
 import { useRealtime } from '../../realtime/realtime-context.tsx';
 import { serverClock } from '../../shared/server-clock.ts';
 import { usePresenceStore } from '../../stores/presence-store.ts';
@@ -14,11 +14,36 @@ import { ConversationAnnouncer } from './conversation-announcer.tsx';
 import { ConversationLockToggle, MicrophoneToggle } from './conversation-controls.tsx';
 import { FloorSwitcher } from './floor-switcher.tsx';
 import { PeopleList } from './people-list.tsx';
+import { RoomAnnouncer } from './room-announcer.tsx';
+import { DoorModeControl, DoorNotice, KnockTray } from './room-controls.tsx';
+import { entryTarget, floorRooms } from './rooms.ts';
+import { RoomsList } from './rooms-list.tsx';
 import { talkToTarget } from './talk-to.ts';
 import { useKeyboardWalking } from './use-keyboard-walking.ts';
+import { useMyRoom } from './use-my-room.ts';
 
 // Three.js is large; the UI shell renders first and the world loads in a separate chunk.
 const WorldScene = lazy(() => import('../../world/world-scene.tsx').then((module) => ({ default: module.WorldScene })));
+
+/** Current tiles of everyone on the floor (where walking avatars are closest to right now). */
+function currentTiles(): { readonly me: TileCoord | null; readonly tileOf: (personId: string) => TileCoord | null } {
+  const { avatars, myPersonId } = usePresenceStore.getState();
+  const now = serverClock.now();
+  const tileOf = (id: string) => {
+    const avatar = avatars[id];
+    if (!avatar) return null;
+    return avatar.movement ? tileAt(avatar.movement, now) : avatar.tile;
+  };
+  return { me: myPersonId ? tileOf(myPersonId) : null, tileOf };
+}
+
+function othersTiles(tileOf: (personId: string) => TileCoord | null): TileCoord[] {
+  const { avatars, myPersonId } = usePresenceStore.getState();
+  return Object.keys(avatars)
+    .filter((id) => id !== myPersonId)
+    .map(tileOf)
+    .filter((tile) => tile !== null);
+}
 
 export function OfficePage() {
   const { t } = useTranslation();
@@ -28,6 +53,7 @@ export function OfficePage() {
   const floors = useFloors();
   const connection = usePresenceStore((state) => state.connection);
   const [selectedFloorId, setSelectedFloorId] = useState<string | null>(null);
+  const [closedDoorRoomId, setClosedDoorRoomId] = useState<string | null>(null);
 
   const floorId = selectedFloorId ?? floors.data?.floors[0]?.floorId ?? null;
   const plan = useFloorPlan(floorId);
@@ -36,34 +62,48 @@ export function OfficePage() {
     const built = buildFloorGrid(plan.data);
     return built.ok ? built.value : null;
   }, [plan.data]);
+  const rooms = useMemo(() => (plan.data ? floorRooms(plan.data) : null), [plan.data]);
+  const roomNames = useMemo(() => new Map(rooms?.rooms.map((room) => [room.roomId, room.name])), [rooms]);
+  const myRoomId = useMyRoom(rooms?.roomMap ?? null);
+  const myRoom = rooms?.rooms.find((room) => room.roomId === myRoomId) ?? null;
+  const closedDoorRoom = rooms?.rooms.find((room) => room.roomId === closedDoorRoomId) ?? null;
+  const doorModeLabels = useMemo(
+    () => ({ open: t('room.mode_open'), knock: t('room.mode_knock'), locked: t('room.mode_locked') }),
+    [t],
+  );
 
   useEffect(() => {
     if (floorId && connection === 'online') void realtime.joinFloor(floorId);
   }, [floorId, connection, realtime]);
 
   useKeyboardWalking(grid, realtime);
-  useConversationAudio(realtime);
-  const walkTo = useCallback((tile: { x: number; y: number }) => void realtime.moveTo(tile), [realtime]);
+  useCallAudio(realtime);
+  const walkTo = useCallback(
+    (tile: TileCoord) => {
+      void realtime.moveTo(tile).then((result) => {
+        setClosedDoorRoomId(!result.ok && result.code === 'door-closed' ? (rooms?.roomMap.roomAt(tile) ?? null) : null);
+      });
+    },
+    [realtime, rooms],
+  );
   const talkTo = useCallback(
     (personId: string) => {
-      const { avatars, myPersonId } = usePresenceStore.getState();
-      const now = serverClock.now();
-      const tileOf = (id: string) => {
-        const avatar = avatars[id];
-        if (!avatar) return null;
-        return avatar.movement ? tileAt(avatar.movement, now) : avatar.tile;
-      };
-      const me = myPersonId ? tileOf(myPersonId) : null;
+      const { me, tileOf } = currentTiles();
       const them = tileOf(personId);
       if (!grid || !me || !them) return;
-      const occupied = Object.keys(avatars)
-        .filter((id) => id !== myPersonId)
-        .map(tileOf)
-        .filter((tile) => tile !== null);
-      const target = talkToTarget(grid, me, them, occupied);
+      const target = talkToTarget(grid, me, them, othersTiles(tileOf));
       if (target) walkTo(target);
     },
     [grid, walkTo],
+  );
+  const goToRoom = useCallback(
+    (roomId: string) => {
+      const { me, tileOf } = currentTiles();
+      if (!grid || !rooms || !me) return;
+      const target = entryTarget(grid, rooms.roomMap, roomId, me, othersTiles(tileOf));
+      if (target) walkTo(target);
+    },
+    [grid, rooms, walkTo],
   );
 
   return (
@@ -79,6 +119,7 @@ export function OfficePage() {
           <FloorSwitcher floors={floors.data.floors} currentFloorId={floorId} onSelect={setSelectedFloorId} />
         )}
         <div className="ml-auto flex items-center gap-3">
+          {myRoom?.doorModeAdjustable && <DoorModeControl room={myRoom} />}
           <ConversationLockToggle />
           <MicrophoneToggle />
           <ConnectionBadge />
@@ -98,8 +139,11 @@ export function OfficePage() {
       </header>
 
       <aside className="overflow-y-auto border-r border-border-subtle bg-surface-sunken p-4">
+        <KnockTray roomId={myRoomId} roomName={myRoom?.name ?? ''} />
         <PeopleList onTalkTo={talkTo} />
+        {rooms && <RoomsList rooms={rooms.rooms} roomMap={rooms.roomMap} myRoomId={myRoomId} onGoTo={goToRoom} />}
         <ConversationAnnouncer />
+        <RoomAnnouncer myRoomId={myRoomId} roomNames={roomNames} />
         <p className="mt-6 text-xs text-text-secondary">{t('office.walkHint')}</p>
       </aside>
 
@@ -110,10 +154,23 @@ export function OfficePage() {
           </p>
         ) : plan.data ? (
           <Suspense fallback={<p className="p-8 text-text-secondary">{t('office.loading')}</p>}>
-            <WorldScene plan={plan.data} label={t('app.worldLabel')} onTileSelected={walkTo} />
+            <WorldScene
+              plan={plan.data}
+              label={t('app.worldLabel')}
+              onTileSelected={walkTo}
+              doorModeLabels={doorModeLabels}
+            />
           </Suspense>
         ) : (
           <p className="p-8 text-text-secondary">{t('office.loading')}</p>
+        )}
+        {closedDoorRoom && (
+          <DoorNotice
+            room={closedDoorRoom}
+            onDismiss={() => {
+              setClosedDoorRoomId(null);
+            }}
+          />
         )}
       </main>
     </div>

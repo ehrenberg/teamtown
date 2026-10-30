@@ -8,23 +8,23 @@ import {
   type RemoteParticipant,
   type RemoteTrack,
 } from 'livekit-client';
-import type { ConversationAccess } from '../realtime/realtime-client.ts';
+import type { CallAccess, CallId } from '../realtime/realtime-client.ts';
 import { SpatialMixer } from './spatial-mixer.ts';
 import type { VoiceMix } from './voice-mix.ts';
 
-export interface ConversationAudioCallbacks {
+export interface CallAudioCallbacks {
   readonly onSpeaking: (personIds: string[]) => void;
   readonly onMuted: (personIds: string[]) => void;
-  /** The media connection dropped although the conversation goes on; ask for a fresh token. */
-  readonly onConnectionLost: (conversationId: string) => void;
+  /** The media connection dropped although the call goes on; ask for a fresh token. */
+  readonly onConnectionLost: (callId: CallId) => void;
   readonly onMicrophoneFailed: () => void;
 }
 
 /** Switching rooms is make-before-break, so a merge or split doesn't cut off the voices. */
-export class ConversationAudio {
-  #current: { readonly conversationId: string; readonly room: Room } | null = null;
-  /** The conversation whose room is being joined right now; a second token for it must not open a second room. */
-  #joining: string | null = null;
+export class CallAudio {
+  #current: { readonly callId: CallId; readonly room: Room } | null = null;
+  /** The call whose room is being joined right now; a second token for it must not open a second room. */
+  #joining: CallId | null = null;
   /** Bumped by `leave()`, so a join that finishes afterwards is dropped. */
   #generation = 0;
   #microphoneOn: boolean;
@@ -33,43 +33,43 @@ export class ConversationAudio {
   constructor(
     context: AudioContext,
     microphoneOn: boolean,
-    private readonly callbacks: ConversationAudioCallbacks,
+    private readonly callbacks: CallAudioCallbacks,
   ) {
     this.#mixer = new SpatialMixer(context);
     this.#microphoneOn = microphoneOn;
   }
 
-  get conversationId(): string | null {
-    return this.#current?.conversationId ?? null;
+  get callId(): CallId | null {
+    return this.#current?.callId ?? null;
   }
 
-  isActive(conversationId: string): boolean {
+  isActive(callId: CallId): boolean {
     return (
-      this.#joining === conversationId ||
-      (this.#current?.conversationId === conversationId && this.#current.room.state === ConnectionState.Connected)
+      this.#joining === callId ||
+      (this.#current?.callId === callId && this.#current.room.state === ConnectionState.Connected)
     );
   }
 
-  async join(access: ConversationAccess): Promise<void> {
-    if (this.isActive(access.conversationId)) return;
+  async join(access: CallAccess): Promise<void> {
+    if (this.isActive(access.callId)) return;
 
-    this.#joining = access.conversationId;
+    this.#joining = access.callId;
     const generation = this.#generation;
     const room = new Room({ adaptiveStream: false, dynacast: false });
     try {
-      this.#wire(room, access.conversationId);
+      this.#wire(room, access.callId);
       await room.connect(access.url, access.token, { autoSubscribe: true });
     } finally {
-      if (this.#joining === access.conversationId) this.#joining = null;
+      if (this.#joining === access.callId) this.#joining = null;
     }
     if (generation !== this.#generation) {
-      await room.disconnect(); // left the conversation while connecting
+      await room.disconnect(); // left the call while connecting
       return;
     }
 
     // Switch over at once, so no event of the new room is missed (LiveKit reports speakers only on change) …
     const previous = this.#current;
-    this.#current = { conversationId: access.conversationId, room };
+    this.#current = { callId: access.callId, room };
     this.#mixer.clear();
     for (const participant of room.remoteParticipants.values()) this.#addVoices(participant);
     this.callbacks.onSpeaking(room.activeSpeakers.map((speaker) => speaker.identity));
@@ -80,13 +80,13 @@ export class ConversationAudio {
     await previous?.room.disconnect();
   }
 
-  async leave(conversationId?: string): Promise<void> {
-    if (!conversationId || this.#joining === conversationId) {
+  async leave(callId?: CallId): Promise<void> {
+    if (!callId || this.#joining === callId) {
       this.#generation++;
       this.#joining = null;
     }
     const current = this.#current;
-    if (!current || (conversationId && current.conversationId !== conversationId)) return;
+    if (!current || (callId && current.callId !== callId)) return;
     this.#current = null;
     this.#mixer.clear();
     this.callbacks.onSpeaking([]);
@@ -118,7 +118,7 @@ export class ConversationAudio {
     }
   }
 
-  #wire(room: Room, conversationId: string): void {
+  #wire(room: Room, callId: CallId): void {
     const isCurrent = () => this.#current?.room === room;
     room.on(RoomEvent.TrackSubscribed, (track: RemoteTrack, _publication, participant: RemoteParticipant) => {
       if (isCurrent() && track.kind === Track.Kind.Audio) this.#mixer.add(participant.identity, track.mediaStreamTrack);
@@ -151,7 +151,7 @@ export class ConversationAudio {
       this.#current = null;
       this.#mixer.clear();
       this.callbacks.onSpeaking([]);
-      // Removed by the server (left the conversation) or replaced by another connection of ours is expected;
+      // Removed by the server (left the conversation or room) or replaced by another connection of ours is expected;
       // anything else is a lost connection.
       const expected = [
         DisconnectReason.PARTICIPANT_REMOVED,
@@ -159,7 +159,7 @@ export class ConversationAudio {
         DisconnectReason.DUPLICATE_IDENTITY,
       ];
       if (reason === undefined || !expected.includes(reason)) {
-        this.callbacks.onConnectionLost(conversationId);
+        this.callbacks.onConnectionLost(callId);
       }
     });
   }
