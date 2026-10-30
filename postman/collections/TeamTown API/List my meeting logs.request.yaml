@@ -1,0 +1,22 @@
+$kind: http-request
+method: GET
+url: '{{baseUrl}}/meeting-logs'
+order: 7000
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test('responds 200', () => pm.response.to.have.status(200));
+      const { logs } = pm.response.json();
+      pm.test('matches MeetingLogListResponse', () => {
+        pm.expect(logs).to.be.an('array');
+        for (const log of logs) {
+          pm.expect(log.meetingId).to.be.a('string').and.not.empty;
+          pm.expect(log.title).to.be.a('string').and.not.empty;
+          pm.expect(log.hostId).to.match(/^[0-9a-f-]{36}$/);
+          pm.expect(log.participants).to.be.an('array').and.not.empty;
+          pm.expect(new Date(log.startedAt).toString()).to.not.equal('Invalid Date');
+          pm.expect(log.endedAt === null || typeof log.endedAt === 'string').to.be.true;
+          pm.expect(new Date(log.expiresAt).toString()).to.not.equal('Invalid Date');
+        }
+      });

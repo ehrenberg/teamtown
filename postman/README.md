@@ -4,10 +4,10 @@ Contract tests for the REST API of the TeamTown server, in the Git-native Postma
 (one YAML file per request). Realtime messages are tested with Vitest, the UI with Playwright
 (`docs/engineering/testing-strategy.md`).
 
-| Path                                  | Content                                              |
-| ------------------------------------- | ---------------------------------------------------- |
-| `collections/TeamTown API/`           | `/api/health`, `/api/me`, `/api/floors`, floor plans |
-| `environments/Local.environment.yaml` | Local dev stack (`pnpm stack:up` + `pnpm dev`)       |
+| Path                                  | Content                                                                   |
+| ------------------------------------- | ------------------------------------------------------------------------- |
+| `collections/TeamTown API/`           | `/api/health`, `/api/me`, `/api/floors`, floor plans, `/api/meeting-logs` |
+| `environments/Local.environment.yaml` | Local dev stack (`pnpm stack:up` + `pnpm dev`)                            |
 
 ## Run
 

@@ -1,0 +1,10 @@
+$kind: http-request
+method: DELETE
+url: '{{baseUrl}}/meeting-logs/not-a-meeting'
+order: 8000
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      // Someone who didn't take part learns nothing, not even whether the log exists (ADR-0026).
+      pm.test('responds 404', () => pm.response.to.have.status(404));
