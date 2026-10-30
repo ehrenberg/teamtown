@@ -96,6 +96,9 @@ flowchart TB
   `AvatarState[]`.
 - **`AvatarState`**: `personId`, `tile`, `path?`, `facing`, `status`, `visibility`, `roomId?`.
   - Invariants: only walkable tiles; entering a room requires a decision from Access + door mode.
+- **Live door mode** per room: starts at the floor plan's `doorMode`, changed by occupants until M4, reset when the
+  room empties. Plus entry passes and the 30 s grace period. Presence owns it because it enforces paths
+  (decided 2026-10-30, M2b).
 
 ### Meetings (mostly in-memory)
 

@@ -1,6 +1,6 @@
 # Feature: Room calls, door modes and knock
 
-- **Status:** Draft
+- **Status:** Ready
 - **Brainstorming ID:** C3 (room meetings), C4 (knock knock), S1 (door states as availability)
 - **Bounded context(s):** Meetings, Presence, World, realtime gateway
 - **Milestone:** M2b (ADR-0031)
@@ -26,7 +26,7 @@ so that we decide who joins.
    without one is rejected with `door-closed`. Leaving a room is always
    possible. If the door mode changes while someone is walking towards it, their path ends in front of the door.
 4. **Who changes the door mode.** Until M4, any occupant of a room may switch its door mode (ADR-0031). This works
-   in every room that has at least one door. The last change wins.
+   in every room that has at least one door and no spawn point. The last change wins.
 5. **Reset.** When the last occupant leaves, the room goes back to the door mode from its floor plan.
 6. **Empty rooms.** A `knock` room with nobody inside can be entered freely (nobody could answer a knock). A
    `locked` room is never empty, because it resets when the last person leaves.
@@ -43,8 +43,8 @@ so that we decide who joins.
     in without knocking (same grace period as a locked conversation, ADR-0031). After that they are a newcomer.
 11. **Visibility.** Avatars and names inside a room stay visible to everyone on the floor in every door mode,
     like a glass-walled office. Only entry and sound are restricted.
-12. **Spawn safety.** _(Proposal)_ Rooms that contain a spawn point can't be switched away from `open`, so nobody
-    joining the floor is placed inside a closed room or locked out of the floor.
+12. **Spawn safety.** Rooms that contain a spawn point always stay `open`; their door mode can't be switched, so
+    nobody joining the floor is placed inside a closed room or locked out of the floor.
 
 ## Acceptance criteria
 
@@ -88,8 +88,8 @@ M4 only swaps the policy. No new permissions.
   exactly one of the two tiles next to the door); pathfinding with a predicate for blocked door crossings.
 - **Presence:** `FloorInstance` tracks each avatar's `roomId` and emits `AvatarEnteredRoom` / `AvatarLeftRoom`.
   It holds the **live door mode** per room (in memory, reset when the room empties), entry passes and grace
-  periods, and blocks door crossings without a pass. _(Proposal: Presence owns the live door mode because it
-  enforces paths and knows occupancy; Meetings grants passes through Presence's public API.)_
+  periods, and blocks door crossings without a pass. Presence owns the live door mode because it enforces paths
+  and knows occupancy; Meetings grants entry passes through Presence's public API (decided 2026-10-30).
 - **Meetings:** `KnockRequest` (`knockId`, `roomId`, `requester`, `state: pending | admitted | declined | expired |
 cancelled`, `expiresAt`) and `RoomCall` (`roomId`, `participants[]`), both in memory. Events:
   `KnockRequested`, `KnockAnswered`, `RoomCallJoined`, `RoomCallLeft`. The `MediaGateway` port from M2a issues
@@ -106,7 +106,8 @@ cancelled`, `expiresAt`) and `RoomCall` (`roomId`, `participants[]`), both in me
   `KnockAnswered { knockId, outcome }` (`admitted`, `declined`, `expired`, `cancelled`).
 - Events to the requester only: `KnockAnswered { knockId, outcome }`.
 - Event to an occupant only: `RoomCallAccessGranted { roomId, url, token }`.
-- Nack codes: `door-closed`, `room-not-found`, `not-in-room`, `knock-not-found`, `knock-pending`.
+- Nack codes: `door-closed`, `room-not-found`, `not-in-room`, `knock-not-found`, `knock-pending`,
+  `door-mode-fixed` (room with a spawn point).
 
 ## Privacy impact
 
@@ -129,5 +130,4 @@ cancelled`, `expiresAt`) and `RoomCall` (`roomId`, `participants[]`), both in me
 
 ## Open questions
 
-- Should rooms with a spawn point be excluded from door mode changes (behaviour 12, proposal)?
-- Should the grace period also apply to `knock` rooms, as written in behaviour 10, or only to `locked` rooms?
+- None at the moment.
