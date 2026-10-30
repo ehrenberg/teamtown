@@ -27,4 +27,5 @@ The production Compose setup (Caddy, hostnames, secrets) is part of milestone M6
 ## Testing audio alone
 
 `pnpm dev:echo` starts an "echo colleague": it signs in as `demo2`, follows whoever is on the floor (sign in as
-`demo` yourself) and plays back what you say one second later. Use headphones.
+`demo` yourself) and plays back what you say one second later. Use headphones. Press `f` in its terminal to switch following on or off
+(`ECHO_FOLLOW_OFF=1` starts it standing still).

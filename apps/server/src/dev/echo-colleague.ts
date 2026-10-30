@@ -4,6 +4,9 @@
  *
  *   pnpm dev:echo            (needs `pnpm stack:up` and `pnpm dev`)
  *   ECHO_FOLLOW="Demo User"  whom to follow (display name; default: the first other person on the floor)
+ *   ECHO_FOLLOW_OFF=1        start without following
+ *
+ * Press `f` in its terminal to switch following on or off.
  */
 import {
   AudioSource,
@@ -65,6 +68,7 @@ let counter = 0;
 let room: Room | null = null;
 let conversationId: string | null = null;
 let attempt = 0;
+let following = !process.env.ECHO_FOLLOW_OFF;
 
 const send = (command: Omit<ClientCommand, 'id'>) => {
   socket.send(encodeMessage({ ...command, id: `e${String(++counter)}` } as ClientCommand));
@@ -72,6 +76,7 @@ const send = (command: Omit<ClientCommand, 'id'>) => {
 
 /** Walks to a free tile next to where the followed person stands or is heading; `retry` tries the next one. */
 function follow(retry = false): void {
+  if (!following) return;
   const person = target ? avatars.get(target) : undefined;
   if (!person) return;
   attempt = retry ? attempt + 1 : 0;
@@ -91,7 +96,8 @@ function chooseTarget(): void {
   const others = [...avatars.values()].filter((a) => a.personId !== me);
   target = (FOLLOW ? others.find((a) => a.displayName === FOLLOW) : others[0])?.personId ?? null;
   const name = target ? avatars.get(target)?.displayName : null;
-  console.warn(name ? `Following ${name}.` : 'Waiting for someone to join the floor…');
+  if (!name) console.warn('Waiting for someone to join the floor…');
+  else console.warn(following ? `Following ${name}.` : `${name} is here; press f to follow.`);
   follow();
 }
 
@@ -158,7 +164,7 @@ function onEvent(event: ServerEvent): void {
         conversationId = null;
         void room?.disconnect();
         room = null;
-        console.warn('The conversation ended. Walk back to me, or I will follow you.');
+        console.warn(following ? 'The conversation ended; I am coming.' : 'The conversation ended. Walk back to me.');
       }
       return;
     case 'Nack':
@@ -190,4 +196,17 @@ const stop = () => {
 };
 process.once('SIGINT', stop);
 process.once('SIGTERM', stop);
-console.warn('Echo colleague starting (Ctrl+C to stop)…');
+
+// Raw mode delivers single key presses, so Ctrl+C has to be handled here too.
+if (process.stdin.isTTY) {
+  process.stdin.setRawMode(true);
+  process.stdin.on('data', (key: Buffer) => {
+    const pressed = key.toString();
+    if (pressed === '\u0003') stop();
+    if (pressed.toLowerCase() !== 'f') return;
+    following = !following;
+    console.warn(following ? 'Following again.' : 'Staying here.');
+    follow();
+  });
+}
+console.warn(`Echo colleague starting (${following ? 'following' : 'staying'}; f: follow on/off, Ctrl+C: stop)…`);
