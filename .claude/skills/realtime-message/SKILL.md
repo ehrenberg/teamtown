@@ -13,7 +13,7 @@ Envelope `{ t, id?, p }`, MessagePack-encoded.
 - **Commands** (client → server): imperative, e.g. `MoveTo`, `KnockOnRoom`, `SetStatus`.
 - **Events** (server → client): past tense or state change, e.g. `AvatarPathStarted`, `KnockRequested`.
 - Payloads carry IDs and minimal data. **Never** include data the receiver isn't allowed to see (e.g. no
-  names of people inside a locked room).
+  knock requests for people outside the room).
 
 ## Steps
 

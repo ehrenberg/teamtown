@@ -30,6 +30,8 @@ Use these terms consistently in code, UI, docs and conversations. Code identifie
 | **Direct call**     | A call to a person independent of location                                                               | `DirectCall`                               |
 | **Logged meeting**  | A room call the host explicitly started as logged: title, participants and times are stored              | `MeetingLog`                               |
 | **Knock**           | A request to enter a `knock`-mode room                                                                   | `KnockRequest`                             |
+| **Occupant**        | A person whose avatar is inside a room                                                                   | `roomId` in `AvatarState`                  |
+| **Entry pass**      | A short-lived right for one person to walk into a `knock` or `locked` room (after a knock or on return)  | `EntryPass`                                |
 | **Channel**         | A persistent message stream: `public`, `private`, `announcement`, `room` or `direct`                     | `Channel`                                  |
 | **Room wall**       | The channel linked to a room                                                                             | `Channel{kind: room}`                      |
 | **Thread**          | Replies to one message                                                                                   | `Thread`                                   |
