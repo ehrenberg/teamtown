@@ -24,6 +24,14 @@ interface MediaState {
   readonly localVideo: MediaStreamTrack | null;
   /** People on the current floor whose camera is on (no picture unless they are in one's call). */
   readonly cameraOn: readonly string[];
+  /** The screen shared in one's call (by someone else or oneself). */
+  readonly screenShare: { readonly personId: string; readonly track: MediaStreamTrack } | null;
+  readonly sharingScreen: boolean;
+  /** Bumped to ask the video panel to show the shared screen in full screen (e.g. after a click on the wall). */
+  readonly fullScreenRequests: number;
+  readonly setScreenShare: (share: MediaState['screenShare']) => void;
+  readonly setSharingScreen: (sharing: boolean) => void;
+  readonly requestFullScreen: () => void;
   readonly setCamera: (camera: CameraState) => void;
   readonly setVideos: (videos: ReadonlyMap<string, MediaStreamTrack>) => void;
   readonly setLocalVideo: (track: MediaStreamTrack | null) => void;
@@ -43,6 +51,18 @@ export const useMediaStore = create<MediaState>()((set) => ({
   videos: new Map(),
   localVideo: null,
   cameraOn: [],
+  screenShare: null,
+  sharingScreen: false,
+  fullScreenRequests: 0,
+  setScreenShare: (screenShare) => {
+    set({ screenShare });
+  },
+  setSharingScreen: (sharingScreen) => {
+    set({ sharingScreen });
+  },
+  requestFullScreen: () => {
+    set((state) => ({ fullScreenRequests: state.fullScreenRequests + 1 }));
+  },
   setCamera: (camera) => {
     set({ camera });
   },

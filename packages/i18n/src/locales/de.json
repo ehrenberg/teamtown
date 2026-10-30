@@ -145,5 +145,15 @@
     "grid": "Video",
     "show": "Video zeigen",
     "hide": "Video ausblenden"
+  },
+  "screen": {
+    "share": "Bildschirm teilen",
+    "stop": "Teilen beenden",
+    "of": "Bildschirm von {{name}}",
+    "fullScreen": "Vollbild",
+    "started": "{{name}} teilt den Bildschirm.",
+    "ended": "Die Bildschirmfreigabe ist beendet.",
+    "takenOver": "{{name}} teilt jetzt, deine Freigabe ist beendet.",
+    "stopped": "Deine Bildschirmfreigabe ist beendet."
   }
 }

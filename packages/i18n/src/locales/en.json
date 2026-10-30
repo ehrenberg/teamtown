@@ -145,5 +145,15 @@
     "grid": "Video",
     "show": "Show video",
     "hide": "Hide video"
+  },
+  "screen": {
+    "share": "Share screen",
+    "stop": "Stop sharing",
+    "of": "Screen of {{name}}",
+    "fullScreen": "Full screen",
+    "started": "{{name}} is sharing their screen.",
+    "ended": "The screen share ended.",
+    "takenOver": "{{name}} is sharing now, so your share stopped.",
+    "stopped": "Your screen share stopped."
   }
 }

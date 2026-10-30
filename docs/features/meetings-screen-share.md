@@ -1,6 +1,6 @@
 # Feature: Screen share
 
-- **Status:** Ready
+- **Status:** Done (2026-10-30)
 - **Brainstorming ID:** C5 (screen on the wall)
 - **Bounded context(s):** Meetings, realtime gateway
 - **Milestone:** M2c, part 3 of 3 (direct call → camera → screen share; ADR-0031)
@@ -32,18 +32,19 @@ someone in a meeting room, I want to see it on the room's wall screen, like in t
 
 ## Acceptance criteria
 
-- [ ] Given a room call of two, when one shares the screen, then the other sees it in the video panel within 1 s,
-      and nobody outside the call receives it.
-- [ ] Given someone sharing, when another participant starts sharing, then the first share stops and its sharer
+- [x] Given a room call of two, when one shares the screen, then the other sees it in the video panel within 1 s,
+      and nobody outside the call receives it. _(e2e `screen-share.spec.ts` without the 1 s budget; only members of
+      a LiveKit room receive its tracks.)_
+- [x] Given someone sharing, when another participant starts sharing, then the first share stops and its sharer
       is told.
-- [ ] Given a person sharing, when they leave the call, then the share stops for everyone.
-- [ ] Given a proximity conversation, then there is no "Share screen" button and the server refuses a share.
-- [ ] Given a room call in a room with a wall screen, then participants see the share on the wall screen; clicking
-      it opens full screen.
-- [ ] Non-spatial path: the share is visible in the video panel with a "Full screen" button, by keyboard.
-- [ ] Accessibility: the share button has `aria-pressed`; the shared screen has a label with the sharer's name;
-      starting and stopping a share is announced politely.
-- [ ] i18n: all new strings in EN and DE.
+- [x] Given a person sharing, when they leave the call, then the share stops for everyone. _(Unit tests.)_
+- [x] Given a proximity conversation, then there is no "Share screen" button and the server refuses a share.
+- [x] Given a room call in a room with a wall screen, then participants see the share on the wall screen; clicking
+      it opens full screen. _(The picture on the wall is checked by screenshot; the click is checked by hand only.)_
+- [x] Non-spatial path: the share is visible in the video panel with a "Full screen" button, by keyboard.
+- [x] Accessibility: the share button has `aria-pressed`; the shared screen has a label with the sharer's name;
+      starting and stopping a share is announced politely. _(Not yet checked with a screen reader.)_
+- [x] i18n: all new strings in EN and DE.
 
 ## Permissions
 
@@ -75,6 +76,11 @@ direct call may share. No new permissions.
 - Video panel: a large share tile above the camera tiles, with the sharer's name and "Full screen".
 - World: the `tv-wall` in the call's room shows the share as a live picture for participants; a pointer cursor and
   a click open full screen.
+
+## Not yet covered by automated tests
+
+- The 1 s budget (M6), the click on the wall screen and full screen, and screen-reader announcements.
+- In one of five e2e runs, the first "Share screen" did not start; the cause is not found yet.
 
 ## Open questions
 

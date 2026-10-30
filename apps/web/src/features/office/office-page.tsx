@@ -12,7 +12,8 @@ import { usePresenceStore } from '../../stores/presence-store.ts';
 import { Phone } from 'lucide-react';
 import { useCallStore } from '../../stores/call-store.ts';
 import { CallAnnouncer, CallPanel, CallSomeoneDialog, IncomingCallDialog } from './calls.tsx';
-import { CameraToggle, VideoGrid } from './video.tsx';
+import { useMediaStore } from '../../stores/media-store.ts';
+import { CameraToggle, ScreenShareAnnouncer, ScreenShareToggle, VideoGrid } from './video.tsx';
 import { ConnectionBadge } from './connection-badge.tsx';
 import { ConversationAnnouncer } from './conversation-announcer.tsx';
 import { ConversationLockToggle, MicrophoneToggle } from './conversation-controls.tsx';
@@ -77,6 +78,9 @@ export function OfficePage() {
     [t],
   );
 
+  const requestFullScreen = useCallback(() => {
+    useMediaStore.getState().requestFullScreen();
+  }, []);
   const videoLabelOf = useCallback((name: string) => t('video.of', { name }), [t]);
 
   useEffect(() => {
@@ -149,6 +153,7 @@ export function OfficePage() {
           <ConversationLockToggle />
           <MicrophoneToggle />
           <CameraToggle />
+          <ScreenShareToggle />
           <ConnectionBadge />
           {me.data && (
             <span
@@ -171,6 +176,7 @@ export function OfficePage() {
             setCallDialogOpen(true);
           }}
         />
+        <ScreenShareAnnouncer />
         <KnockTray roomId={myRoomId} roomName={myRoom?.name ?? ''} />
         <PeopleList onTalkTo={talkTo} onCall={call} />
         {rooms && <RoomsList rooms={rooms.rooms} roomMap={rooms.roomMap} myRoomId={myRoomId} onGoTo={goToRoom} />}
@@ -193,6 +199,7 @@ export function OfficePage() {
               onTileSelected={walkTo}
               doorModeLabels={doorModeLabels}
               videoLabelOf={videoLabelOf}
+              onWallScreenSelected={requestFullScreen}
             />
           </Suspense>
         ) : (

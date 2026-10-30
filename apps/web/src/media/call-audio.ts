@@ -23,6 +23,10 @@ export interface CallAudioCallbacks {
   /** One's own camera track while it is on. */
   readonly onLocalVideo: (track: MediaStreamTrack | null) => void;
   readonly onCameraFailed: () => void;
+  /** The screen shared in the current call (by someone else or oneself), or `null`. */
+  readonly onScreenShare: (share: { readonly personId: string; readonly track: MediaStreamTrack } | null) => void;
+  /** One's own share ended without being asked to (e.g. the browser's "Stop sharing"). */
+  readonly onOwnScreenShareEnded: () => void;
 }
 
 /**
@@ -37,6 +41,7 @@ export class CallAudio {
   #generation = 0;
   #microphoneOn: boolean;
   #cameraOn = false;
+  #screenShareOn = false;
   readonly #videos = new Map<string, MediaStreamTrack>();
   readonly #mixer: SpatialMixer;
 
@@ -85,6 +90,7 @@ export class CallAudio {
     this.callbacks.onLocalVideo(null);
     for (const participant of room.remoteParticipants.values()) this.#addVoices(participant);
     this.#reportVideos();
+    this.#reportScreenShare();
     this.callbacks.onSpeaking(room.activeSpeakers.map((speaker) => speaker.identity));
     this.#reportMuted();
     // … but keep the old room until one's own voice is on air in the new one (make-before-break).
@@ -92,6 +98,7 @@ export class CallAudio {
     this.#reportMuted();
     // The camera may have been switched on while the room was still connecting.
     if (this.#cameraOn) await this.setCameraOn(true);
+    if (this.#screenShareOn) await this.setScreenShareOn(true);
     await previous?.room.disconnect();
   }
 
@@ -158,16 +165,25 @@ export class CallAudio {
         this.#videos.set(participant.identity, track.mediaStreamTrack);
         this.#reportVideos();
       }
+      if (track.source === Track.Source.ScreenShare) this.#reportScreenShare();
     });
     room.on(RoomEvent.TrackUnsubscribed, (track: RemoteTrack, _publication, participant: RemoteParticipant) => {
       if (!isCurrent()) return;
       if (track.kind === Track.Kind.Audio) this.#mixer.remove(participant.identity);
       if (track.source === Track.Source.Camera && this.#videos.delete(participant.identity)) this.#reportVideos();
+      if (track.source === Track.Source.ScreenShare) this.#reportScreenShare();
     });
     room.on(RoomEvent.ParticipantDisconnected, (participant: RemoteParticipant) => {
       if (!isCurrent()) return;
       this.#mixer.remove(participant.identity);
       if (this.#videos.delete(participant.identity)) this.#reportVideos();
+      this.#reportScreenShare();
+    });
+    room.on(RoomEvent.LocalTrackUnpublished, (publication) => {
+      if (!isCurrent() || publication.source !== Track.Source.ScreenShare || !this.#screenShareOn) return;
+      this.#screenShareOn = false;
+      this.callbacks.onOwnScreenShareEnded();
+      this.#reportScreenShare();
     });
     room.on(RoomEvent.ActiveSpeakersChanged, (speakers: Participant[]) => {
       if (isCurrent()) this.callbacks.onSpeaking(speakers.map((speaker) => speaker.identity));
@@ -210,6 +226,41 @@ export class CallAudio {
     if (camera) this.#videos.set(participant.identity, camera.mediaStreamTrack);
   }
 
+  async setScreenShareOn(on: boolean): Promise<void> {
+    this.#screenShareOn = on;
+    const room = this.#current?.room;
+    if (!room) return;
+    try {
+      await room.localParticipant.setScreenShareEnabled(on, { audio: false });
+    } catch {
+      // Cancelled in the browser's picker, or not allowed: nothing is shared.
+      this.#screenShareOn = false;
+      this.callbacks.onOwnScreenShareEnded();
+    }
+    this.#reportScreenShare();
+  }
+
+  #reportScreenShare(): void {
+    const room = this.#current?.room;
+    if (!room) {
+      this.callbacks.onScreenShare(null);
+      return;
+    }
+    const own = room.localParticipant.getTrackPublication(Track.Source.ScreenShare)?.track;
+    if (this.#screenShareOn && own) {
+      this.callbacks.onScreenShare({ personId: room.localParticipant.identity, track: own.mediaStreamTrack });
+      return;
+    }
+    for (const participant of room.remoteParticipants.values()) {
+      const track = participant.getTrackPublication(Track.Source.ScreenShare)?.track;
+      if (track) {
+        this.callbacks.onScreenShare({ personId: participant.identity, track: track.mediaStreamTrack });
+        return;
+      }
+    }
+    this.callbacks.onScreenShare(null);
+  }
+
   #reportVideos(): void {
     this.callbacks.onVideos(new Map(this.#videos));
   }
@@ -220,6 +271,7 @@ export class CallAudio {
     this.callbacks.onSpeaking([]);
     this.callbacks.onLocalVideo(null);
     this.#reportVideos();
+    this.callbacks.onScreenShare(null);
   }
 
   #reportMuted(): void {

@@ -16,6 +16,7 @@ import { AvatarLabels } from './labels/avatar-labels.tsx';
 import { LabelProjector } from './labels/label-projector.tsx';
 import { DoorLeaves, DoorSigns } from './doors/doors.tsx';
 import { VideoBubbleProjector, VideoBubbles } from './video/video-bubbles.tsx';
+import { WallScreens } from './video/wall-screens.tsx';
 import type { DoorMode } from '../stores/room-store.ts';
 
 /**
@@ -28,6 +29,7 @@ export function WorldScene({
   onTileSelected,
   doorModeLabels,
   videoLabelOf,
+  onWallScreenSelected,
 }: {
   readonly plan: FloorPlan;
   readonly label: string;
@@ -36,6 +38,8 @@ export function WorldScene({
   readonly doorModeLabels: Record<DoorMode, string>;
   /** Accessible label of a video bubble, given the person's name. */
   readonly videoLabelOf: (name: string) => string;
+  /** A click on a wall screen showing a share. */
+  readonly onWallScreenSelected: () => void;
 }) {
   const [width, depth] = gridToWorld(plan.width, plan.height);
   const spawn = plan.spawnPoints[0] ?? { x: plan.width / 2, y: plan.height / 2 };
@@ -75,6 +79,7 @@ export function WorldScene({
         <Walls plan={plan} />
         <Furniture plan={plan} />
         <DoorLeaves plan={plan} />
+        <WallScreens plan={plan} onSelect={onWallScreenSelected} />
         <TilePicker width={plan.width} height={plan.height} onTileSelected={onTileSelected} />
         <ConversationBubbles />
         <Suspense fallback={null}>

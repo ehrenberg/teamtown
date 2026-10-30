@@ -137,6 +137,14 @@ export class RealtimeClient {
     return this.#command({ t: 'SetCamera', p: { on } });
   }
 
+  startScreenShare(): Promise<CommandResult> {
+    return this.#command({ t: 'StartScreenShare', p: {} });
+  }
+
+  stopScreenShare(): Promise<CommandResult> {
+    return this.#command({ t: 'StopScreenShare', p: {} });
+  }
+
   /** The answer arrives as `OnlinePeople` in the call store. */
   listOnlinePeople(): Promise<CommandResult> {
     return this.#command({ t: 'ListOnlinePeople', p: {} });
@@ -246,6 +254,16 @@ export class RealtimeClient {
         if (event.p.floorId !== usePresenceStore.getState().floorId) return;
         const others = media.cameraOn.filter((id) => id !== event.p.personId);
         media.setCameraOn(event.p.on ? [...others, event.p.personId] : others);
+        return;
+      }
+      case 'ScreenShareChanged': {
+        // Someone else took over: one's own share stops (one share per call).
+        const media = useMediaStore.getState();
+        const me = usePresenceStore.getState().myPersonId;
+        if (media.sharingScreen && event.p.sharer !== me) {
+          media.setSharingScreen(false);
+          useCallStore.getState().notifyScreenShare(event.p.sharer);
+        }
         return;
       }
       case 'DirectCallAccessGranted':

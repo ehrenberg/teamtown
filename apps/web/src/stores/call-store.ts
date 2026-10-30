@@ -20,6 +20,9 @@ interface CallState {
   readonly applyEvent: (event: ServerEvent) => void;
   /** For answers the server gives as a Nack, e.g. calling someone who is busy. */
   readonly notify: (notice: CallNotice) => void;
+  /** Someone else started sharing and replaced one's own share (`null`: it ended on the server's side). */
+  readonly screenShareTakenBy: string | null | undefined;
+  readonly notifyScreenShare: (personId: string | null | undefined) => void;
 }
 
 export const useCallStore = create<CallState>()((set) => ({
@@ -28,6 +31,10 @@ export const useCallStore = create<CallState>()((set) => ({
   onCall: [],
   onCallFloorId: null,
   online: [],
+  screenShareTakenBy: undefined,
+  notifyScreenShare: (screenShareTakenBy) => {
+    set({ screenShareTakenBy });
+  },
   notify: (lastNotice) => {
     set({ lastNotice });
   },

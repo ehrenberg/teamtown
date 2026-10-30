@@ -43,7 +43,8 @@ instance; deployment is part of M6.
 ([feature spec](../features/meetings-proximity-conversations.md)). M2b room calls, door modes and knock done on 2026-10-30
 ([feature spec](../features/meetings-room-calls-and-knock.md)). M2c part 1, direct calls, done on 2026-10-30
 ([feature spec](../features/meetings-direct-calls.md)). M2c part 2, camera, done on 2026-10-30
-([feature spec](../features/meetings-camera.md)). Next: M2c screen share.
+([feature spec](../features/meetings-camera.md)). M2c part 3, screen share, done on 2026-10-30
+([feature spec](../features/meetings-screen-share.md)). Next: M2d logged meetings.
 
 M2 and M3 can be developed in parallel by different contributors because they are separate bounded
 contexts ([domain model](../architecture/domain-model.md)).

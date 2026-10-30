@@ -63,6 +63,7 @@ export function useMyCallId(): CallId | null {
 export function useCallAudio(realtime: RealtimeClient): void {
   const microphone = useMediaStore((state) => state.microphone);
   const camera = useMediaStore((state) => state.camera);
+  const sharingScreen = useMediaStore((state) => state.sharingScreen);
   const myCallId = useMyCallId();
 
   const [audio] = useState(() => {
@@ -87,6 +88,14 @@ export function useCallAudio(realtime: RealtimeClient): void {
       onCameraFailed: () => {
         useMediaStore.getState().setCamera('unavailable');
         void realtime.setCamera(false);
+      },
+      onScreenShare: (share) => {
+        useMediaStore.getState().setScreenShare(share);
+      },
+      onOwnScreenShareEnded: () => {
+        if (!useMediaStore.getState().sharingScreen) return;
+        useMediaStore.getState().setSharingScreen(false);
+        void realtime.stopScreenShare();
       },
     });
   });
@@ -119,9 +128,14 @@ export function useCallAudio(realtime: RealtimeClient): void {
 
   // The camera is opt-in per call: every new call (or none) starts with it off.
   useEffect(() => {
-    const { camera, setCamera } = useMediaStore.getState();
+    const { camera, setCamera, sharingScreen: sharing, setSharingScreen } = useMediaStore.getState();
     if (camera === 'on') setCamera('off');
+    if (sharing) setSharingScreen(false);
   }, [myCallId]);
+
+  useEffect(() => {
+    void audio.setScreenShareOn(sharingScreen);
+  }, [audio, sharingScreen]);
 
   useEffect(() => {
     void audio.setCameraOn(camera === 'on');

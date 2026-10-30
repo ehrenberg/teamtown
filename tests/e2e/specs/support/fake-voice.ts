@@ -46,6 +46,8 @@ export async function browserWithVoice(frequency: number): Promise<Browser> {
       '--enable-unsafe-swiftshader',
       '--use-fake-ui-for-media-stream',
       '--use-fake-device-for-media-stream',
+      // Screen sharing picks the whole (virtual) screen without showing the browser's picker.
+      '--auto-select-desktop-capture-source=Entire screen',
       `--use-file-for-fake-audio-capture=${file}`,
       '--autoplay-policy=no-user-gesture-required',
     ],
