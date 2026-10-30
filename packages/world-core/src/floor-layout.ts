@@ -45,14 +45,14 @@ export interface FloorLayout {
 
 export type FloorLayoutError = 'invalid-size' | 'diagonal-wall' | 'unknown-furniture';
 
-const tilesOf = (rect: Rect): TileCoord[] =>
+export const tilesOf = (rect: Rect): TileCoord[] =>
   Array.from({ length: rect.width * rect.height }, (_, index) => ({
     x: rect.x + (index % rect.width),
     y: rect.y + Math.floor(index / rect.width),
   }));
 
 /** Expands a wall segment into the tile edges it blocks, described as (tile, side). */
-function edgesOf(wall: WallSegment): Result<{ tile: TileCoord; side: Side }[], FloorLayoutError> {
+export function edgesOf(wall: WallSegment): Result<{ tile: TileCoord; side: Side }[], FloorLayoutError> {
   const { from, to } = wall;
   if (from.y === to.y) {
     const [start, end] = from.x < to.x ? [from.x, to.x] : [to.x, from.x];
@@ -65,8 +65,8 @@ function edgesOf(wall: WallSegment): Result<{ tile: TileCoord; side: Side }[], F
   return err('diagonal-wall');
 }
 
-/** Normalises a door to the same (tile, side) form used for wall edges: north or west of a tile. */
-function doorEdgeKey({ x, y, side }: Door): string {
+/** Normalises a tile edge (e.g. a door) to the form used for wall edges: north or west of a tile. */
+export function edgeKeyOf({ x, y, side }: Door): string {
   switch (side) {
     case 'north':
       return `${tileKey({ x, y })}:north`;
@@ -95,7 +95,7 @@ export function buildFloorGrid(layout: FloorLayout): Result<FloorGrid, FloorLayo
     }
   }
 
-  const doorEdges = new Set(layout.doors.map(doorEdgeKey));
+  const doorEdges = new Set(layout.doors.map(edgeKeyOf));
   for (const wall of layout.walls) {
     const edges = edgesOf(wall);
     if (!edges.ok) return edges;

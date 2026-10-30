@@ -6,4 +6,5 @@ export * from './movement.ts';
 export * from './pathfinding.ts';
 export * from './proximity.ts';
 export * from './reachability.ts';
+export * from './rooms.ts';
 export * from './tile.ts';

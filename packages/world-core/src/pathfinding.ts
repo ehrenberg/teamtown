@@ -1,5 +1,6 @@
 import { err, ok, type Result } from '@teamtown/kernel';
 import type { FloorGrid } from './floor-grid.ts';
+import type { StepGuard } from './rooms.ts';
 import { sameTile, tileKey, type TileCoord } from './tile.ts';
 
 export type PathError = 'start-not-walkable' | 'target-not-walkable' | 'unreachable';
@@ -87,9 +88,14 @@ class OpenSet {
 
 /**
  * Finds the cheapest path with A*. The result excludes the start tile and ends with the target;
- * it is empty if start and target are the same tile.
+ * it is empty if start and target are the same tile. The optional guard forbids further steps (e.g. into closed rooms).
  */
-export function findPath(grid: FloorGrid, start: TileCoord, target: TileCoord): Result<TileCoord[], PathError> {
+export function findPath(
+  grid: FloorGrid,
+  start: TileCoord,
+  target: TileCoord,
+  guard?: StepGuard,
+): Result<TileCoord[], PathError> {
   if (!grid.isWalkable(start)) return err('start-not-walkable');
   if (!grid.isWalkable(target)) return err('target-not-walkable');
   if (sameTile(start, target)) return ok([]);
@@ -109,7 +115,7 @@ export function findPath(grid: FloorGrid, start: TileCoord, target: TileCoord): 
 
     for (const step of STEPS) {
       const next = { x: current.coord.x + step.x, y: current.coord.y + step.y };
-      if (!grid.canStep(current.coord, next)) continue;
+      if (!grid.canStep(current.coord, next) || (guard && !guard(current.coord, next))) continue;
 
       const isDiagonal = step.x !== 0 && step.y !== 0;
       const nextCost = currentCost + (isDiagonal ? DIAGONAL_COST : STRAIGHT_COST);

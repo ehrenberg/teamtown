@@ -1,4 +1,5 @@
 import type { FloorGrid } from './floor-grid.ts';
+import type { StepGuard } from './rooms.ts';
 import { tileKey, type TileCoord } from './tile.ts';
 
 const NEIGHBOUR_STEPS: readonly TileCoord[] = [
@@ -13,7 +14,7 @@ const NEIGHBOUR_STEPS: readonly TileCoord[] = [
 ];
 
 /** All tiles reachable from `start` (breadth-first), as tile keys. Empty if the start is not walkable. */
-export function reachableTiles(grid: FloorGrid, start: TileCoord): ReadonlySet<string> {
+export function reachableTiles(grid: FloorGrid, start: TileCoord, guard?: StepGuard): ReadonlySet<string> {
   const reached = new Set<string>();
   if (!grid.isWalkable(start)) return reached;
 
@@ -23,7 +24,7 @@ export function reachableTiles(grid: FloorGrid, start: TileCoord): ReadonlySet<s
     for (const step of NEIGHBOUR_STEPS) {
       const next = { x: current.x + step.x, y: current.y + step.y };
       const key = tileKey(next);
-      if (!reached.has(key) && grid.canStep(current, next)) {
+      if (!reached.has(key) && grid.canStep(current, next) && (!guard || guard(current, next))) {
         reached.add(key);
         queue.push(next);
       }
