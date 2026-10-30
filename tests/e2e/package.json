@@ -11,6 +11,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.64.1",
-    "@teamtown/config": "workspace:*"
+    "@teamtown/config": "workspace:*",
+    "@teamtown/contracts": "workspace:*"
   }
 }

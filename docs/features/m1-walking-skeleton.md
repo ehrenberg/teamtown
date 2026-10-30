@@ -27,7 +27,7 @@ office, so that I can feel who is around.
 
 ## Acceptance criteria
 
-- [ ] Given two logged-in people on the same floor, when one clicks a reachable tile, then the other sees the avatar walk there within 150 ms (local network). _(Walking is visible to others: e2e `walking-skeleton.spec.ts`; the 150 ms budget is not measured yet.)_
+- [x] Given two logged-in people on the same floor, when one clicks a reachable tile, then the other sees the avatar walk there within 150 ms (local network). _(Measured in e2e `walking-skeleton.spec.ts`: MoveTo sent -> AvatarPathStarted received.)_
 - [x] Given a wall between two tiles, when someone clicks behind it, then the avatar walks around it (never through).
 - [x] Given an unreachable tile, then nothing moves and the client shows no error noise (Nack `unreachable`).
 - [x] Given a person switches floors, then they disappear from the old floor and appear on the new one for everyone.
