@@ -8,6 +8,10 @@ export interface MessageSnapshot {
   readonly channelId: string;
   readonly authorId: string;
   readonly body: string;
+  readonly threadRootId: string | null;
+  readonly alsoInChannel: boolean;
+  readonly mentions: string[];
+  readonly reactions: { readonly emoji: string; readonly personIds: string[] }[];
   readonly postedAt: string;
   readonly editedAt: string | null;
   readonly deleted: boolean;
@@ -52,5 +56,33 @@ export interface ReadMarkerMoved {
   readonly messageId: string;
 }
 
+/** One person added or removed a reaction (ADR-0034). */
+export interface ReactionChanged {
+  readonly type: 'ReactionChanged';
+  readonly channelId: string;
+  readonly messageId: string;
+  readonly personId: string;
+  readonly emoji: string;
+  readonly added: boolean;
+  /** Shows briefly as an emote above the person's avatar: added in a public channel. Never stored (ADR-0012). */
+  readonly inOffice: boolean;
+  readonly recipients: readonly string[];
+}
+
+/** A thread the recipients follow changed: new replies, follow state or read marker. They reload their threads. */
+export interface ThreadActivity {
+  readonly type: 'ThreadActivity';
+  readonly channelId: string;
+  readonly rootMessageId: string;
+  readonly recipients: readonly string[];
+}
+
 export type MessagingEvent =
-  MessagePosted | MessageEdited | MessageDeleted | ChannelChanged | ChannelLeft | ReadMarkerMoved;
+  | MessagePosted
+  | MessageEdited
+  | MessageDeleted
+  | ChannelChanged
+  | ChannelLeft
+  | ReadMarkerMoved
+  | ReactionChanged
+  | ThreadActivity;

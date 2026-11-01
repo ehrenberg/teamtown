@@ -313,12 +313,19 @@ export class RealtimeGateway implements OnApplicationBootstrap, OnApplicationShu
     }
   }
 
-  /** Messages and channel changes go to the channel's members; read markers and leaving to the person only. */
+  /**
+   * Messages, reactions and channel changes go to the channel's members, thread activity to the followers, read
+   * markers and leaving to the person only.
+   */
   #deliverMessagingEvent(event: MessagingEvent): void {
     switch (event.type) {
       case 'MessagePosted':
       case 'MessageEdited':
-        this.#sendToPeople(event.recipients, encodeMessage({ t: event.type, p: { message: event.message } }));
+        // Live messages carry no thread summary; clients count replies themselves.
+        this.#sendToPeople(
+          event.recipients,
+          encodeMessage({ t: event.type, p: { message: { ...event.message, thread: null } } }),
+        );
         return;
       case 'MessageDeleted':
         this.#sendToPeople(
@@ -336,6 +343,26 @@ export class RealtimeGateway implements OnApplicationBootstrap, OnApplicationShu
         this.#sendToPeople(
           [event.personId],
           encodeMessage({ t: 'ReadMarkerMoved', p: { channelId: event.channelId, messageId: event.messageId } }),
+        );
+        return;
+      case 'ReactionChanged': {
+        const { channelId, messageId, personId, emoji, added } = event;
+        this.#sendToPeople(
+          event.recipients,
+          encodeMessage({ t: 'ReactionChanged', p: { channelId, messageId, personId, emoji, added } }),
+        );
+        // Public reactions float above the avatar for the floor (ADR-0034); nothing about it is stored or logged.
+        const floorId = event.inOffice ? this.presence.floorOf(personId) : null;
+        if (floorId) this.#sendToFloor(floorId, encodeMessage({ t: 'AvatarEmoted', p: { floorId, personId, emoji } }));
+        return;
+      }
+      case 'ThreadActivity':
+        this.#sendToPeople(
+          event.recipients,
+          encodeMessage({
+            t: 'ThreadActivity',
+            p: { channelId: event.channelId, rootMessageId: event.rootMessageId },
+          }),
         );
     }
   }

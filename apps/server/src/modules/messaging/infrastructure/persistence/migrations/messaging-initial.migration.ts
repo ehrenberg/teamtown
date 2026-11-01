@@ -1,5 +1,6 @@
 import { Migration } from '@mikro-orm/migrations';
 import { outboxTableSql } from '../../../../../platform/outbox/outbox.ts';
+import { MessagingThreadsMigration } from './messaging-threads.migration.ts';
 
 /** Channels, memberships with read markers, messages, the seed channels and the outbox (M3a, ADR-0033). */
 export class MessagingInitialMigration extends Migration {
@@ -53,4 +54,7 @@ export class MessagingInitialMigration extends Migration {
   }
 }
 
-export const MESSAGING_MIGRATIONS = [{ name: '20261101120000_messaging_initial', class: MessagingInitialMigration }];
+export const MESSAGING_MIGRATIONS = [
+  { name: '20261101120000_messaging_initial', class: MessagingInitialMigration },
+  { name: '20261101200000_messaging_threads', class: MessagingThreadsMigration },
+];

@@ -1,7 +1,7 @@
 import { err, ok, type Result } from '@teamtown/kernel';
 import { channelName } from './channel-name.ts';
 import type { MessagingEvent } from './events.ts';
-import { Message } from './message.ts';
+import { Message, type ReactionError } from './message.ts';
 
 /** `pair`: a 1:1 DM, `group`: a DM with 3–8 people; both are `direct` channels to the outside. */
 export type ChannelKind = 'public' | 'private' | 'pair' | 'group';
@@ -195,10 +195,16 @@ export class Channel {
     if (!this.isMember(personId)) this.#addMembers([personId], now);
   }
 
-  /** The creator invites into a private channel; members add people to a group DM (up to eight in total). */
+  /**
+   * Members add people to a public channel (ADR-0034) or a group DM (up to eight in total); the creator invites
+   * into a private channel.
+   */
   invite(actorId: string, personIds: readonly string[], now: Date): Result<void, ChannelError> {
     const newcomers = [...new Set(personIds)].filter((personId) => !this.isMember(personId));
     switch (this.state.kind) {
+      case 'public':
+        if (!this.isMember(actorId)) return err('not-channel-member');
+        break;
       case 'private':
         if (actorId !== this.state.creatorId) return err('not-channel-creator');
         break;
@@ -209,7 +215,7 @@ export class Channel {
         }
         break;
       default:
-        // People join public channels themselves; a 1:1 DM stays between its two people.
+        // A 1:1 DM stays between its two people.
         return err('cannot-invite');
     }
     if (this.isArchived) return err('channel-archived');
@@ -233,16 +239,46 @@ export class Channel {
     return ok(undefined);
   }
 
-  /** Members post; archived channels take nothing new. */
+  /** Members post; archived channels take nothing new. A reply names the root of its thread (ADR-0034). */
   post(input: {
     messageId: string;
     authorId: string;
     body: string;
+    threadRoot?: Message | null | undefined;
+    alsoInChannel?: boolean | undefined;
     now: Date;
-  }): Result<Message, 'not-channel-member' | 'channel-archived' | 'invalid-message'> {
+  }): Result<Message, 'not-channel-member' | 'channel-archived' | 'invalid-message' | 'invalid-thread-root'> {
     if (!this.isMember(input.authorId)) return err('not-channel-member');
     if (this.isArchived) return err('channel-archived');
-    return Message.create({ ...input, channelId: this.state.channelId }, this.memberIds);
+    const root = input.threadRoot ?? null;
+    if (root && (root.props.channelId !== this.state.channelId || root.isReply)) return err('invalid-thread-root');
+    return Message.create(
+      {
+        messageId: input.messageId,
+        channelId: this.state.channelId,
+        authorId: input.authorId,
+        body: input.body,
+        threadRootId: root?.props.messageId ?? null,
+        alsoInChannel: input.alsoInChannel ?? false,
+        now: input.now,
+      },
+      this.memberIds,
+    );
+  }
+
+  /** Members react; archived channels take no new reactions. Public reactions may show in the office. */
+  react(
+    message: Message,
+    input: { personId: string; emoji: string; add: boolean },
+  ): Result<void, 'not-channel-member' | 'channel-archived' | ReactionError> {
+    if (!this.isMember(input.personId)) return err('not-channel-member');
+    if (this.isArchived) return err('channel-archived');
+    return message.react({ ...input, inOffice: this.state.kind === 'public', recipients: this.memberIds });
+  }
+
+  /** The mentioned people who are members; mentions of others notify nobody (ADR-0034). */
+  membersAmong(personIds: readonly string[]): string[] {
+    return personIds.filter((personId) => this.isMember(personId));
   }
 
   /** Edits and deletions need an open channel, too. */

@@ -13,6 +13,7 @@ import {
   MessagePageResponse,
   MessageSchema,
   PeopleListResponse,
+  ThreadListResponse,
   REALTIME_PATH,
   REALTIME_SUBPROTOCOL,
   type ClientCommand,
@@ -338,12 +339,86 @@ describe('TeamTown server (integration)', () => {
       expect(second.channelId).toBe(first.channelId);
       expect(first).toMatchObject({ kind: 'direct', group: false, name: null });
 
+      // Regression: a group DM is found again by its members (array parameters in raw SQL).
+      const miaId = await idOf('token-mia');
+      const openGroup = async (token: string, personIds: string[]) =>
+        ChannelSummarySchema.parse(await (await send('POST', '/direct-messages', token, { personIds })).json());
+      const group = await openGroup('token-lena', [benId, miaId]);
+      expect(group).toMatchObject({ kind: 'direct', group: true });
+      expect((await openGroup('token-mia', [lenaId, benId])).channelId).toBe(group.channelId);
+
       const unknown = await send('POST', '/direct-messages', 'token-lena', {
         personIds: ['00000000-0000-4000-8000-000000000000'],
       });
       expect(unknown.status).toBe(400);
       expect(await unknown.json()).toMatchObject({ message: 'unknown-person' });
       expect((await send('POST', '/channels', 'token-lena', { kind: 'secret' })).status).toBe(400);
+    });
+
+    it('keeps replies in threads, counts mentions and shows public reactions in the office (M3b)', async () => {
+      const [benId, miaId] = await Promise.all(['token-ben', 'token-mia'].map(idOf));
+      const lena = await connect('token-lena');
+      const ben = await connect('token-ben');
+      for (const client of [lena, ben]) await client.command({ t: 'JoinFloor', p: { floorId: 'ground-floor' } });
+
+      const crew = ChannelSummarySchema.parse(
+        await (await send('POST', '/channels', 'token-lena', { kind: 'public', name: 'crew' })).json(),
+      );
+      const path = `/channels/${crew.channelId}`;
+      // In public channels members add others (ADR-0034).
+      expect((await send('POST', `${path}/members`, 'token-lena', { personIds: [benId, miaId] })).status).toBe(201);
+
+      const root = MessageSchema.parse(
+        await (await send('POST', `${path}/messages`, 'token-lena', { body: 'Wer kommt mit?' })).json(),
+      );
+      const reply = MessageSchema.parse(
+        await (
+          await send('POST', `${path}/messages`, 'token-ben', { body: 'Ich!', threadRootId: root.messageId })
+        ).json(),
+      );
+      expect(reply).toMatchObject({ threadRootId: root.messageId, alsoInChannel: false, thread: null });
+      await lena.waitFor((event) => event.t === 'ThreadActivity' && event.p.rootMessageId === root.messageId);
+
+      const page = MessagePageResponse.parse(await (await get(`${path}/messages`, 'token-lena')).json());
+      expect(page.messages.map((message) => message.body)).toEqual(['Wer kommt mit?']);
+      expect(page.messages[0]?.thread).toMatchObject({ replyCount: 1, replierIds: [benId] });
+      const replies = MessagePageResponse.parse(
+        await (await get(`${path}/messages/${root.messageId}/replies`, 'token-mia')).json(),
+      );
+      expect(replies.messages.map((message) => message.body)).toEqual(['Ich!']);
+
+      const lenaThreads = async () =>
+        ThreadListResponse.parse(await (await get('/threads', 'token-lena')).json()).threads;
+      expect(await lenaThreads()).toMatchObject([{ channelId: crew.channelId, unreadCount: 1 }]);
+      const threadPath = `${path}/threads/${root.messageId}`;
+      expect(
+        (await send('PUT', `${threadPath}/read-marker`, 'token-lena', { messageId: reply.messageId })).status,
+      ).toBe(204);
+      expect((await lenaThreads())[0]?.unreadCount).toBe(0);
+      expect((await remove(`${threadPath}/follow`, 'token-lena')).status).toBe(204);
+      expect(await lenaThreads()).toEqual([]);
+
+      // A mention of a member counts for them; the reply above didn't raise anyone's channel counter.
+      await send('POST', `${path}/messages`, 'token-mia', { body: `Hey <@${benId}>` });
+      const benCrew = (await channelsOf('token-ben')).find((channel) => channel.channelId === crew.channelId);
+      expect(benCrew).toMatchObject({ unreadCount: 2, mentionCount: 1 });
+      expect((await channelsOf('token-lena')).find((c) => c.channelId === crew.channelId)?.unreadCount).toBe(1);
+
+      const reactionPath = `${path}/messages/${root.messageId}/reactions`;
+      const reacted = MessageSchema.parse(
+        await (await send('PUT', `${reactionPath}/${encodeURIComponent('👍')}`, 'token-ben', {})).json(),
+      );
+      expect(reacted.reactions).toEqual([{ emoji: '👍', personIds: [benId] }]);
+      await lena.waitFor((event) => event.t === 'ReactionChanged' && event.p.added);
+      expect(await lena.waitFor((event) => event.t === 'AvatarEmoted')).toMatchObject({
+        p: { personId: benId, emoji: '👍' },
+      });
+      const invalid = await send('PUT', `${reactionPath}/abc`, 'token-ben', {});
+      expect(invalid.status).toBe(400);
+      expect(await invalid.json()).toMatchObject({ message: 'invalid-emoji' });
+
+      lena.close();
+      ben.close();
     });
   });
 });

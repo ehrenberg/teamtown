@@ -40,6 +40,58 @@ describe('Channel', () => {
     expect(channel.memberIds).toEqual(['anna', 'ben', 'carl']);
   });
 
+  it('lets members add people to a public channel (ADR-0034)', () => {
+    const channel = aChannel('public');
+    expect(channel.invite('ben', ['carl'], LATER)).toEqual({ ok: false, error: 'not-channel-member' });
+    expect(channel.invite('anna', ['carl'], LATER).ok).toBe(true);
+    expect(channel.memberIds).toEqual(['anna', 'carl']);
+  });
+
+  it('takes replies to its own root messages only, one level deep', () => {
+    const channel = aChannel();
+    const root = unwrap(channel.post({ messageId: 'm1', authorId: 'anna', body: 'Root', now: LATER }));
+    const reply = unwrap(
+      channel.post({
+        messageId: 'm2',
+        authorId: 'anna',
+        body: 'Reply',
+        threadRoot: root,
+        alsoInChannel: true,
+        now: LATER,
+      }),
+    );
+    expect(reply.props).toMatchObject({ threadRootId: 'm1', alsoInChannel: true });
+    expect(reply.inChannel).toBe(true);
+
+    expect(channel.post({ messageId: 'm3', authorId: 'anna', body: 'x', threadRoot: reply, now: LATER })).toEqual({
+      ok: false,
+      error: 'invalid-thread-root',
+    });
+    const elsewhere = Channel.restore({ ...channel.props, channelId: 'c2' });
+    expect(elsewhere.post({ messageId: 'm4', authorId: 'anna', body: 'x', threadRoot: root, now: LATER })).toEqual({
+      ok: false,
+      error: 'invalid-thread-root',
+    });
+  });
+
+  it('lets members react and shows reactions in the office for public channels only', () => {
+    const open = aChannel('public');
+    const message = unwrap(open.post({ messageId: 'm1', authorId: 'anna', body: 'Hi', now: LATER }));
+    message.pullEvents();
+    expect(open.react(message, { personId: 'ben', emoji: '👍', add: true })).toEqual({
+      ok: false,
+      error: 'not-channel-member',
+    });
+    expect(open.react(message, { personId: 'anna', emoji: '👍', add: true }).ok).toBe(true);
+    expect(message.pullEvents()).toMatchObject([{ type: 'ReactionChanged', inOffice: true }]);
+
+    const closed = aChannel('private');
+    const secret = unwrap(closed.post({ messageId: 'm2', authorId: 'anna', body: 'Hi', now: LATER }));
+    secret.pullEvents();
+    closed.react(secret, { personId: 'anna', emoji: '👍', add: true });
+    expect(secret.pullEvents()).toMatchObject([{ type: 'ReactionChanged', inOffice: false }]);
+  });
+
   it('lets only the creator rename and archive it', () => {
     const channel = aChannel();
     expect(channel.rename('ben', 'other')).toEqual({ ok: false, error: 'not-channel-creator' });

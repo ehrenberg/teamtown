@@ -82,6 +82,9 @@ const summaries = {
   ChannelChanged: 'A channel was created, renamed, archived or its members changed: reload it. Sent to its members.',
   ChannelLeft: 'The person left a channel or DM: drop it. Sent only to them.',
   ReadMarkerMoved: 'The person read up to a message, e.g. on another device. Sent only to them.',
+  ReactionChanged: 'Someone added or removed a reaction. Sent to the members of the channel.',
+  ThreadActivity: 'A followed thread got replies, or the follow or thread read marker changed. Sent to the followers.',
+  AvatarEmoted: 'A reaction in a public channel shows above the avatar. Sent to everyone on the floor; never stored.',
   Ack: 'The command with this correlation ID succeeded.',
   Nack: 'The command failed. Codes are stable and translated in the client.',
 };

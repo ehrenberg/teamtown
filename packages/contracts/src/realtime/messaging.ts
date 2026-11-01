@@ -1,8 +1,9 @@
 import { z } from 'zod';
-import { ChannelId, MessageId, MessageSchema } from '../messaging/channels.ts';
+import { ChannelId, Emoji, MessageId, MessageSchema } from '../messaging/channels.ts';
+import { PersonId } from '../people/me.ts';
 
 /**
- * Messaging pushes (M3a). Writes go over REST; these events reach the members' open connections
+ * Messaging pushes (M3a, M3b). Writes go over REST; these events reach the members' open connections
  * (docs/architecture/world-and-realtime.md §5).
  */
 
@@ -37,4 +38,27 @@ export const ChannelLeftEvent = z.object({
 export const ReadMarkerMovedEvent = z.object({
   t: z.literal('ReadMarkerMoved'),
   p: z.object({ channelId: ChannelId, messageId: MessageId }),
+});
+
+/** One person added or removed a reaction; members apply it to the message (ADR-0034). */
+export const ReactionChangedEvent = z.object({
+  t: z.literal('ReactionChanged'),
+  p: z.object({ channelId: ChannelId, messageId: MessageId, personId: PersonId, emoji: Emoji, added: z.boolean() }),
+});
+
+/** A followed thread got replies or the person's follow or marker changed: reload the threads. */
+export const ThreadActivityEvent = z.object({
+  t: z.literal('ThreadActivity'),
+  p: z.object({ channelId: ChannelId, rootMessageId: MessageId }),
+});
+
+const FloorId = z.string().min(1).max(64);
+
+/**
+ * Someone reacted in a public channel: the emoji floats briefly above their avatar. To everyone on their floor;
+ * carries no message and is never stored (ADR-0034, ADR-0012).
+ */
+export const AvatarEmotedEvent = z.object({
+  t: z.literal('AvatarEmoted'),
+  p: z.object({ floorId: FloorId, personId: PersonId, emoji: Emoji }),
 });

@@ -3,12 +3,14 @@ import type { Message, MessageError } from '../domain/message.ts';
 import { findReadableChannel } from './channel-access.ts';
 import type { ChannelRepository } from './ports/channel-repository.port.ts';
 import type { MessageRepository } from './ports/message-repository.port.ts';
+import type { ThreadRepository } from './ports/thread-repository.port.ts';
 
-/** Use case: the author edits their message. */
+/** Use case: the author edits their message; mentions follow the new body (decided 2026-11-01). */
 export class EditMessage {
   constructor(
     private readonly channels: ChannelRepository,
     private readonly messages: MessageRepository,
+    private readonly threads: ThreadRepository,
     private readonly clock: Clock,
   ) {}
 
@@ -26,6 +28,12 @@ export class EditMessage {
     const edited = message.edit(input.personId, input.body, this.clock.now(), channel.memberIds);
     if (!edited.ok) return edited;
     await this.messages.save(message);
+    if (message.isReply) {
+      // Members newly mentioned in a reply follow its thread, as if mentioned when it was posted.
+      const thread = await this.threads.find(channel.props.channelId, message.threadId);
+      thread.recordMentions(channel.membersAmong(message.props.mentions));
+      await this.threads.save(thread);
+    }
     return ok(message);
   }
 }

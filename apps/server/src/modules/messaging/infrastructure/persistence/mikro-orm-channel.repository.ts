@@ -5,6 +5,11 @@ import type { ChannelOverview, ChannelRepository } from '../../application/ports
 import { Channel, type ChannelKind } from '../../domain/channel.ts';
 import { ChannelRecord, MembershipRecord } from './messaging.entities.ts';
 
+/** A message by someone else after the member's read marker, not deleted. */
+const UNREAD = `msg."author_id" <> mem."person_id" and msg."deleted_at" is null
+  and (mem."read_posted_at" is null
+       or (msg."posted_at", msg."message_id") > (mem."read_posted_at", mem."read_message_id"))`;
+
 export class MikroOrmChannelRepository implements ChannelRepository {
   constructor(
     private readonly orm: MikroORM,
@@ -28,12 +33,13 @@ export class MikroOrmChannelRepository implements ChannelRepository {
   }
 
   async findGroupWithMembers(memberIds: readonly string[]): Promise<Channel | null> {
+    // MikroORM expands an array parameter into a list, so `in (?)` (not `any(?)`).
     const rows = await this.orm.em.fork().execute<{ channel_id: string }[]>(
       `select m."channel_id" from "messaging"."membership" m
          join "messaging"."channel" c on c."channel_id" = m."channel_id"
         where c."kind" = 'group'
         group by m."channel_id"
-       having count(*) = ? and bool_and(m."person_id" = any(?::uuid[]))
+       having count(*) = ? and bool_and(m."person_id" in (?))
         limit 1`,
       [memberIds.length, [...memberIds]],
     );
@@ -42,19 +48,18 @@ export class MikroOrmChannelRepository implements ChannelRepository {
   }
 
   async listForMember(personId: string, channelId?: string): Promise<ChannelOverview[]> {
-    // Messages by others after the member's read marker; deleted ones don't count.
+    // Messages by others after the member's read marker; deleted ones and thread replies that stay in their
+    // thread don't count (ADR-0034). Mentions are the unread ones that name the member.
     const rows = await this.orm.em
       .fork()
-      .execute<{ channel_id: string; unread: string; last_message_at: Date | null }[]>(
+      .execute<{ channel_id: string; unread: string; mentions: string; last_message_at: Date | null }[]>(
         `select mem."channel_id",
-              count(msg."message_id") filter (
-                where msg."author_id" <> mem."person_id" and msg."deleted_at" is null
-                  and (mem."read_posted_at" is null
-                       or (msg."posted_at", msg."message_id") > (mem."read_posted_at", mem."read_message_id"))
-              ) as "unread",
+              count(msg."message_id") filter (where ${UNREAD}) as "unread",
+              count(msg."message_id") filter (where ${UNREAD} and mem."person_id" = any(msg."mentions")) as "mentions",
               max(msg."posted_at") as "last_message_at"
          from "messaging"."membership" mem
-         left join "messaging"."message" msg on msg."channel_id" = mem."channel_id"
+         left join "messaging"."message" msg
+           on msg."channel_id" = mem."channel_id" and (msg."thread_root_id" is null or msg."also_in_channel")
         where mem."person_id" = ? ${channelId === undefined ? '' : 'and mem."channel_id" = ?'}
         group by mem."channel_id"`,
         channelId === undefined ? [personId] : [personId, channelId],
@@ -73,6 +78,7 @@ export class MikroOrmChannelRepository implements ChannelRepository {
             {
               channel,
               unreadCount: Number(row.unread),
+              mentionCount: Number(row.mentions),
               lastMessageAt: row.last_message_at ? new Date(row.last_message_at) : null,
             },
           ]

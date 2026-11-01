@@ -7,8 +7,8 @@ import type { PeopleDirectory } from './ports/people-directory.port.ts';
 export type AddChannelMembersError = ChannelError | 'not-found' | 'unknown-person';
 
 /**
- * Use case: someone joins a public channel themselves, the creator invites into a private channel, or a member
- * adds people to a group DM (ADR-0033).
+ * Use case: someone joins a public channel themselves, a member adds people to a public channel (ADR-0034) or a
+ * group DM, or the creator invites into a private channel (ADR-0033).
  */
 export class AddChannelMembers {
   constructor(

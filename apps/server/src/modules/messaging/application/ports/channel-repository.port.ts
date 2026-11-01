@@ -1,10 +1,14 @@
 import type { Result } from '@teamtown/kernel';
 import type { Channel } from '../../domain/channel.ts';
 
-/** A channel as its member lists it: with unread messages by others and the newest message's time. */
+/**
+ * A channel as its member lists it: with unread messages by others, how many of them mention the member, and the
+ * newest message's time. Only messages shown in the channel count, not thread replies (ADR-0034).
+ */
 export interface ChannelOverview {
   readonly channel: Channel;
   readonly unreadCount: number;
+  readonly mentionCount: number;
   readonly lastMessageAt: Date | null;
 }
 

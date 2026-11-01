@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { Channel, GENERAL_CHANNEL_ID, RANDOM_CHANNEL_ID } from '../domain/channel.ts';
 import type { MessagingEvent } from '../domain/events.ts';
 import type { Message } from '../domain/message.ts';
+import { Thread } from '../domain/thread.ts';
 import { AddChannelMembers } from './add-channel-members.ts';
 import { CreateChannel } from './create-channel.ts';
 import { DeleteMessage } from './delete-message.ts';
@@ -10,12 +11,17 @@ import { EditMessage } from './edit-message.ts';
 import { LeaveChannel } from './leave-channel.ts';
 import { ListMessages } from './list-messages.ts';
 import { ListMyChannels } from './list-my-channels.ts';
+import { ListReplies } from './list-replies.ts';
+import { ListThreads } from './list-threads.ts';
 import { MoveReadMarker } from './move-read-marker.ts';
 import { OpenDirectMessage } from './open-direct-message.ts';
 import type { ChannelOverview, ChannelRepository } from './ports/channel-repository.port.ts';
-import type { MessagePage, MessageRepository } from './ports/message-repository.port.ts';
+import type { MessagePage, MessageRepository, ThreadSummary } from './ports/message-repository.port.ts';
 import type { PeopleDirectory } from './ports/people-directory.port.ts';
+import type { FollowedThread, ThreadRepository } from './ports/thread-repository.port.ts';
 import { PostMessage } from './post-message.ts';
+import { ReactToMessage } from './react-to-message.ts';
+import { MoveThreadReadMarker, SetThreadFollowing } from './thread-follows.ts';
 import { UpdateChannel } from './update-channel.ts';
 
 /** The outbox of the fakes: every event that a save would have written. */
@@ -27,16 +33,41 @@ class InMemoryMessages implements MessageRepository {
   findById(messageId: string): Promise<Message | null> {
     return Promise.resolve(this.messages.get(messageId) ?? null);
   }
-  page(channelId: string, before: Message | null, limit: number): Promise<MessagePage> {
-    const all = [...this.messages.values()]
-      .filter((m) => m.props.channelId === channelId && (!before || m.props.postedAt < before.props.postedAt))
-      .sort((a, b) => b.props.postedAt.getTime() - a.props.postedAt.getTime());
-    return Promise.resolve({ messages: all.slice(0, limit), hasMore: all.length > limit });
+  async page(channelId: string, before: Message | null, limit: number): Promise<MessagePage> {
+    return this.#page((m) => m.props.channelId === channelId && m.inChannel, before, limit);
+  }
+  replies(rootMessageId: string, before: Message | null, limit: number): Promise<MessagePage> {
+    return this.#page((m) => m.props.threadRootId === rootMessageId, before, limit);
+  }
+  threadSummaries(rootMessageIds: readonly string[]): Promise<ReadonlyMap<string, ThreadSummary>> {
+    const summaries = new Map<string, ThreadSummary>();
+    for (const rootId of rootMessageIds) {
+      const replies = [...this.messages.values()]
+        .filter((m) => m.props.threadRootId === rootId)
+        .sort((a, b) => b.props.postedAt.getTime() - a.props.postedAt.getTime());
+      const [newest] = replies;
+      if (!newest) continue;
+      summaries.set(rootId, {
+        replyCount: replies.length,
+        lastReplyAt: newest.props.postedAt,
+        replierIds: [...new Set(replies.map((m) => m.props.authorId))].slice(0, 3),
+      });
+    }
+    return Promise.resolve(summaries);
   }
   save(message: Message): Promise<void> {
+    message.pullReactionChanges();
     this.messages.set(message.props.messageId, message);
     outbox.push(...message.pullEvents());
     return Promise.resolve();
+  }
+  async #page(filter: (m: Message) => boolean, before: Message | null, limit: number): Promise<MessagePage> {
+    const all = [...this.messages.values()]
+      .filter((m) => filter(m) && (!before || m.props.postedAt < before.props.postedAt))
+      .sort((a, b) => b.props.postedAt.getTime() - a.props.postedAt.getTime());
+    const messages = all.slice(0, limit);
+    const threads = await this.threadSummaries(messages.map((m) => m.props.messageId));
+    return { messages, hasMore: all.length > limit, threads };
   }
 }
 
@@ -71,11 +102,13 @@ class InMemoryChannels implements ChannelRepository {
           const unread = [...this.messages.messages.values()].filter(
             (m) =>
               m.props.channelId === channel.props.channelId &&
+              m.inChannel &&
               m.props.authorId !== personId &&
               !m.isDeleted &&
               (!marker || m.props.postedAt > marker.postedAt),
           );
-          return { channel, unreadCount: unread.length, lastMessageAt: null };
+          const mentionCount = unread.filter((m) => m.props.mentions.includes(personId)).length;
+          return { channel, unreadCount: unread.length, mentionCount, lastMessageAt: null };
         }),
     );
   }
@@ -97,6 +130,41 @@ class InMemoryChannels implements ChannelRepository {
   }
 }
 
+class InMemoryThreads implements ThreadRepository {
+  readonly threads = new Map<string, Thread>();
+
+  constructor(private readonly messages: InMemoryMessages) {}
+
+  find(channelId: string, rootMessageId: string): Promise<Thread> {
+    return Promise.resolve(
+      this.threads.get(rootMessageId) ?? Thread.restore({ rootMessageId, channelId, follows: [] }),
+    );
+  }
+  listFollowed(personId: string): Promise<FollowedThread[]> {
+    return Promise.resolve(
+      [...this.threads.values()].flatMap((thread) => {
+        const follow = thread.followOf(personId);
+        if (!follow?.following) return [];
+        const replies = [...this.messages.messages.values()].filter(
+          (m) => m.props.threadRootId === thread.props.rootMessageId,
+        );
+        const marker = follow.readMarker;
+        const unread = replies.filter(
+          (m) => m.props.authorId !== personId && !m.isDeleted && (!marker || m.props.postedAt > marker.postedAt),
+        );
+        const lastReplyAt = new Date(Math.max(...replies.map((m) => m.props.postedAt.getTime())));
+        return [{ ...thread.props, unreadCount: unread.length, lastReplyAt }];
+      }),
+    );
+  }
+  save(thread: Thread): Promise<void> {
+    thread.pullChanges();
+    this.threads.set(thread.props.rootMessageId, thread);
+    outbox.push(...thread.pullEvents());
+    return Promise.resolve();
+  }
+}
+
 const people: PeopleDirectory = {
   existing: (ids) => Promise.resolve(new Set(ids.filter((id) => !id.startsWith('ghost')))),
 };
@@ -108,6 +176,7 @@ function setup() {
   const ids: IdGenerator = { next: () => `id-${String(++counter)}` };
   const messages = new InMemoryMessages();
   const channels = new InMemoryChannels(messages);
+  const threads = new InMemoryThreads(messages);
   for (const channelId of [GENERAL_CHANNEL_ID, RANDOM_CHANNEL_ID]) {
     channels.channels.set(
       channelId,
@@ -137,10 +206,15 @@ function setup() {
     leave: new LeaveChannel(channels),
     openDm: new OpenDirectMessage(channels, people, clock, ids),
     history: new ListMessages(channels, messages),
-    post: new PostMessage(channels, messages, clock, ids),
-    edit: new EditMessage(channels, messages, clock),
+    post: new PostMessage(channels, messages, threads, clock, ids),
+    edit: new EditMessage(channels, messages, threads, clock),
     remove: new DeleteMessage(channels, messages, clock),
     read: new MoveReadMarker(channels, messages),
+    replies: new ListReplies(channels, messages),
+    react: new ReactToMessage(channels, messages),
+    threads: new ListThreads(channels, messages, threads),
+    follow: new SetThreadFollowing(channels, messages, threads),
+    readThread: new MoveThreadReadMarker(channels, messages, threads),
   };
 }
 
@@ -319,5 +393,122 @@ describe('Messaging use cases', () => {
     const older = unwrap(await app.history.execute({ personId: 'anna', channelId, before, limit: 2 }));
     expect(older.messages.map((m) => m.props.body)).toEqual(['1']);
     expect(older.hasMore).toBe(false);
+  });
+
+  describe('threads, mentions and reactions (M3b)', () => {
+    const BEN = '0b0b0b0b-0000-4000-8000-000000000002';
+
+    async function aTeam() {
+      const team = unwrap(await app.create.execute({ personId: 'anna', kind: 'public', name: 'team' }));
+      const channelId = team.props.channelId;
+      unwrap(await app.add.execute({ personId: 'anna', channelId, personIds: [BEN, 'carl'] }));
+      const root = unwrap(await app.post.execute({ personId: 'anna', channelId, body: 'Wer kommt mit?' }));
+      app.tick();
+      return { channelId, rootId: root.props.messageId };
+    }
+
+    it('keeps replies in their thread and out of the channel and its unread count', async () => {
+      const { channelId, rootId } = await aTeam();
+      const reply = unwrap(await app.post.execute({ personId: BEN, channelId, body: 'Ich!', threadRootId: rootId }));
+      app.tick();
+      // Answering a reply answers its root.
+      unwrap(await app.post.execute({ personId: 'carl', channelId, body: '+1', threadRootId: reply.props.messageId }));
+
+      const page = unwrap(await app.history.execute({ personId: 'anna', channelId, limit: 50 }));
+      expect(page.messages.map((m) => m.props.body)).toEqual(['Wer kommt mit?']);
+      expect(page.threads.get(rootId)).toMatchObject({ replyCount: 2, replierIds: ['carl', BEN] });
+      const replies = unwrap(
+        await app.replies.execute({ personId: 'anna', channelId, rootMessageId: rootId, limit: 50 }),
+      );
+      expect(replies.messages.map((m) => m.props.body)).toEqual(['+1', 'Ich!']);
+      const [overview] = await app.channels.listForMember('anna', channelId);
+      expect(overview?.unreadCount).toBe(0);
+    });
+
+    it('shows a reply also sent to the channel there, as unread', async () => {
+      const { channelId, rootId } = await aTeam();
+      unwrap(
+        await app.post.execute({
+          personId: BEN,
+          channelId,
+          body: 'Für alle',
+          threadRootId: rootId,
+          alsoInChannel: true,
+        }),
+      );
+      const page = unwrap(await app.history.execute({ personId: 'anna', channelId, limit: 50 }));
+      expect(page.messages.map((m) => m.props.body)).toEqual(['Für alle', 'Wer kommt mit?']);
+      const [overview] = await app.channels.listForMember('anna', channelId);
+      expect(overview?.unreadCount).toBe(1);
+    });
+
+    it('counts unread replies in followed threads until read, and not after unfollowing', async () => {
+      const { channelId, rootId } = await aTeam();
+      const reply = unwrap(await app.post.execute({ personId: BEN, channelId, body: 'Ich!', threadRootId: rootId }));
+      expect(outbox.at(-1)).toMatchObject({ type: 'ThreadActivity', recipients: ['anna', BEN] });
+
+      const [thread] = await app.threads.execute('anna');
+      expect(thread).toMatchObject({ channelId, unreadCount: 1, summary: { replyCount: 1 } });
+      expect(thread?.root.props.messageId).toBe(rootId);
+      expect(await app.threads.execute('carl')).toEqual([]);
+
+      unwrap(
+        await app.readThread.execute({
+          personId: 'anna',
+          channelId,
+          rootMessageId: rootId,
+          messageId: reply.props.messageId,
+        }),
+      );
+      expect((await app.threads.execute('anna'))[0]?.unreadCount).toBe(0);
+
+      unwrap(await app.follow.execute({ personId: 'anna', channelId, rootMessageId: rootId, following: false }));
+      app.tick();
+      unwrap(await app.post.execute({ personId: BEN, channelId, body: 'Noch was', threadRootId: rootId }));
+      expect(await app.threads.execute('anna')).toEqual([]);
+    });
+
+    it('counts mentions of members and lets mentioned members follow the thread', async () => {
+      const { channelId, rootId } = await aTeam();
+      unwrap(await app.post.execute({ personId: 'carl', channelId, body: `Hey <@${BEN}>` }));
+      const [overview] = await app.channels.listForMember(BEN, channelId);
+      expect(overview).toMatchObject({ unreadCount: 2, mentionCount: 1 });
+
+      unwrap(await app.post.execute({ personId: 'carl', channelId, body: `<@${BEN}> hier`, threadRootId: rootId }));
+      expect((await app.threads.execute(BEN)).map((t) => t.root.props.messageId)).toEqual([rootId]);
+    });
+
+    it('lets members react, and refuses anything but one emoji', async () => {
+      const { channelId, rootId } = await aTeam();
+      const react = (personId: string, emoji: string, add = true) =>
+        app.react.execute({ personId, channelId, messageId: rootId, emoji, add });
+
+      unwrap(await react(BEN, '👍'));
+      const message = unwrap(await react('carl', '👍'));
+      expect(message.props.reactions).toEqual([{ emoji: '👍', personIds: [BEN, 'carl'] }]);
+      expect(outbox.at(-1)).toMatchObject({ type: 'ReactionChanged', emoji: '👍', added: true, inOffice: true });
+      expect(await react('dora', '👍')).toEqual({ ok: false, error: 'not-channel-member' });
+      expect(await react(BEN, 'nope')).toEqual({ ok: false, error: 'invalid-emoji' });
+      expect((await react(BEN, '👍', false)).ok).toBe(true);
+    });
+
+    it('hides threads of private channels from non-members', async () => {
+      const secret = unwrap(await app.create.execute({ personId: 'anna', kind: 'private', name: 'secret' }));
+      const channelId = secret.props.channelId;
+      const root = unwrap(await app.post.execute({ personId: 'anna', channelId, body: 'psst' }));
+      const rootMessageId = root.props.messageId;
+
+      expect(await app.replies.execute({ personId: BEN, channelId, rootMessageId, limit: 50 })).toEqual({
+        ok: false,
+        error: 'not-found',
+      });
+      expect(await app.follow.execute({ personId: BEN, channelId, rootMessageId, following: true })).toEqual({
+        ok: false,
+        error: 'not-found',
+      });
+      expect(
+        await app.react.execute({ personId: BEN, channelId, messageId: rootMessageId, emoji: '👍', add: true }),
+      ).toEqual({ ok: false, error: 'not-found' });
+    });
   });
 });

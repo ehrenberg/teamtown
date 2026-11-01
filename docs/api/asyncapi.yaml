@@ -1873,6 +1873,63 @@ channels:
                     body:
                       type: string
                       maxLength: 4000
+                    threadRootId:
+                      anyOf:
+                        - type: string
+                          minLength: 1
+                          maxLength: 64
+                        - type: "null"
+                    alsoInChannel:
+                      type: boolean
+                    mentions:
+                      type: array
+                      items:
+                        type: string
+                        format: uuid
+                        pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                    reactions:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          emoji:
+                            type: string
+                            minLength: 1
+                            maxLength: 64
+                          personIds:
+                            type: array
+                            items:
+                              type: string
+                              format: uuid
+                              pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                        required:
+                          - emoji
+                          - personIds
+                        additionalProperties: false
+                    thread:
+                      anyOf:
+                        - type: object
+                          properties:
+                            replyCount:
+                              type: integer
+                              exclusiveMinimum: 0
+                              maximum: 9007199254740991
+                            lastReplyAt:
+                              type: string
+                              format: date-time
+                              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+                            replierIds:
+                              type: array
+                              items:
+                                type: string
+                                format: uuid
+                                pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                          required:
+                            - replyCount
+                            - lastReplyAt
+                            - replierIds
+                          additionalProperties: false
+                        - type: "null"
                     postedAt:
                       type: string
                       format: date-time
@@ -1890,6 +1947,11 @@ channels:
                     - channelId
                     - authorId
                     - body
+                    - threadRootId
+                    - alsoInChannel
+                    - mentions
+                    - reactions
+                    - thread
                     - postedAt
                     - editedAt
                     - deleted
@@ -1932,6 +1994,63 @@ channels:
                     body:
                       type: string
                       maxLength: 4000
+                    threadRootId:
+                      anyOf:
+                        - type: string
+                          minLength: 1
+                          maxLength: 64
+                        - type: "null"
+                    alsoInChannel:
+                      type: boolean
+                    mentions:
+                      type: array
+                      items:
+                        type: string
+                        format: uuid
+                        pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                    reactions:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          emoji:
+                            type: string
+                            minLength: 1
+                            maxLength: 64
+                          personIds:
+                            type: array
+                            items:
+                              type: string
+                              format: uuid
+                              pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                        required:
+                          - emoji
+                          - personIds
+                        additionalProperties: false
+                    thread:
+                      anyOf:
+                        - type: object
+                          properties:
+                            replyCount:
+                              type: integer
+                              exclusiveMinimum: 0
+                              maximum: 9007199254740991
+                            lastReplyAt:
+                              type: string
+                              format: date-time
+                              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+                            replierIds:
+                              type: array
+                              items:
+                                type: string
+                                format: uuid
+                                pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                          required:
+                            - replyCount
+                            - lastReplyAt
+                            - replierIds
+                          additionalProperties: false
+                        - type: "null"
                     postedAt:
                       type: string
                       format: date-time
@@ -1949,6 +2068,11 @@ channels:
                     - channelId
                     - authorId
                     - body
+                    - threadRootId
+                    - alsoInChannel
+                    - mentions
+                    - reactions
+                    - thread
                     - postedAt
                     - editedAt
                     - deleted
@@ -2061,6 +2185,111 @@ channels:
               required:
                 - channelId
                 - messageId
+              additionalProperties: false
+          required:
+            - t
+            - p
+          additionalProperties: false
+      ReactionChanged:
+        name: ReactionChanged
+        title: ReactionChanged
+        summary: Someone added or removed a reaction. Sent to the members of the channel.
+        payload:
+          type: object
+          properties:
+            t:
+              type: string
+              const: ReactionChanged
+            p:
+              type: object
+              properties:
+                channelId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                messageId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                personId:
+                  type: string
+                  format: uuid
+                  pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                emoji:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                added:
+                  type: boolean
+              required:
+                - channelId
+                - messageId
+                - personId
+                - emoji
+                - added
+              additionalProperties: false
+          required:
+            - t
+            - p
+          additionalProperties: false
+      ThreadActivity:
+        name: ThreadActivity
+        title: ThreadActivity
+        summary: A followed thread got replies, or the follow or thread read marker changed. Sent to the followers.
+        payload:
+          type: object
+          properties:
+            t:
+              type: string
+              const: ThreadActivity
+            p:
+              type: object
+              properties:
+                channelId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                rootMessageId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+              required:
+                - channelId
+                - rootMessageId
+              additionalProperties: false
+          required:
+            - t
+            - p
+          additionalProperties: false
+      AvatarEmoted:
+        name: AvatarEmoted
+        title: AvatarEmoted
+        summary: A reaction in a public channel shows above the avatar. Sent to everyone on the floor; never stored.
+        payload:
+          type: object
+          properties:
+            t:
+              type: string
+              const: AvatarEmoted
+            p:
+              type: object
+              properties:
+                floorId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                personId:
+                  type: string
+                  format: uuid
+                  pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                emoji:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+              required:
+                - floorId
+                - personId
+                - emoji
               additionalProperties: false
           required:
             - t
@@ -2219,5 +2448,8 @@ operations:
       - $ref: "#/channels/realtime/messages/ChannelChanged"
       - $ref: "#/channels/realtime/messages/ChannelLeft"
       - $ref: "#/channels/realtime/messages/ReadMarkerMoved"
+      - $ref: "#/channels/realtime/messages/ReactionChanged"
+      - $ref: "#/channels/realtime/messages/ThreadActivity"
+      - $ref: "#/channels/realtime/messages/AvatarEmoted"
       - $ref: "#/channels/realtime/messages/Ack"
       - $ref: "#/channels/realtime/messages/Nack"

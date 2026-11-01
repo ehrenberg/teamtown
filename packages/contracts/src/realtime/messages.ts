@@ -56,8 +56,11 @@ import {
   ChannelLeftEvent,
   MessageDeletedEvent,
   MessageEditedEvent,
+  AvatarEmotedEvent,
   MessagePostedEvent,
+  ReactionChangedEvent,
   ReadMarkerMovedEvent,
+  ThreadActivityEvent,
 } from './messaging.ts';
 
 /**
@@ -284,6 +287,9 @@ export const ServerEvent = z.discriminatedUnion('t', [
   ChannelChangedEvent,
   ChannelLeftEvent,
   ReadMarkerMovedEvent,
+  ReactionChangedEvent,
+  ThreadActivityEvent,
+  AvatarEmotedEvent,
   AckEvent,
   NackEvent,
 ]);
