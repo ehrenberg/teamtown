@@ -1,0 +1,28 @@
+$kind: http-request
+method: POST
+url: '{{baseUrl}}/channels/:channelId/messages'
+order: 10210
+pathVariables:
+  - key: channelId
+    value: '{{channelId}}'
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{secondAccessToken}}'
+body:
+  type: json
+  content: |-
+    { "body": "Count me in, <@{{myPersonId}}>", "threadRootId": "{{messageId}}" }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      // The colleague answers in the thread and mentions me (ADR-0034).
+      pm.test('responds 201', () => pm.response.to.have.status(201));
+      const reply = pm.response.json();
+      pm.test('is a reply that stays in its thread and knows the mention', () => {
+        pm.expect(reply).to.include({ threadRootId: pm.collectionVariables.get('messageId'), alsoInChannel: false });
+        pm.expect(reply.mentions).to.eql([pm.collectionVariables.get('myPersonId')]);
+      });
+      pm.collectionVariables.set('replyId', reply.messageId);

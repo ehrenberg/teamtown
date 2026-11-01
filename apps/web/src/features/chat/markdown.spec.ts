@@ -62,4 +62,15 @@ describe('safeHref', () => {
     expect(safeHref('data:text/html,hi')).toBeNull();
     expect(safeHref('not a url')).toBeNull();
   });
+
+  it('reads mentions by person ID, also inside other formatting, but not in code', () => {
+    const id = '0b0b0b0b-0000-4000-8000-000000000002';
+    expect(parseInline(`Hi <@${id}>!`)).toEqual([
+      { type: 'text', text: 'Hi ' },
+      { type: 'mention', personId: id },
+      { type: 'text', text: '!' },
+    ]);
+    expect(parseInline(`**<@${id}>**`)).toEqual([{ type: 'bold', children: [{ type: 'mention', personId: id }] }]);
+    expect(parseInline(`\`<@${id}>\``)).toEqual([{ type: 'code', text: `<@${id}>` }]);
+  });
 });

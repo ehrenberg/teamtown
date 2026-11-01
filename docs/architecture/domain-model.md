@@ -35,7 +35,7 @@ Use these terms consistently in code, UI, docs and conversations. Code identifie
 | **Channel**         | A persistent message stream: `public`, `private`, `announcement`, `room` or `direct`                     | `Channel`                                  |
 | **Room wall**       | The channel linked to a room                                                                             | `Channel{kind: room}`                      |
 | **Thread**          | Replies to one message                                                                                   | `Thread`                                   |
-| **Followed thread** | A thread whose new replies count as unread for a person (root author, repliers, mentioned people)        | `ThreadFollow`                             |
+| **Followed thread** | A thread whose new replies count as unread for a person (root author, repliers, mentioned people)        | `Thread.follows`                           |
 | **Mention**         | `@person` in a message; notifies members of the channel                                                  | `mentions[]`                               |
 | **Reaction**        | An emoji a person attaches to a message                                                                  | `reactions[]`                              |
 | **Emote**           | A reaction shown briefly above the avatar (public channels only, never stored)                           | `AvatarEmoted`                             |
@@ -118,10 +118,10 @@ flowchart TB
 
 - **`Channel`** (root): `kind`, `name`, `visibility`, `memberships[]`, `archived`.
 - **`Message`** (root, references `channelId`): `author`, `body` (Markdown subset), `threadRootId?`,
-  `alsoInChannel`, `mentions[]`, `reactions[]`, `attachments[]`, `editedAt?`, `deletedAt?`; a root keeps its thread
-  summary (reply count, newest reply, repliers).
+  `alsoInChannel`, `mentions[]`, `reactions[]`, `attachments[]`, `editedAt?`, `deletedAt?`; a root's thread summary
+  (reply count, newest reply, repliers) is derived from its replies.
   - A separate aggregate so that high-volume messages don't lock the channel.
-- **`ThreadFollow`** (per person and thread root): `following`, `readMarker?` (ADR-0034).
+- **`Thread`** (root, per thread root): its follows per person, `following` and `readMarker?` (ADR-0034).
 
 ### Access
 
@@ -130,13 +130,13 @@ flowchart TB
 
 ## 5. Domain events (initial catalogue)
 
-| Context   | Event                                                                                                                                                                                                          | Main consumers                                  |
-| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
-| Identity  | `PersonAuthenticated`                                                                                                                                                                                          | People (create profile on first login)          |
-| World     | `FloorPlanPublished`, `RoomCreated`, `RoomPolicyChanged`, `RoomDeleted`, `DeskAssigned`                                                                                                                        | Presence, Messaging, Audit                      |
-| Presence  | `AvatarMoved`, `AvatarEnteredRoom`, `AvatarLeftRoom`, `DoorModeChanged`, `StatusChanged`, `PersonWentOnline/Offline`                                                                                           | Meetings, gateway                               |
-| Meetings  | `ConversationFormed/Changed/Dissolved`, `RoomCallChanged`, `KnockRequested/Answered`, `DirectCallRequested`, `MeetingLogStarted/Ended`                                                                         | Notifications, gateway                          |
-| Messaging | `MessagePosted`, `MessageEdited`, `MessageDeleted`, `PersonMentioned`, `ChannelChanged`, `ChannelLeft`, `ReadMarkerMoved`, `ThreadUpdated`, `ReactionsChanged`, `ThreadFollowChanged`, `ThreadReadMarkerMoved` | Notifications, gateway, Presence (emote), Audit |
-| Access    | `RoleCreated/Changed`, `RoleAssigned/Revoked`                                                                                                                                                                  | Audit, permission cache invalidation            |
+| Context   | Event                                                                                                                                                          | Main consumers                                  |
+| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| Identity  | `PersonAuthenticated`                                                                                                                                          | People (create profile on first login)          |
+| World     | `FloorPlanPublished`, `RoomCreated`, `RoomPolicyChanged`, `RoomDeleted`, `DeskAssigned`                                                                        | Presence, Messaging, Audit                      |
+| Presence  | `AvatarMoved`, `AvatarEnteredRoom`, `AvatarLeftRoom`, `DoorModeChanged`, `StatusChanged`, `PersonWentOnline/Offline`                                           | Meetings, gateway                               |
+| Meetings  | `ConversationFormed/Changed/Dissolved`, `RoomCallChanged`, `KnockRequested/Answered`, `DirectCallRequested`, `MeetingLogStarted/Ended`                         | Notifications, gateway                          |
+| Messaging | `MessagePosted`, `MessageEdited`, `MessageDeleted`, `PersonMentioned`, `ChannelChanged`, `ChannelLeft`, `ReadMarkerMoved`, `ReactionChanged`, `ThreadActivity` | Notifications, gateway, Presence (emote), Audit |
+| Access    | `RoleCreated/Changed`, `RoleAssigned/Revoked`                                                                                                                  | Audit, permission cache invalidation            |
 
 Naming rule: past tense, the context name implied by the module, payload with IDs plus the minimum data consumers need.

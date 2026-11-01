@@ -11,6 +11,7 @@ import type { TileCoord } from '@teamtown/world-core';
 import { useCallStore } from '../stores/call-store.ts';
 import { useConversationStore } from '../stores/conversation-store.ts';
 import { useMediaStore } from '../stores/media-store.ts';
+import { useEmoteStore } from '../stores/emote-store.ts';
 import { usePresenceStore } from '../stores/presence-store.ts';
 import { useRoomStore, type DoorMode } from '../stores/room-store.ts';
 import type { ServerClock } from '../shared/server-clock.ts';
@@ -36,10 +37,20 @@ export interface CallAccess {
 }
 export type CallAccessListener = (access: CallAccess) => void;
 
-/** Messaging pushes (M3a); they update the server state that TanStack Query holds. */
+/** Messaging pushes (M3a, M3b); they update the server state that TanStack Query holds. */
 export type MessagingServerEvent = Extract<
   ServerEvent,
-  { t: 'MessagePosted' | 'MessageEdited' | 'MessageDeleted' | 'ChannelChanged' | 'ChannelLeft' | 'ReadMarkerMoved' }
+  {
+    t:
+      | 'MessagePosted'
+      | 'MessageEdited'
+      | 'MessageDeleted'
+      | 'ChannelChanged'
+      | 'ChannelLeft'
+      | 'ReadMarkerMoved'
+      | 'ReactionChanged'
+      | 'ThreadActivity';
+  }
 >;
 export type MessagingListener = (event: MessagingServerEvent) => void;
 type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never;
@@ -308,7 +319,14 @@ export class RealtimeClient {
       case 'ChannelChanged':
       case 'ChannelLeft':
       case 'ReadMarkerMoved':
+      case 'ReactionChanged':
+      case 'ThreadActivity':
         for (const listener of this.#messagingListeners) listener(event);
+        return;
+      case 'AvatarEmoted':
+        if (event.p.floorId === usePresenceStore.getState().floorId) {
+          useEmoteStore.getState().show(event.p.personId, event.p.emoji);
+        }
         return;
       default:
         store.applyEvent(event);

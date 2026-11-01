@@ -11,7 +11,7 @@ import { serverClock } from '../../shared/server-clock.ts';
 import { usePresenceStore } from '../../stores/presence-store.ts';
 import { Phone } from 'lucide-react';
 import { useCallStore } from '../../stores/call-store.ts';
-import { useChatStore } from '../../stores/chat-store.ts';
+import { selectPanelOpen, useChatStore } from '../../stores/chat-store.ts';
 import { CallAnnouncer, CallPanel, CallSomeoneDialog, IncomingCallDialog } from './calls.tsx';
 import { MeetingLogConsentDialog, MeetingLogControls, MyMeetingsButton } from './meeting-log.tsx';
 import { useRoomStore } from '../../stores/room-store.ts';
@@ -67,7 +67,7 @@ export function OfficePage({ sidebar, sidePanel }: { readonly sidebar?: ReactNod
   const [selectedFloorId, setSelectedFloorId] = useState<string | null>(null);
   const [closedDoorRoomId, setClosedDoorRoomId] = useState<string | null>(null);
   const [callDialogOpen, setCallDialogOpen] = useState(false);
-  const chatOpen = useChatStore((state) => state.openChannelId !== null);
+  const chatOpen = useChatStore(selectPanelOpen);
 
   const floorId = selectedFloorId ?? floors.data?.floors[0]?.floorId ?? null;
   const plan = useFloorPlan(floorId);

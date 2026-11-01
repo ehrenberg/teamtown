@@ -25,6 +25,37 @@
       transform: rotate(10deg);
     }
   }
+
+  /* A reaction rising above the avatar (ADR-0034); with reduced motion it only fades. */
+  --animate-emote-rise: emote-rise 3s ease-out forwards;
+  --animate-emote-fade: emote-fade 3s ease-out forwards;
+  @keyframes emote-rise {
+    0% {
+      opacity: 0;
+      transform: translateY(0.5rem) scale(0.8);
+    }
+    15% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+    75% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(-1.75rem);
+    }
+  }
+  @keyframes emote-fade {
+    0%,
+    100% {
+      opacity: 0;
+    }
+    15%,
+    75% {
+      opacity: 1;
+    }
+  }
 }
 
 @layer base {

@@ -1,5 +1,6 @@
 /**
- * The Markdown subset of messages (ADR-0033): bold, italic, inline code, code blocks, links and lists.
+ * The Markdown subset of messages (ADR-0033): bold, italic, inline code, code blocks, links and lists, plus
+ * mentions written as `<@personId>` (ADR-0034).
  * It parses into plain data that the renderer turns into React elements, so raw HTML is never interpreted.
  */
 
@@ -8,7 +9,8 @@ export type Inline =
   | { readonly type: 'bold'; readonly children: readonly Inline[] }
   | { readonly type: 'italic'; readonly children: readonly Inline[] }
   | { readonly type: 'code'; readonly text: string }
-  | { readonly type: 'link'; readonly href: string; readonly children: readonly Inline[] };
+  | { readonly type: 'link'; readonly href: string; readonly children: readonly Inline[] }
+  | { readonly type: 'mention'; readonly personId: string };
 
 export type Block =
   | { readonly type: 'paragraph'; readonly lines: readonly (readonly Inline[])[] }
@@ -16,6 +18,8 @@ export type Block =
   | { readonly type: 'list'; readonly ordered: boolean; readonly items: readonly (readonly Inline[])[] };
 
 const FENCE = '```';
+/** A mention in a stored body; the composer shows it as `@Name` (mentions.ts). */
+export const MENTION_TOKEN = /<@([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})>/i;
 const BULLET = /^\s*[-*]\s+(.*)$/;
 const NUMBERED = /^\s*\d+[.)]\s+(.*)$/;
 
@@ -73,6 +77,7 @@ export function parseMarkdown(source: string): Block[] {
 /** Earliest match wins; on a tie the earlier rule in this list. */
 const RULES: readonly { readonly pattern: RegExp; readonly build: (match: RegExpExecArray) => Inline | null }[] = [
   { pattern: /`([^`]+)`/, build: (m) => ({ type: 'code', text: m[1] ?? '' }) },
+  { pattern: MENTION_TOKEN, build: (m) => ({ type: 'mention', personId: (m[1] ?? '').toLowerCase() }) },
   {
     pattern: /\[([^\]]+)\]\(([^)\s]+)\)/,
     build: (m) => {

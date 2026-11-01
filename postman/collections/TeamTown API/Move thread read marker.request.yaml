@@ -1,0 +1,18 @@
+$kind: http-request
+method: PUT
+url: '{{baseUrl}}/channels/:channelId/threads/:rootMessageId/read-marker'
+order: 10240
+pathVariables:
+  - key: channelId
+    value: '{{channelId}}'
+  - key: rootMessageId
+    value: '{{messageId}}'
+body:
+  type: json
+  content: |-
+    { "messageId": "{{replyId}}" }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test('responds 204', () => pm.response.to.have.status(204));

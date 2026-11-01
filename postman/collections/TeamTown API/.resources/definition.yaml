@@ -36,6 +36,9 @@ variables:
   - key: messageId
     value: ''
     description: Set by "Post message".
+  - key: replyId
+    value: ''
+    description: Set by "Reply in thread as colleague".
 scripts:
   - type: http:beforeRequest
     language: text/javascript

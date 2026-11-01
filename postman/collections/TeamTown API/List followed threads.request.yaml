@@ -1,0 +1,15 @@
+$kind: http-request
+method: GET
+url: '{{baseUrl}}/threads'
+order: 10230
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test('responds 200', () => pm.response.to.have.status(200));
+      pm.test('the root author follows the thread and has an unread reply', () => {
+        const thread = pm.response.json().threads.find((t) => t.root.messageId === pm.collectionVariables.get('messageId'));
+        pm.expect(thread).to.be.an('object');
+        pm.expect(thread.unreadCount).to.equal(1);
+        pm.expect(thread.root.thread).to.include({ replyCount: 1 });
+      });

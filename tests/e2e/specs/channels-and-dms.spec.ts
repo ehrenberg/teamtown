@@ -6,7 +6,7 @@ import { signIn } from './support/session.ts';
 const channels = (page: Page) => page.getByRole('region', { name: 'Channels' });
 const directMessages = (page: Page) => page.getByRole('region', { name: 'Direct messages' });
 const chat = (page: Page) => page.getByRole('complementary', { name: 'Chat' });
-const composer = (page: Page) => chat(page).getByRole('textbox', { name: /^Message to/ });
+const composer = (page: Page) => chat(page).getByRole('combobox', { name: /^Message to/ });
 
 test('people write in #general and in a DM, live and with unread counts', async ({ browser }) => {
   const anna = (await signIn(browser, 'demo', 'demo')).page;

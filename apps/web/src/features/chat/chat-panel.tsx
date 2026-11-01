@@ -1,29 +1,31 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { MessageSchema, type ChannelSummary, type MessageContract } from '@teamtown/contracts';
+import type { ChannelSummary } from '@teamtown/contracts';
 import { Button } from '@teamtown/ui';
-import { Archive, ArchiveRestore, LogOut, Pencil, Trash2, UserPlus, X } from 'lucide-react';
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
+import { Archive, ArchiveRestore, LogOut, Pencil, UserPlus, X } from 'lucide-react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { apiDelete, apiSend } from '../../api/api-client.ts';
-import { messagesKey, useChannels, useMessages, usePeople } from '../../api/queries.ts';
+import { useChannels, useMessages, usePeople } from '../../api/queries.ts';
 import { useChatStore } from '../../stores/chat-store.ts';
 import { usePresenceStore } from '../../stores/presence-store.ts';
 import { NewMessageDialog, PeoplePickerDialog, PrivateMark, RenameChannelDialog } from './chat-dialogs.tsx';
 import { channelTitle, errorText, type Person } from './chat-shared.ts';
-import { MessageBody } from './message-body.tsx';
-import { flatten, withPosted, type MessagePages } from './message-cache.ts';
+import { channelPath, Composer } from './composer.tsx';
+import { MentionContext } from './message-body.tsx';
+import { flatten } from './message-cache.ts';
+import { MessageItem } from './message-item.tsx';
+import { ThreadsView } from './threads-view.tsx';
 
 const GENERAL_CHANNEL_ID = 'general';
 const MAX_DIRECT_MEMBERS = 8;
 /** Pixels from the bottom that still count as "read to the bottom". */
 const BOTTOM_SLACK_PX = 24;
 
-const channelPath = (channelId: string) => `/channels/${encodeURIComponent(channelId)}`;
-
-/** The open channel next to the world (ADR-0033). Escape closes it. */
+/** The open channel or the threads view next to the world (ADR-0033, ADR-0034). Escape closes it. */
 export function ChatPanel() {
   const { t } = useTranslation();
   const openChannelId = useChatStore((state) => state.openChannelId);
+  const threadsOpen = useChatStore((state) => state.threadsOpen);
   const channels = useChannels();
   const channel = channels.data?.channels.find((c) => c.channelId === openChannelId) ?? null;
 
@@ -41,14 +43,16 @@ export function ChatPanel() {
     };
   }, []);
 
-  if (!openChannelId) return null;
+  if (!openChannelId && !threadsOpen) return null;
   return (
     <aside
       ref={panel}
       aria-label={t('chat.panel')}
       className="col-start-3 row-start-2 flex min-h-0 w-[360px] flex-col border-l border-border-subtle bg-surface-raised"
     >
-      {channel ? (
+      {threadsOpen ? (
+        <ThreadsView />
+      ) : channel ? (
         <OpenChannel key={channel.channelId} channel={channel} />
       ) : (
         <p className="p-4 text-sm text-text-secondary">{t(channels.isError ? 'chat.loadError' : 'chat.loading')}</p>
@@ -66,13 +70,17 @@ function OpenChannel({ channel }: { readonly channel: ChannelSummary }) {
     [people.data],
   );
   const title = channelTitle(channel, myPersonId, peopleById, t);
+  const mentions = useMemo(
+    () => ({ nameOf: (personId: string) => peopleById.get(personId)?.displayName, myPersonId }),
+    [peopleById, myPersonId],
+  );
 
   return (
-    <>
+    <MentionContext value={mentions}>
       <ChannelHeader channel={channel} title={title} />
-      <MessageList channel={channel} people={peopleById} />
-      <Composer channel={channel} title={title} />
-    </>
+      <MessageList channel={channel} title={title} people={peopleById} />
+      <ChannelComposer channel={channel} title={title} />
+    </MentionContext>
   );
 }
 
@@ -186,9 +194,11 @@ function ChannelHeader({ channel, title }: { readonly channel: ChannelSummary; r
 
 function MessageList({
   channel,
+  title,
   people,
 }: {
   readonly channel: ChannelSummary;
+  readonly title: string;
   readonly people: ReadonlyMap<string, Person>;
 }) {
   const { t, i18n } = useTranslation();
@@ -199,10 +209,20 @@ function MessageList({
   const atBottom = useRef(true);
   /** The newest message the read marker was moved to (or is already at). */
   const readTo = useRef<string | null>(channel.readMarker);
+  /** Roots whose threads are expanded inline (ADR-0034). */
+  const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
   const newest = messages.at(-1);
   const isMember = myPersonId !== null && channel.members.includes(myPersonId);
   const day = new Intl.DateTimeFormat(i18n.language, { dateStyle: 'full' });
   const time = new Intl.DateTimeFormat(i18n.language, { timeStyle: 'short' });
+  const byId = new Map(messages.map((message) => [message.messageId, message]));
+  const toggle = (messageId: string) => {
+    setExpanded((current) => {
+      const next = new Set(current);
+      if (!next.delete(messageId)) next.add(messageId);
+      return next;
+    });
+  };
 
   // Stay at the newest message while reading at the bottom.
   useLayoutEffect(() => {
@@ -252,7 +272,10 @@ function MessageList({
           const sameAuthor =
             !newDay &&
             previous.authorId === message.authorId &&
+            !previous.thread &&
+            !message.threadRootId &&
             posted.getTime() - new Date(previous.postedAt).getTime() < 5 * 60_000;
+          const root = message.threadRootId ? byId.get(message.threadRootId) : undefined;
           return (
             <li key={message.messageId}>
               {newDay && (
@@ -260,11 +283,19 @@ function MessageList({
               )}
               <MessageItem
                 message={message}
-                author={people.get(message.authorId)}
+                channel={channel}
+                title={title}
+                people={people}
                 showAuthor={!sameAuthor}
                 time={time.format(posted)}
-                isMine={message.authorId === myPersonId}
-                canChange={!channel.archived}
+                {...(message.threadRootId
+                  ? { repliedTo: root && !root.deleted ? excerpt(root.body) : null }
+                  : {
+                      expanded: expanded.has(message.messageId),
+                      onToggleThread: () => {
+                        toggle(message.messageId);
+                      },
+                    })}
               />
             </li>
           );
@@ -274,228 +305,47 @@ function MessageList({
   );
 }
 
-function MessageItem({
-  message,
-  author,
-  showAuthor,
-  time,
-  isMine,
-  canChange,
-}: {
-  readonly message: MessageContract;
-  readonly author: Person | undefined;
-  readonly showAuthor: boolean;
-  readonly time: string;
-  readonly isMine: boolean;
-  readonly canChange: boolean;
-}) {
-  const { t } = useTranslation();
-  const [editing, setEditing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const path = `${channelPath(message.channelId)}/messages/${encodeURIComponent(message.messageId)}`;
-  const name = author?.displayName ?? t('chat.someone');
-
-  return (
-    <article
-      aria-label={t('chat.messageBy', { name, time })}
-      className={`group relative rounded-sm px-1 hover:bg-neutral-50 ${showAuthor ? 'mt-2' : ''}`}
-    >
-      {showAuthor && (
-        <p className="flex items-baseline gap-2 text-sm">
-          <span className="font-semibold">{name}</span>
-          <span className="text-xs text-text-secondary">{time}</span>
-        </p>
-      )}
-      {message.deleted ? (
-        <p className="text-sm text-text-secondary italic">{t('chat.deleted')}</p>
-      ) : editing ? (
-        <MessageEditor
-          initial={message.body}
-          onCancel={() => {
-            setEditing(false);
-          }}
-          onSave={(body) => {
-            apiSend('PATCH', path, { body }, MessageSchema).then(
-              () => {
-                setEditing(false);
-                setError(null);
-              },
-              (failure: unknown) => {
-                setError(errorText(failure, t));
-              },
-            );
-          }}
-        />
-      ) : (
-        <div className="text-sm break-words">
-          <MessageBody body={message.body} />
-          {message.editedAt && <span className="text-xs text-text-secondary"> ({t('chat.edited')})</span>}
-        </div>
-      )}
-      {error && (
-        <p role="alert" className="text-xs">
-          {error}
-        </p>
-      )}
-      {isMine && canChange && !message.deleted && !editing && (
-        <div className="absolute top-0 right-0 hidden gap-0.5 rounded-sm bg-surface-raised shadow-raised group-focus-within:flex group-hover:flex">
-          <button
-            type="button"
-            aria-label={t('chat.edit')}
-            title={t('chat.edit')}
-            onClick={() => {
-              setEditing(true);
-            }}
-            className="grid size-7 place-items-center rounded-sm hover:bg-neutral-100"
-          >
-            <Pencil aria-hidden="true" className="size-3.5" />
-          </button>
-          <button
-            type="button"
-            aria-label={t('chat.delete')}
-            title={t('chat.delete')}
-            onClick={() => {
-              apiDelete(path).catch((failure: unknown) => {
-                setError(errorText(failure, t));
-              });
-            }}
-            className="grid size-7 place-items-center rounded-sm hover:bg-neutral-100"
-          >
-            <Trash2 aria-hidden="true" className="size-3.5" />
-          </button>
-        </div>
-      )}
-    </article>
-  );
-}
-
-/** Enter sends, Shift+Enter makes a new line. */
-const sendOnEnter = (event: KeyboardEvent<HTMLTextAreaElement>, send: () => void) => {
-  if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) {
-    event.preventDefault();
-    send();
-  }
+/** The first words of a root, without Markdown marks or mention tokens. */
+const excerpt = (body: string) => {
+  const plain = body
+    .replace(/<@[^>]+>/g, '@…')
+    .replace(/[*_`#>[\]()]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return plain.length > 60 ? `${plain.slice(0, 60)}…` : plain;
 };
 
-function MessageEditor({
-  initial,
-  onSave,
-  onCancel,
-}: {
-  readonly initial: string;
-  readonly onSave: (body: string) => void;
-  readonly onCancel: () => void;
-}) {
-  const { t } = useTranslation();
-  const [body, setBody] = useState(initial);
-  return (
-    <div className="flex flex-col gap-1.5">
-      <textarea
-        value={body}
-        aria-label={t('chat.editMessage')}
-        // eslint-disable-next-line jsx-a11y/no-autofocus -- the person just chose to edit this message
-        autoFocus
-        rows={3}
-        onChange={(event) => {
-          setBody(event.target.value);
-        }}
-        onKeyDown={(event) => {
-          if (event.key === 'Escape') {
-            event.preventDefault();
-            onCancel();
-          }
-          sendOnEnter(event, () => {
-            if (body.trim()) onSave(body);
-          });
-        }}
-        className="resize-none rounded-md border border-border-subtle bg-surface-sunken px-2 py-1.5 text-sm"
-      />
-      <div className="flex gap-1.5">
-        <Button
-          variant="secondary"
-          onClick={() => {
-            if (body.trim()) onSave(body);
-          }}
-        >
-          {t('chat.save')}
-        </Button>
-        <Button variant="ghost" onClick={onCancel}>
-          {t('chat.cancel')}
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-function Composer({ channel, title }: { readonly channel: ChannelSummary; readonly title: string }) {
+/** Members write; others of a public channel join first; archived channels take nothing new. */
+function ChannelComposer({ channel, title }: { readonly channel: ChannelSummary; readonly title: string }) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const myPersonId = usePresenceStore((state) => state.myPersonId);
-  const [body, setBody] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const path = channelPath(channel.channelId);
   const isMember = myPersonId !== null && channel.members.includes(myPersonId);
 
   if (channel.archived) {
     return <p className="border-t border-border-subtle p-4 text-sm text-text-secondary">{t('chat.archivedHint')}</p>;
   }
-  if (!isMember) {
-    return (
-      <div className="border-t border-border-subtle p-4">
-        <Button
-          onClick={() => {
-            apiSend('POST', `${path}/members`, { personIds: [myPersonId] }).then(
-              () => void queryClient.invalidateQueries({ queryKey: ['channels'] }),
-              (failure: unknown) => {
-                setError(errorText(failure, t));
-              },
-            );
-          }}
-        >
-          {t('chat.join')}
-        </Button>
-      </div>
-    );
-  }
-
-  const send = () => {
-    if (!body.trim()) return;
-    const sent = body;
-    setBody('');
-    apiSend('POST', `${path}/messages`, { body: sent }, MessageSchema).then(
-      (message) => {
-        setError(null);
-        queryClient.setQueryData<MessagePages>(messagesKey(channel.channelId), (data) => withPosted(data, message));
-      },
-      (failure: unknown) => {
-        setBody(sent);
-        setError(errorText(failure, t));
-      },
-    );
-  };
-
+  if (isMember) return <Composer channel={channel} title={title} />;
   return (
-    <div className="border-t border-border-subtle p-3">
+    <div className="border-t border-border-subtle p-4">
       {error && (
         <p role="alert" className="mb-1.5 text-xs">
           {error}
         </p>
       )}
-      <textarea
-        value={body}
-        rows={2}
-        maxLength={4000}
-        aria-label={t('chat.composerLabel', { title })}
-        placeholder={t('chat.composerPlaceholder', { title })}
-        onChange={(event) => {
-          setBody(event.target.value);
+      <Button
+        onClick={() => {
+          apiSend('POST', `${channelPath(channel.channelId)}/members`, { personIds: [myPersonId] }).then(
+            () => void queryClient.invalidateQueries({ queryKey: ['channels'] }),
+            (failure: unknown) => {
+              setError(errorText(failure, t));
+            },
+          );
         }}
-        onKeyDown={(event) => {
-          sendOnEnter(event, send);
-        }}
-        className="w-full resize-none rounded-md border border-border-subtle bg-surface-sunken px-3 py-2 text-sm"
-      />
-      <p className="mt-1 text-xs text-text-secondary">{t('chat.composerHint')}</p>
+      >
+        {t('chat.join')}
+      </Button>
     </div>
   );
 }

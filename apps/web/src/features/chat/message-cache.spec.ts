@@ -1,6 +1,14 @@
 import type { MessageContract } from '@teamtown/contracts';
 import { describe, expect, it } from 'vitest';
-import { flatten, withDeleted, withPosted, withReplaced, type MessagePages } from './message-cache.ts';
+import {
+  flatten,
+  withDeleted,
+  withPosted,
+  withReaction,
+  withReplaced,
+  withReply,
+  type MessagePages,
+} from './message-cache.ts';
 
 const message = (messageId: string, body = messageId): MessageContract => ({
   messageId,
@@ -25,6 +33,11 @@ const pages: MessagePages = {
   pageParams: ['', 'm3'],
 };
 
+const onePage = (messages: MessageContract[]): MessagePages => ({
+  pages: [{ messages, hasMore: false }],
+  pageParams: [''],
+});
+
 describe('message cache', () => {
   it('lists the loaded messages oldest first', () => {
     expect(flatten(pages).map((m) => m.messageId)).toEqual(['m1', 'm2', 'm3', 'm4']);
@@ -43,5 +56,24 @@ describe('message cache', () => {
 
   it('leaves channels that are not loaded alone', () => {
     expect(withPosted(undefined, message('m1'))).toBeUndefined();
+  });
+
+  it('applies reaction changes once per person and emoji', () => {
+    const anna = '00000000-0000-4000-8000-00000000000a';
+    let data: MessagePages | undefined = onePage([message('a')]);
+    const change = { messageId: 'a', personId: anna, emoji: '👍', added: true };
+    data = withReaction(withReaction(data, change), change);
+    expect(flatten(data)[0]?.reactions).toEqual([{ emoji: '👍', personIds: [anna] }]);
+    data = withReaction(data, { ...change, added: false });
+    expect(flatten(data)[0]?.reactions).toEqual([]);
+  });
+
+  it('counts a reply on its root and keeps the summary when the root is edited', () => {
+    const ben = '00000000-0000-4000-8000-00000000000b';
+    const reply = { ...message('r', 'Re'), threadRootId: 'a', authorId: ben, postedAt: '2026-11-01T11:00:00.000Z' };
+    let data = withReply(onePage([message('a')]), reply);
+    expect(flatten(data)[0]?.thread).toEqual({ replyCount: 1, lastReplyAt: reply.postedAt, replierIds: [ben] });
+    data = withReplaced(data, { ...message('a', 'edited'), thread: null });
+    expect(flatten(data)[0]).toMatchObject({ body: 'edited', thread: { replyCount: 1 } });
   });
 });

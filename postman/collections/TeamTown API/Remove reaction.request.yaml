@@ -1,0 +1,17 @@
+$kind: http-request
+method: DELETE
+url: '{{baseUrl}}/channels/:channelId/messages/:messageId/reactions/:emoji'
+order: 10280
+pathVariables:
+  - key: channelId
+    value: '{{channelId}}'
+  - key: messageId
+    value: '{{messageId}}'
+  - key: emoji
+    value: '%F0%9F%8E%89'
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test('responds 200', () => pm.response.to.have.status(200));
+      pm.test('has no reactions left', () => pm.expect(pm.response.json().reactions).to.eql([]));

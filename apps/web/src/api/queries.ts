@@ -9,6 +9,7 @@ import {
   MeetingLogListResponse,
   MessagePageResponse,
   PeopleListResponse,
+  ThreadListResponse,
 } from '@teamtown/contracts';
 import { apiGet } from './api-client.ts';
 
@@ -73,3 +74,23 @@ export const useMessages = (channelId: string | null) =>
     getNextPageParam: (page) => (page.hasMore ? page.messages[0]?.messageId : undefined),
     enabled: channelId !== null,
   });
+
+export const repliesKey = (rootMessageId: string) => ['replies', rootMessageId] as const;
+
+/** A thread's replies, paged like a channel's history (ADR-0034); loaded when the thread is expanded. */
+export const useReplies = (channelId: string, rootMessageId: string, enabled: boolean) =>
+  useInfiniteQuery({
+    queryKey: repliesKey(rootMessageId),
+    queryFn: ({ pageParam }) =>
+      apiGet(
+        `/channels/${encodeURIComponent(channelId)}/messages/${encodeURIComponent(rootMessageId)}/replies${pageParam ? `?before=${encodeURIComponent(pageParam)}` : ''}`,
+        MessagePageResponse,
+      ),
+    initialPageParam: '',
+    getNextPageParam: (page) => (page.hasMore ? page.messages[0]?.messageId : undefined),
+    enabled,
+  });
+
+/** The threads I follow with unread replies; kept fresh by `ThreadActivity` pushes. */
+export const useThreads = () =>
+  useQuery({ queryKey: ['threads'], queryFn: () => apiGet('/threads', ThreadListResponse) });

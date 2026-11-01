@@ -1,9 +1,31 @@
-import { Fragment, useMemo } from 'react';
+import { createContext, Fragment, use, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { parseMarkdown, type Inline } from './markdown.ts';
+
+/** Display names for mentions, and who "I" am, so mentions of me stand out (ADR-0034). */
+export const MentionContext = createContext<{
+  readonly nameOf: (personId: string) => string | undefined;
+  readonly myPersonId: string | null;
+}>({ nameOf: () => undefined, myPersonId: null });
+
+function Mention({ personId }: { readonly personId: string }) {
+  const { t } = useTranslation();
+  const { nameOf, myPersonId } = use(MentionContext);
+  const mine = personId === myPersonId;
+  return (
+    <span
+      className={`rounded-sm px-0.5 font-medium ${mine ? 'bg-terracotta-500 text-white' : 'bg-terracotta-100 text-terracotta-900'}`}
+    >
+      @{nameOf(personId) ?? t('chat.someone')}
+    </span>
+  );
+}
 
 function InlineNodes({ nodes }: { readonly nodes: readonly Inline[] }) {
   return nodes.map((node, index) => {
     switch (node.type) {
+      case 'mention':
+        return <Mention key={index} personId={node.personId} />;
       case 'text':
         return <Fragment key={index}>{node.text}</Fragment>;
       case 'bold':

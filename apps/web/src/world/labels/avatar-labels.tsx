@@ -1,5 +1,6 @@
 import { Lock, MicOff, Phone, Video } from 'lucide-react';
 import { useCallStore } from '../../stores/call-store.ts';
+import { useEmoteStore } from '../../stores/emote-store.ts';
 import { conversationOf, useConversationStore } from '../../stores/conversation-store.ts';
 import { useMediaStore } from '../../stores/media-store.ts';
 import { usePresenceStore } from '../../stores/presence-store.ts';
@@ -7,7 +8,8 @@ import { labelElements } from './label-registry.ts';
 
 /**
  * Name labels as plain DOM above the canvas (crisp text, no per-label React roots).
- * Hidden from assistive technology: the people list is the accessible equivalent.
+ * Hidden from assistive technology: the people list is the accessible equivalent; reaction emotes are decoration,
+ * the reaction itself is in the chat (ADR-0034).
  */
 export function AvatarLabels() {
   const avatars = usePresenceStore((state) => state.avatars);
@@ -17,6 +19,7 @@ export function AvatarLabels() {
   const muted = useMediaStore((state) => state.muted);
   const onCall = useCallStore((state) => state.onCall);
   const cameraOn = useMediaStore((state) => state.cameraOn);
+  const emotes = useEmoteStore((state) => state.emotes);
 
   return (
     <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -25,6 +28,7 @@ export function AvatarLabels() {
         const locked = conversationOf(conversations, avatar.personId)?.locked ?? false;
         const isSpeaking = speaking.includes(avatar.personId);
         const isMuted = muted.includes(avatar.personId);
+        const emote = emotes[avatar.personId];
         return (
           <span
             key={avatar.personId}
@@ -48,6 +52,14 @@ export function AvatarLabels() {
             {isMuted && <MicOff className="size-3" />}
             {onCall.includes(avatar.personId) && <Phone className="size-3" />}
             {cameraOn.includes(avatar.personId) && <Video className="size-3" />}
+            {emote && (
+              <span
+                key={emote.key}
+                className="absolute bottom-full left-1/2 mb-1 -translate-x-1/2 text-2xl leading-none motion-safe:animate-emote-rise motion-reduce:animate-emote-fade"
+              >
+                {emote.emoji}
+              </span>
+            )}
           </span>
         );
       })}
