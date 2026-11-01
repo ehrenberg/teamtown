@@ -47,5 +47,8 @@ instance; deployment is part of M6.
 ([feature spec](../features/meetings-screen-share.md)). M2d logged meetings done on 2026-10-30
 ([feature spec](../features/meetings-logged-meetings.md)). **M2 Talk is complete.**
 
+**M3 notes:** slicing decided on 2026-11-01 (ADR-0033): M3a channels and DMs → M3b threads, mentions, reactions →
+M3c room walls → M3d files → M3e search. M3a in progress ([feature spec](../features/messaging-channels-and-dms.md)).
+
 M2 and M3 can be developed in parallel by different contributors because they are separate bounded
 contexts ([domain model](../architecture/domain-model.md)).

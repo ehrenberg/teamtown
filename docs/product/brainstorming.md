@@ -41,17 +41,17 @@ Rating legend: **Impact** (value for users) and **Effort** each from ● (low) t
 
 ## 3. Asynchronous communication (channels & messages)
 
-| #   | Idea                                | Description                                                                                                                   | Impact | Effort | MVP? |
-| --- | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | ---- |
-| M1  | **Channels with roles**             | Public, private and announcement channels (read-only except for publishers), with per-channel roles.                          | ●●●    | ●●     | ✔    |
-| M2  | **Direct & group messages**         | 1:1 and small group DMs.                                                                                                      | ●●●    | ●●     | ✔    |
-| M3  | **Threads, mentions, reactions**    | The standard set; reactions also show briefly as an emote above the avatar if the author is visible.                          | ●●●    | ●●     | ✔    |
-| M4  | **Room wall (room-linked channel)** | Each room has a persistent chat/pinboard. Meeting chat and shared links stay with the room.                                   | ●●●    | ●      | ✔    |
-| M5  | **Sticky note on a door or desk**   | Leave an async note at someone's desk ("Call me when you're back"). It shows as a post-it in the world and as a notification. | ●●     | ●      |      |
-| M6  | **Pigeonhole inbox**                | A central "mail slot": mentions, knocks you missed, notes left for you. The world metaphor for notifications.                 | ●●     | ●●     |      |
-| M7  | **Files & previews**                | Upload files, image and PDF previews, pin to a channel or room.                                                               | ●●●    | ●●     | ✔    |
-| M8  | **Full-text search**                | Search messages, channels and people from the command palette.                                                                | ●●●    | ●●     | ✔    |
-| M9  | **Message → meeting**               | A button in a thread: "Let's talk". Everyone in the thread gets a knock invitation to a pop-up room.                          | ●●     | ●      |      |
+| #   | Idea                                                                            | Description                                                                                                                   | Impact | Effort | MVP? |
+| --- | ------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | ---- |
+| M1  | **Channels with roles** → [spec](../features/messaging-channels-and-dms.md)     | Public, private and announcement channels (read-only except for publishers), with per-channel roles.                          | ●●●    | ●●     | ✔    |
+| M2  | **Direct & group messages** → [spec](../features/messaging-channels-and-dms.md) | 1:1 and small group DMs.                                                                                                      | ●●●    | ●●     | ✔    |
+| M3  | **Threads, mentions, reactions**                                                | The standard set; reactions also show briefly as an emote above the avatar if the author is visible.                          | ●●●    | ●●     | ✔    |
+| M4  | **Room wall (room-linked channel)**                                             | Each room has a persistent chat/pinboard. Meeting chat and shared links stay with the room.                                   | ●●●    | ●      | ✔    |
+| M5  | **Sticky note on a door or desk**                                               | Leave an async note at someone's desk ("Call me when you're back"). It shows as a post-it in the world and as a notification. | ●●     | ●      |      |
+| M6  | **Pigeonhole inbox**                                                            | A central "mail slot": mentions, knocks you missed, notes left for you. The world metaphor for notifications.                 | ●●     | ●●     |      |
+| M7  | **Files & previews**                                                            | Upload files, image and PDF previews, pin to a channel or room.                                                               | ●●●    | ●●     | ✔    |
+| M8  | **Full-text search**                                                            | Search messages, channels and people from the command palette.                                                                | ●●●    | ●●     | ✔    |
+| M9  | **Message → meeting**                                                           | A button in a thread: "Let's talk". Everyone in the thread gets a knock invitation to a pop-up room.                          | ●●     | ●      |      |
 
 ## 4. Presence, focus & wellbeing
 

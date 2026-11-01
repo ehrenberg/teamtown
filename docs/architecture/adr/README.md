@@ -37,3 +37,4 @@ See [ADR-0001](0001-record-architecture-decisions.md) for the process. New ADRs 
 | [0030](0030-server-logging-and-instrumentation.md)   | Server logging (pino) and targeted OpenTelemetry instrumentation   | Accepted                                     |
 | [0031](0031-talk-milestone-rules.md)                 | Talk (M2): slicing, proximity rules, door modes before roles       | Accepted                                     |
 | [0032](0032-livekit-room-per-conversation.md)        | One LiveKit room per proximity conversation                        | Accepted                                     |
+| [0033](0033-write-milestone-rules.md)                | Write (M3): slicing, channel rules before roles, chat panel        | Accepted                                     |
