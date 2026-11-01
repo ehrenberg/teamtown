@@ -1,0 +1,19 @@
+$kind: http-request
+method: POST
+url: '{{baseUrl}}/channels/:channelId/members'
+order: 9900
+pathVariables:
+  - key: channelId
+    value: '{{channelId}}'
+body:
+  type: json
+  content: |-
+    { "personIds": ["{{otherPersonId}}"] }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test('responds 201', () => pm.response.to.have.status(201));
+      pm.test('the colleague is a member now', () => {
+        pm.expect(pm.response.json().members).to.include(pm.collectionVariables.get('otherPersonId'));
+      });

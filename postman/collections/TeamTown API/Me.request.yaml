@@ -16,3 +16,4 @@ scripts:
       pm.test('exposes only the fields of the contract', () => {
         pm.expect(Object.keys(pm.response.json()).sort()).to.eql(['avatarColor', 'displayName', 'personId']);
       });
+      pm.collectionVariables.set('myPersonId', pm.response.json().personId);

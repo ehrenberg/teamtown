@@ -1,0 +1,13 @@
+$kind: http-request
+method: GET
+url: '{{baseUrl}}/channels/:channelId'
+order: 9400
+pathVariables:
+  - key: channelId
+    value: 'no-such-channel'
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      // Channels one may not read answer like channels that don't exist (ADR-0033).
+      pm.test('responds 404', () => pm.response.to.have.status(404));

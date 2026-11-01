@@ -1,0 +1,26 @@
+$kind: http-request
+method: PATCH
+url: '{{baseUrl}}/channels/:channelId/messages/:messageId'
+order: 10800
+pathVariables:
+  - key: channelId
+    value: '{{channelId}}'
+  - key: messageId
+    value: '{{messageId}}'
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{secondAccessToken}}'
+body:
+  type: json
+  content: |-
+    { "body": "Not mine" }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test('responds 403 not-message-author', () => {
+        pm.response.to.have.status(403);
+        pm.expect(pm.response.json().message).to.equal('not-message-author');
+      });

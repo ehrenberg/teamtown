@@ -1,0 +1,23 @@
+$kind: http-request
+method: PATCH
+url: '{{baseUrl}}/channels/:channelId/messages/:messageId'
+order: 10900
+pathVariables:
+  - key: channelId
+    value: '{{channelId}}'
+  - key: messageId
+    value: '{{messageId}}'
+body:
+  type: json
+  content: |-
+    { "body": "Moin from **Postman**, edited" }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test('responds 200', () => pm.response.to.have.status(200));
+      pm.test('has the new body and an edit time', () => {
+        const message = pm.response.json();
+        pm.expect(message.body).to.equal('Moin from **Postman**, edited');
+        pm.expect(new Date(message.editedAt).toString()).to.not.equal('Invalid Date');
+      });

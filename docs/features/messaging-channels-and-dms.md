@@ -150,7 +150,6 @@ Realtime events (push only, to the members' open connections):
 ## Not yet covered by automated tests
 
 - Archive, rename, invite and group-DM changes in the browser (covered by use-case and server integration tests).
-- Requests for the Postman collection (`postman/`) are still to be added.
 
 ## Open questions
 

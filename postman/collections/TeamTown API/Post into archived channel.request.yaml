@@ -1,0 +1,20 @@
+$kind: http-request
+method: POST
+url: '{{baseUrl}}/channels/:channelId/messages'
+order: 11200
+pathVariables:
+  - key: channelId
+    value: '{{channelId}}'
+body:
+  type: json
+  content: |-
+    { "body": "Too late" }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      // Archived channels stay readable but take nothing new (ADR-0033).
+      pm.test('responds 409 channel-archived', () => {
+        pm.response.to.have.status(409);
+        pm.expect(pm.response.json().message).to.equal('channel-archived');
+      });

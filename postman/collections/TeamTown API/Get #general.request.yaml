@@ -1,0 +1,17 @@
+$kind: http-request
+method: GET
+url: '{{baseUrl}}/channels/:channelId'
+order: 9300
+pathVariables:
+  - key: channelId
+    value: 'general'
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test('responds 200', () => pm.response.to.have.status(200));
+      pm.test('is the public seed channel', () => {
+        const channel = pm.response.json();
+        pm.expect(channel).to.include({ channelId: 'general', kind: 'public', name: 'general', creatorId: null });
+        pm.expect(channel.members).to.include(pm.collectionVariables.get('myPersonId'));
+      });

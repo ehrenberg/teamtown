@@ -25,3 +25,13 @@ values:
     enabled: true
     type: secret
     description: Public dev-only demo password (docker/README.md); use real secrets for other environments.
+  - key: secondUsername
+    value: demo2
+    enabled: true
+    type: default
+    description: Second demo user of the dev realm, the colleague in DM and invitation requests.
+  - key: secondPassword
+    value: demo2
+    enabled: true
+    type: secret
+    description: Public dev-only demo password (docker/README.md).

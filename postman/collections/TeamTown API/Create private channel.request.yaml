@@ -1,0 +1,30 @@
+$kind: http-request
+method: POST
+url: '{{baseUrl}}/channels'
+order: 9800
+body:
+  type: json
+  content: |-
+    { "kind": "private", "name": "api-test-{{$timestamp}}" }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      const isSummary = (channel) => {
+        pm.expect(channel.channelId).to.be.a('string').and.not.empty;
+        pm.expect(channel.kind).to.be.oneOf(['public', 'private', 'direct']);
+        pm.expect(channel.group).to.be.a('boolean');
+        pm.expect(channel.members).to.be.an('array');
+        pm.expect(channel.archived).to.be.a('boolean');
+        pm.expect(channel.unreadCount).to.be.a('number').and.at.least(0);
+      };
+
+      pm.test('responds 201', () => pm.response.to.have.status(201));
+      const channel = pm.response.json();
+      pm.test('creates a private channel with me as creator and only member', () => {
+        isSummary(channel);
+        const me = pm.collectionVariables.get('myPersonId');
+        pm.expect(channel).to.include({ kind: 'private', group: false, creatorId: me, archived: false, unreadCount: 0 });
+        pm.expect(channel.members).to.eql([me]);
+      });
+      pm.collectionVariables.set('channelId', channel.channelId);

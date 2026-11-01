@@ -1,0 +1,17 @@
+$kind: http-request
+method: PATCH
+url: '{{baseUrl}}/channels/:channelId'
+order: 10000
+pathVariables:
+  - key: channelId
+    value: '{{channelId}}'
+body:
+  type: json
+  content: |-
+    { "name": "api-test-renamed-{{$timestamp}}" }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test('responds 200', () => pm.response.to.have.status(200));
+      pm.test('has the new name', () => pm.expect(pm.response.json().name).to.match(/^api-test-renamed-\d+$/));

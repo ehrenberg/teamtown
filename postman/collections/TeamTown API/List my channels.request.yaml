@@ -1,0 +1,27 @@
+$kind: http-request
+method: GET
+url: '{{baseUrl}}/channels'
+order: 9100
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      const isSummary = (channel) => {
+        pm.expect(channel.channelId).to.be.a('string').and.not.empty;
+        pm.expect(channel.kind).to.be.oneOf(['public', 'private', 'direct']);
+        pm.expect(channel.group).to.be.a('boolean');
+        pm.expect(channel.members).to.be.an('array');
+        pm.expect(channel.archived).to.be.a('boolean');
+        pm.expect(channel.unreadCount).to.be.a('number').and.at.least(0);
+      };
+
+      pm.test('responds 200', () => pm.response.to.have.status(200));
+      const { channels } = pm.response.json();
+      pm.test('matches ChannelListResponse', () => {
+        pm.expect(channels).to.be.an('array').and.not.empty;
+        channels.forEach(isSummary);
+      });
+      pm.test('everyone is in the seed channels #general and #random', () => {
+        const names = channels.map((channel) => channel.name);
+        pm.expect(names).to.include.members(['general', 'random']);
+      });

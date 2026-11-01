@@ -1,0 +1,15 @@
+$kind: http-request
+method: GET
+url: '{{baseUrl}}/me'
+order: 8500
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{secondAccessToken}}'
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      // Signs in the colleague once, so "List people" has someone to start a DM with on a fresh stack.
+      pm.test('responds 200', () => pm.response.to.have.status(200));

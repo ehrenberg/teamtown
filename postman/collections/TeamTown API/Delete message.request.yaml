@@ -1,0 +1,14 @@
+$kind: http-request
+method: DELETE
+url: '{{baseUrl}}/channels/:channelId/messages/:messageId'
+order: 11000
+pathVariables:
+  - key: channelId
+    value: '{{channelId}}'
+  - key: messageId
+    value: '{{messageId}}'
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test('responds 204', () => pm.response.to.have.status(204));

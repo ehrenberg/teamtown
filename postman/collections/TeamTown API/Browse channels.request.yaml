@@ -1,0 +1,19 @@
+$kind: http-request
+method: GET
+url: '{{baseUrl}}/channels/browse'
+order: 9200
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test('responds 200', () => pm.response.to.have.status(200));
+      const { channels } = pm.response.json();
+      pm.test('matches BrowseChannelsResponse', () => {
+        pm.expect(channels).to.be.an('array').and.not.empty;
+        for (const channel of channels) {
+          pm.expect(channel.name).to.match(/^[a-z0-9_-]{1,40}$/);
+          pm.expect(channel.memberCount).to.be.a('number').and.at.least(0);
+          pm.expect(channel.archived).to.be.a('boolean');
+          pm.expect(channel.isMember).to.be.a('boolean');
+        }
+      });

@@ -18,13 +18,33 @@ variables:
   - key: floorId
     value: ground-floor
     description: Set by "List floors" to the first floor of the office.
+  - key: secondAccessToken
+    value: ''
+    description: Token of the second demo user (DMs, invitations); set by the collection script.
+  - key: secondAccessTokenExpiresAt
+    value: '0'
+    description: ms since the epoch; set by the collection script.
+  - key: myPersonId
+    value: ''
+    description: Set by "Me".
+  - key: otherPersonId
+    value: ''
+    description: The second demo user; set by "List people".
+  - key: channelId
+    value: ''
+    description: The private channel the messaging requests create; set by "Create private channel".
+  - key: messageId
+    value: ''
+    description: Set by "Post message".
 scripts:
   - type: http:beforeRequest
     language: text/javascript
     code: |-
-      // Fetches an access token for the demo user from the dev realm (client teamtown-api-tests, docker/keycloak).
-      const expiresAt = Number(pm.collectionVariables.get('accessTokenExpiresAt') || 0);
-      if (!pm.collectionVariables.get('accessToken') || Date.now() > expiresAt - 30000) {
+      // Fetches access tokens for both demo users from the dev realm (client teamtown-api-tests, docker/keycloak).
+      // The second one stands in for a colleague in DMs and invitations.
+      const fetchToken = (prefix, username, password) => {
+        const expiresAt = Number(pm.collectionVariables.get(`${prefix}ExpiresAt`) || 0);
+        if (pm.collectionVariables.get(prefix) && Date.now() < expiresAt - 30000) return;
         pm.sendRequest(
           {
             url: pm.variables.get('oidcTokenUrl'),
@@ -35,18 +55,20 @@ scripts:
               urlencoded: [
                 { key: 'grant_type', value: 'password' },
                 { key: 'client_id', value: pm.variables.get('oidcClientId') },
-                { key: 'username', value: pm.variables.get('username') },
-                { key: 'password', value: pm.variables.get('password') },
+                { key: 'username', value: username },
+                { key: 'password', value: password },
                 { key: 'scope', value: 'openid' },
               ],
             },
           },
           (error, response) => {
             if (error) throw error;
-            if (response.code !== 200) throw new Error(`Token request failed with ${response.code}`);
+            if (response.code !== 200) throw new Error(`Token request for ${username} failed with ${response.code}`);
             const body = response.json();
-            pm.collectionVariables.set('accessToken', body.access_token);
-            pm.collectionVariables.set('accessTokenExpiresAt', String(Date.now() + body.expires_in * 1000));
+            pm.collectionVariables.set(prefix, body.access_token);
+            pm.collectionVariables.set(`${prefix}ExpiresAt`, String(Date.now() + body.expires_in * 1000));
           },
         );
-      }
+      };
+      fetchToken('accessToken', pm.variables.get('username'), pm.variables.get('password'));
+      fetchToken('secondAccessToken', pm.variables.get('secondUsername'), pm.variables.get('secondPassword'));

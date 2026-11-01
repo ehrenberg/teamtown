@@ -1,0 +1,17 @@
+$kind: http-request
+method: GET
+url: '{{baseUrl}}/channels/:channelId/messages?limit=50'
+order: 10400
+pathVariables:
+  - key: channelId
+    value: '{{channelId}}'
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test('responds 200', () => pm.response.to.have.status(200));
+      pm.test('matches MessagePageResponse and holds the posted message', () => {
+        const { messages, hasMore } = pm.response.json();
+        pm.expect(hasMore).to.be.false;
+        pm.expect(messages.map((message) => message.messageId)).to.include(pm.collectionVariables.get('messageId'));
+      });

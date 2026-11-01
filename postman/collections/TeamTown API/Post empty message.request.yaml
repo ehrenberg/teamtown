@@ -1,0 +1,19 @@
+$kind: http-request
+method: POST
+url: '{{baseUrl}}/channels/:channelId/messages'
+order: 10300
+pathVariables:
+  - key: channelId
+    value: '{{channelId}}'
+body:
+  type: json
+  content: |-
+    { "body": "" }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test('responds 400 invalid-request', () => {
+        pm.response.to.have.status(400);
+        pm.expect(pm.response.json().message).to.equal('invalid-request');
+      });

@@ -1,0 +1,17 @@
+$kind: http-request
+method: PATCH
+url: '{{baseUrl}}/channels/:channelId'
+order: 11100
+pathVariables:
+  - key: channelId
+    value: '{{channelId}}'
+body:
+  type: json
+  content: |-
+    { "archived": true }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test('responds 200', () => pm.response.to.have.status(200));
+      pm.test('is archived', () => pm.expect(pm.response.json().archived).to.be.true);

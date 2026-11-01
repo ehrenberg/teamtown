@@ -1,0 +1,18 @@
+$kind: http-request
+method: DELETE
+url: '{{baseUrl}}/channels/:channelId/members/me'
+order: 11350
+pathVariables:
+  - key: channelId
+    value: '{{channelId}}'
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{secondAccessToken}}'
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      // Leaves no test channel in either demo user's list.
+      pm.test('responds 204', () => pm.response.to.have.status(204));

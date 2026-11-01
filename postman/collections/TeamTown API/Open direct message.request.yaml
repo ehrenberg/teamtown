@@ -1,0 +1,21 @@
+$kind: http-request
+method: POST
+url: '{{baseUrl}}/direct-messages'
+order: 11500
+body:
+  type: json
+  content: |-
+    { "personIds": ["{{otherPersonId}}"] }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test('responds 201', () => pm.response.to.have.status(201));
+      pm.test('is a 1:1 DM between the two demo users', () => {
+        const channel = pm.response.json();
+        pm.expect(channel).to.include({ kind: 'direct', group: false, name: null });
+        pm.expect(channel.members).to.have.members([
+          pm.collectionVariables.get('myPersonId'),
+          pm.collectionVariables.get('otherPersonId'),
+        ]);
+      });

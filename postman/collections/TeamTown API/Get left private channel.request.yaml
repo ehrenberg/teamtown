@@ -1,0 +1,13 @@
+$kind: http-request
+method: GET
+url: '{{baseUrl}}/channels/:channelId'
+order: 11400
+pathVariables:
+  - key: channelId
+    value: '{{channelId}}'
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      // Former members of a private channel learn nothing more about it.
+      pm.test('responds 404', () => pm.response.to.have.status(404));

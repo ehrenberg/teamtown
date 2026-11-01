@@ -1,0 +1,29 @@
+$kind: http-request
+method: POST
+url: '{{baseUrl}}/channels/:channelId/messages'
+order: 10200
+pathVariables:
+  - key: channelId
+    value: '{{channelId}}'
+body:
+  type: json
+  content: |-
+    { "body": "Moin from **Postman**" }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test('responds 201', () => pm.response.to.have.status(201));
+      const message = pm.response.json();
+      pm.test('matches the Message contract', () => {
+        pm.expect(message.messageId).to.be.a('string').and.not.empty;
+        pm.expect(message).to.include({
+          channelId: pm.collectionVariables.get('channelId'),
+          authorId: pm.collectionVariables.get('myPersonId'),
+          body: 'Moin from **Postman**',
+          editedAt: null,
+          deleted: false,
+        });
+        pm.expect(new Date(message.postedAt).toString()).to.not.equal('Invalid Date');
+      });
+      pm.collectionVariables.set('messageId', message.messageId);

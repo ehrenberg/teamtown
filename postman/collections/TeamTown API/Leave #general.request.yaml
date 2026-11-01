@@ -1,0 +1,15 @@
+$kind: http-request
+method: DELETE
+url: '{{baseUrl}}/channels/:channelId/members/me'
+order: 9500
+pathVariables:
+  - key: channelId
+    value: 'general'
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test('responds 403 cannot-leave-channel', () => {
+        pm.response.to.have.status(403);
+        pm.expect(pm.response.json().message).to.equal('cannot-leave-channel');
+      });

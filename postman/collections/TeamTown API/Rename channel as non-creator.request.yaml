@@ -1,0 +1,25 @@
+$kind: http-request
+method: PATCH
+url: '{{baseUrl}}/channels/:channelId'
+order: 10100
+pathVariables:
+  - key: channelId
+    value: '{{channelId}}'
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{secondAccessToken}}'
+body:
+  type: json
+  content: |-
+    { "name": "taken-over" }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      // Until roles arrive (M4), only the creator moderates a channel (ADR-0033).
+      pm.test('responds 403 not-channel-creator', () => {
+        pm.response.to.have.status(403);
+        pm.expect(pm.response.json().message).to.equal('not-channel-creator');
+      });
