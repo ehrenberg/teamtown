@@ -1,6 +1,6 @@
 # Feature: Threads, mentions and reactions
 
-- **Status:** Ready
+- **Status:** In progress
 - **Brainstorming ID:** M3 Threads, mentions, reactions
 - **Bounded context(s):** Messaging, Presence (avatar emote), realtime gateway, REST
 - **Milestone:** M3b (ADR-0033, ADR-0034)
@@ -14,14 +14,14 @@ and react without writing, so that chats stay readable and quick feedback costs 
 
 1. **Threads** (ADR-0034).
    - Any message in a channel or DM can get replies; together they are its **thread**. Threads are one level deep:
-     answering a reply answers the same root _(proposal)_.
+     answering a reply answers the same root (decided 2026-11-01).
    - Below a root with replies the channel shows "3 replies", the newest reply time and up to three repliers'
      avatars. Activating it expands the thread **inline** under the root; it shows the replies (newest 50, "Show
-     older replies" loads more _(proposal)_) and a reply composer. Activating it again collapses the thread.
+     older replies" loads more (decided 2026-11-01)) and a reply composer. Activating it again collapses the thread.
    - **"Also send to channel":** a checkbox on the reply composer. Such a reply is still part of the thread and also
      appears in the channel, marked "replied to a thread" with a short excerpt of the root; it counts as unread in
-     the channel. It is one message, shown in both places, so editing and deleting change both _(proposal)_.
-   - A deleted root keeps its place as "Message deleted" so the thread stays readable _(proposal)_. Archived channels
+     the channel. It is one message, shown in both places, so editing and deleting change both (decided 2026-11-01).
+   - A deleted root keeps its place as "Message deleted" so the thread stays readable (decided 2026-11-01). Archived channels
      take no replies.
 2. **Followed threads** (ADR-0034).
    - The root's author, everyone who replies and everyone mentioned in the thread follow it automatically. The
@@ -34,21 +34,21 @@ and react without writing, so that chats stay readable and quick feedback costs 
      end moves its marker.
 3. **Mentions** (ADR-0034).
    - Typing `@` in a composer opens a list of people, channel members first, filtered as one types; arrow keys and
-     Enter pick, Escape closes. The message stores the person's ID, not the name _(proposal)_, and shows
+     Enter pick, Escape closes. The message stores the person's ID, not the name (decided 2026-11-01), and shows
      "@Display Name" as a highlighted chip, so a later name change shows up everywhere.
    - A mentioned **member** sees the message highlighted and gets an `@` counter on the channel in the sidebar
      (number **and** `@` shape) until they read past the message. Mentions in thread replies also count, and the
      mentioned person follows the thread.
-   - Editing a message counts newly added mentions; removing a mention withdraws it _(proposal)_.
+   - Editing a message counts newly added mentions; removing a mention withdraws it (decided 2026-11-01).
    - Mentioning a **non-member** notifies nobody; the mention stays in the text. After sending, the sender sees a
      hint "Cem isn't in #design" with "Add to channel" when they may add people: in public channels every member
      (extends ADR-0033), in private channels the creator, in group DMs every member (up to 8). In a 1:1 DM the hint
      has no button.
    - No `@channel` / `@here`, no browser or OS notifications yet (ADR-0034).
 4. **Reactions** (ADR-0034).
-   - Members react to a message with any Unicode emoji: a quick bar with six emoji (👍 ❤️ 😂 🎉 👀 🙏, _proposal_)
+   - Members react to a message with any Unicode emoji: a quick bar with six emoji (👍 ❤️ 😂 🎉 👀 🙏, decided 2026-11-01)
      and "More reactions" for the full picker (frimousse, searchable, skin tones). A person reacts at most once per
-     emoji per message; reacting again removes it. At most 20 different emoji per message _(proposal)_.
+     emoji per message; reacting again removes it. At most 20 different emoji per message (decided 2026-11-01).
    - Under the message each emoji shows as a chip with its count, pressed when one reacted oneself; activating it
      toggles one's own reaction. Its label lists who reacted ("👍 Anna, Ben and 2 more").
    - Reactions on a deleted message are removed with it. Archived channels take no new reactions.
@@ -156,6 +156,5 @@ Realtime events (to the members' open connections unless noted):
 
 ## Open questions
 
-- The rules marked _(proposal)_ above: one-level threads, 50 replies per page, "also sent to channel" as one shared
-  message, deleted roots keep the thread, mentions stored by ID, edits update mentions, the six quick emoji, at most
-  20 emoji per message, and the thread summary stored on the root.
+- None. The detail rules were confirmed on 2026-11-01; storing the thread summary on the root is a technical
+  _(proposal)_ that can change without affecting behaviour.
