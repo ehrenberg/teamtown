@@ -336,7 +336,7 @@ describe('TeamTown server (integration)', () => {
         await (await send('POST', '/direct-messages', 'token-ben', { personIds: [lenaId] })).json(),
       );
       expect(second.channelId).toBe(first.channelId);
-      expect(first).toMatchObject({ kind: 'direct', name: null });
+      expect(first).toMatchObject({ kind: 'direct', group: false, name: null });
 
       const unknown = await send('POST', '/direct-messages', 'token-lena', {
         personIds: ['00000000-0000-4000-8000-000000000000'],

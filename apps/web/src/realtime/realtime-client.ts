@@ -35,6 +35,13 @@ export interface CallAccess {
   readonly token: string;
 }
 export type CallAccessListener = (access: CallAccess) => void;
+
+/** Messaging pushes (M3a); they update the server state that TanStack Query holds. */
+export type MessagingServerEvent = Extract<
+  ServerEvent,
+  { t: 'MessagePosted' | 'MessageEdited' | 'MessageDeleted' | 'ChannelChanged' | 'ChannelLeft' | 'ReadMarkerMoved' }
+>;
+export type MessagingListener = (event: MessagingServerEvent) => void;
 type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never;
 
 /**
@@ -51,6 +58,7 @@ export class RealtimeClient {
   #desiredFloorId: string | null = null;
   readonly #pingSentAt = new Map<number, number>();
   readonly #accessListeners = new Set<CallAccessListener>();
+  readonly #messagingListeners = new Set<MessagingListener>();
 
   constructor(
     private readonly options: {
@@ -165,6 +173,11 @@ export class RealtimeClient {
   onCallAccess(listener: CallAccessListener): () => void {
     this.#accessListeners.add(listener);
     return () => this.#accessListeners.delete(listener);
+  }
+
+  onMessagingEvent(listener: MessagingListener): () => void {
+    this.#messagingListeners.add(listener);
+    return () => this.#messagingListeners.delete(listener);
   }
 
   /** Sends a refreshed access token on the open connection (the server checks token expiry). */
@@ -288,6 +301,14 @@ export class RealtimeClient {
         return;
       case 'RoomCallAccessGranted':
         this.#grantAccess({ callId: roomCallId(event.p.roomId), ...event.p });
+        return;
+      case 'MessagePosted':
+      case 'MessageEdited':
+      case 'MessageDeleted':
+      case 'ChannelChanged':
+      case 'ChannelLeft':
+      case 'ReadMarkerMoved':
+        for (const listener of this.#messagingListeners) listener(event);
         return;
       default:
         store.applyEvent(event);

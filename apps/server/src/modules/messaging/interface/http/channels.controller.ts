@@ -77,6 +77,7 @@ function valueOf<T>(result: Result<T, string>): T {
 const toSummary = (personId: string, { channel, unreadCount, lastMessageAt }: ChannelOverview): ChannelSummary => ({
   channelId: channel.props.channelId,
   kind: channel.isDirect ? 'direct' : (channel.props.kind as 'public' | 'private'),
+  group: channel.props.kind === 'group',
   name: channel.props.name,
   creatorId: channel.props.creatorId,
   members: channel.memberIds,

@@ -17,6 +17,8 @@ export type ChannelKind = z.infer<typeof ChannelKind>;
 export const ChannelSummarySchema = z.object({
   channelId: ChannelId,
   kind: ChannelKind,
+  /** A group DM: people can be added and leave. A 1:1 DM (`false`) stays between its two people. */
+  group: z.boolean(),
   /** Without the `#`; `null` for DMs. */
   name: z.string().nullable(),
   /** `null` for the seed channels. */

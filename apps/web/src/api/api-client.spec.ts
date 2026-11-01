@@ -1,7 +1,7 @@
 import { HealthResponse } from '@teamtown/contracts';
 import { afterEach, describe, expect, it } from 'vitest';
 import { useSessionStore } from '../stores/session-store.ts';
-import { ApiError, apiGet } from './api-client.ts';
+import { ApiError, apiGet, apiSend } from './api-client.ts';
 
 const respondWith =
   (status: number, body: unknown, seen: Headers[] = []): typeof fetch =>
@@ -33,5 +33,21 @@ describe('apiGet', () => {
 
   it('reports HTTP errors with their status', async () => {
     await expect(apiGet('/health', HealthResponse, respondWith(401, {}))).rejects.toEqual(new ApiError(401));
+  });
+});
+
+describe('apiSend', () => {
+  it('sends JSON and reports the error code of a refusal', async () => {
+    const seen: Headers[] = [];
+    const refused = apiSend(
+      'POST',
+      '/channels',
+      { kind: 'public', name: 'x' },
+      undefined,
+      respondWith(409, { statusCode: 409, message: 'channel-name-taken' }, seen),
+    );
+
+    await expect(refused).rejects.toEqual(new ApiError(409, 'channel-name-taken'));
+    expect(seen[0]?.get('content-type')).toBe('application/json');
   });
 });

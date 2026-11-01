@@ -1,6 +1,6 @@
 import { Button } from '@teamtown/ui';
 import { buildFloorGrid, tileAt, type TileCoord } from '@teamtown/world-core';
-import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import logoMark from '../../../../../design/brand/logo-mark.svg';
 import { useFloorPlan, useFloors, useMe } from '../../api/queries.ts';
@@ -11,6 +11,7 @@ import { serverClock } from '../../shared/server-clock.ts';
 import { usePresenceStore } from '../../stores/presence-store.ts';
 import { Phone } from 'lucide-react';
 import { useCallStore } from '../../stores/call-store.ts';
+import { useChatStore } from '../../stores/chat-store.ts';
 import { CallAnnouncer, CallPanel, CallSomeoneDialog, IncomingCallDialog } from './calls.tsx';
 import { MeetingLogConsentDialog, MeetingLogControls, MyMeetingsButton } from './meeting-log.tsx';
 import { useRoomStore } from '../../stores/room-store.ts';
@@ -52,7 +53,11 @@ function othersTiles(tileOf: (personId: string) => TileCoord | null): TileCoord[
     .filter((tile) => tile !== null);
 }
 
-export function OfficePage() {
+/**
+ * The office: header, sidebar, world and media controls. Other features plug in through slots (composed in
+ * `app/`): `sidebar` below the rooms (e.g. channels), `sidePanel` as a third column (e.g. the chat, ADR-0033).
+ */
+export function OfficePage({ sidebar, sidePanel }: { readonly sidebar?: ReactNode; readonly sidePanel?: ReactNode }) {
   const { t } = useTranslation();
   const auth = useAuthClient();
   const realtime = useRealtime();
@@ -62,6 +67,7 @@ export function OfficePage() {
   const [selectedFloorId, setSelectedFloorId] = useState<string | null>(null);
   const [closedDoorRoomId, setClosedDoorRoomId] = useState<string | null>(null);
   const [callDialogOpen, setCallDialogOpen] = useState(false);
+  const chatOpen = useChatStore((state) => state.openChannelId !== null);
 
   const floorId = selectedFloorId ?? floors.data?.floors[0]?.floorId ?? null;
   const plan = useFloorPlan(floorId);
@@ -135,8 +141,11 @@ export function OfficePage() {
   );
 
   return (
-    <div className="grid h-full grid-cols-[260px_1fr] grid-rows-[56px_1fr]">
-      <header className="col-span-2 flex items-center gap-4 border-b border-border-subtle bg-surface-raised px-4">
+    // The chat panel opens as a third column, so the office stays visible next to it (ADR-0033).
+    <div
+      className={`grid h-full grid-rows-[56px_1fr] ${chatOpen ? 'grid-cols-[260px_1fr_auto]' : 'grid-cols-[260px_1fr]'}`}
+    >
+      <header className="col-span-full flex items-center gap-4 border-b border-border-subtle bg-surface-raised px-4">
         <div className="flex items-center gap-2.5 font-display text-xl font-semibold">
           <img src={logoMark} alt="" className="size-8" />
           <span>
@@ -183,6 +192,7 @@ export function OfficePage() {
         <KnockTray roomId={myRoomId} roomName={myRoom?.name ?? ''} />
         <PeopleList onTalkTo={talkTo} onCall={call} />
         {rooms && <RoomsList rooms={rooms.rooms} roomMap={rooms.roomMap} myRoomId={myRoomId} onGoTo={goToRoom} />}
+        {sidebar}
         <ConversationAnnouncer />
         <RoomAnnouncer myRoomId={myRoomId} roomNames={roomNames} />
         <CallAnnouncer />
@@ -234,6 +244,7 @@ export function OfficePage() {
           />
         )}
       </main>
+      {sidePanel}
       <CallSomeoneDialog open={callDialogOpen} onOpenChange={setCallDialogOpen} />
       <IncomingCallDialog />
       <MeetingLogConsentDialog roomNames={roomNames} />
