@@ -1,6 +1,6 @@
 # Feature: Channels and direct messages
 
-- **Status:** In progress
+- **Status:** Done (2026-11-01), except the command palette entries (see below)
 - **Brainstorming ID:** M1 Channels with roles (without roles and announcement channels), M2 Direct & group messages
 - **Bounded context(s):** Messaging (new), People, realtime gateway, REST
 - **Milestone:** M3a (ADR-0033)
@@ -42,30 +42,31 @@ reach people who aren't in the office right now.
 
 ## Acceptance criteria
 
-- [ ] Given a person, when they create a public channel, then it appears in their list and everyone can find and
+- [x] Given a person, when they create a public channel, then it appears in their list and everyone can find and
       join it under "Browse channels".
-- [ ] Given a private channel, then only its members see it and its messages; the creator can invite people;
+- [x] Given a private channel, then only its members see it and its messages; the creator can invite people;
       someone who isn't a member gets `404` from every endpoint of the channel (server-side check, integration test).
-- [ ] Given a member of a channel, when they post a message, then every other member's open client shows it within
+- [x] Given a member of a channel, when they post a message, then every other member's open client shows it within
       a second and their unread counter goes up.
-- [ ] Given an own message, when the author edits or deletes it, then all members see the change; nobody else can
+- [x] Given an own message, when the author edits or deletes it, then all members see the change; nobody else can
       edit or delete it.
-- [ ] Given a DM with the same people, when someone opens a DM with them again, then the existing DM opens.
-- [ ] Given more than 8 people, when someone opens a DM with them or adds a ninth person to a group DM, then it is
+- [x] Given a DM with the same people, when someone opens a DM with them again, then the existing DM opens.
+- [x] Given more than 8 people, when someone opens a DM with them or adds a ninth person to a group DM, then it is
       refused with a plain hint to use a private channel.
-- [ ] Given a group DM, when a member adds a person, then that person sees the DM with its history; when a member
+- [x] Given a group DM, when a member adds a person, then that person sees the DM with its history; when a member
       leaves, then they no longer see it. A 1:1 DM can't be left; adding someone to it opens a new group DM.
-- [ ] Given a message with `**bold**`, a list and `<script>`, then bold and the list render, the script tag shows
+- [x] Given a message with `**bold**`, a list and `<script>`, then bold and the list render, the script tag shows
       as text.
-- [ ] Given a first login, then the person is a member of `#general` and `#random`.
-- [ ] Given unread messages, when the person opens the channel and reads to the bottom, then the counter clears,
+- [x] Given a first login, then the person is a member of `#general` and `#random`.
+- [x] Given unread messages, when the person opens the channel and reads to the bottom, then the counter clears,
       also in their other open clients.
 - [ ] Non-spatial path: the chat works fully without the 3D view: sidebar list, chat panel and command palette
-      entries "Go to channel", "New channel", "New message" (direct message).
-- [ ] Accessibility: the message list is a labelled log (`role="log"`), new messages are announced politely, the
+      entries "Go to channel", "New channel", "New message" (direct message). _(Sidebar, panel and dialogs work by
+      keyboard; the command palette doesn't exist yet, its entries follow with it.)_
+- [x] Accessibility: the message list is a labelled log (`role="log"`), new messages are announced politely, the
       composer is labelled; everything works by keyboard (Enter sends, Shift+Enter makes a new line, Escape closes
-      the panel).
-- [ ] i18n: all new strings in EN and DE.
+      the panel). _(Not yet checked with a screen reader.)_
+- [x] i18n: all new strings in EN and DE.
 
 ## Permissions
 
@@ -145,6 +146,11 @@ Realtime events (push only, to the members' open connections):
 - **Dialogs** (Radix): "New channel" (name, public/private), "Browse channels", "New message" (person picker, up
   to 7 others).
 - **World:** nothing new in M3a (reactions above avatars come with M3b, room walls with M3c).
+
+## Not yet covered by automated tests
+
+- Archive, rename, invite and group-DM changes in the browser (covered by use-case and server integration tests).
+- Requests for the Postman collection (`postman/`) are still to be added.
 
 ## Open questions
 
