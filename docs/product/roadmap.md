@@ -50,6 +50,8 @@ instance; deployment is part of M6.
 **M3 notes:** slicing decided on 2026-11-01 (ADR-0033): M3a channels and DMs → M3b threads, mentions, reactions →
 M3c room walls → M3d files → M3e search. M3a channels and DMs done on 2026-11-01
 ([feature spec](../features/messaging-channels-and-dms.md)); the command palette entries follow with the palette.
+M3b threads, mentions and reactions decided on 2026-11-01 (ADR-0034,
+[feature spec](../features/messaging-threads-mentions-reactions.md)).
 
 M2 and M3 can be developed in parallel by different contributors because they are separate bounded
 contexts ([domain model](../architecture/domain-model.md)).
