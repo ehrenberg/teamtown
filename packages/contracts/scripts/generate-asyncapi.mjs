@@ -76,6 +76,12 @@ const summaries = {
   MeetingLogChanged: 'A room started or stopped being logged. Sent to everyone on the floor; no title.',
   MeetingLogDetails: 'The logged meeting one is in, or null once it ended. Sent to its participants.',
   MeetingLogConsentRequested: 'Asks someone inside a logged room for consent. Sent only to them.',
+  MessagePosted: 'A message was posted in a channel or DM. Sent to its members.',
+  MessageEdited: 'A message was edited by its author. Sent to the members of its channel.',
+  MessageDeleted: 'A message was deleted by its author. Sent to the members of its channel.',
+  ChannelChanged: 'A channel was created, renamed, archived or its members changed: reload it. Sent to its members.',
+  ChannelLeft: 'The person left a channel or DM: drop it. Sent only to them.',
+  ReadMarkerMoved: 'The person read up to a message, e.g. on another device. Sent only to them.',
   Ack: 'The command with this correlation ID succeeded.',
   Nack: 'The command failed. Codes are stable and translated in the client.',
 };

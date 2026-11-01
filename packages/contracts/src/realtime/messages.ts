@@ -51,6 +51,14 @@ import {
   SetDoorModeCommand,
   RoomId,
 } from './rooms.ts';
+import {
+  ChannelChangedEvent,
+  ChannelLeftEvent,
+  MessageDeletedEvent,
+  MessageEditedEvent,
+  MessagePostedEvent,
+  ReadMarkerMovedEvent,
+} from './messaging.ts';
 
 /**
  * Realtime protocol (ADR-0007, docs/architecture/world-and-realtime.md §5).
@@ -270,6 +278,12 @@ export const ServerEvent = z.discriminatedUnion('t', [
   MeetingLogChangedEvent,
   MeetingLogDetailsEvent,
   MeetingLogConsentRequestedEvent,
+  MessagePostedEvent,
+  MessageEditedEvent,
+  MessageDeletedEvent,
+  ChannelChangedEvent,
+  ChannelLeftEvent,
+  ReadMarkerMovedEvent,
   AckEvent,
   NackEvent,
 ]);

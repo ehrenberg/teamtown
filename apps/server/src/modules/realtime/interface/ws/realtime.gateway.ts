@@ -29,6 +29,7 @@ import {
   StopScreenShare,
   type MeetingsEvent,
 } from '../../../meetings/public-api.ts';
+import { MessagingEventStream, type MessagingEvent } from '../../../messaging/public-api.ts';
 import {
   JoinFloor,
   LeavePresence,
@@ -103,6 +104,7 @@ export class RealtimeGateway implements OnApplicationBootstrap, OnApplicationShu
     @Inject(StartMeetingLog) private readonly startMeetingLog: StartMeetingLog,
     @Inject(EndMeetingLog) private readonly endMeetingLog: EndMeetingLog,
     @Inject(AnswerMeetingLog) private readonly answerMeetingLog: AnswerMeetingLog,
+    @Inject(MessagingEventStream) private readonly messagingEvents: MessagingEventStream,
   ) {}
 
   onApplicationBootstrap(): void {
@@ -135,6 +137,9 @@ export class RealtimeGateway implements OnApplicationBootstrap, OnApplicationShu
       }),
       this.meetingsEvents.subscribe((event) => {
         this.#deliverMeetingsEvent(event);
+      }),
+      this.messagingEvents.subscribe((event) => {
+        this.#deliverMessagingEvent(event);
       }),
     ];
     this.#maintenance = setInterval(() => {
@@ -305,6 +310,33 @@ export class RealtimeGateway implements OnApplicationBootstrap, OnApplicationShu
         return;
       default:
         this.#sendToFloor(event.floorId, encodeMessage(toConversationServerEvent(event)));
+    }
+  }
+
+  /** Messages and channel changes go to the channel's members; read markers and leaving to the person only. */
+  #deliverMessagingEvent(event: MessagingEvent): void {
+    switch (event.type) {
+      case 'MessagePosted':
+      case 'MessageEdited':
+        this.#sendToPeople(event.recipients, encodeMessage({ t: event.type, p: { message: event.message } }));
+        return;
+      case 'MessageDeleted':
+        this.#sendToPeople(
+          event.recipients,
+          encodeMessage({ t: 'MessageDeleted', p: { channelId: event.channelId, messageId: event.messageId } }),
+        );
+        return;
+      case 'ChannelChanged':
+        this.#sendToPeople(event.recipients, encodeMessage({ t: 'ChannelChanged', p: { channelId: event.channelId } }));
+        return;
+      case 'ChannelLeft':
+        this.#sendToPeople([event.personId], encodeMessage({ t: 'ChannelLeft', p: { channelId: event.channelId } }));
+        return;
+      case 'ReadMarkerMoved':
+        this.#sendToPeople(
+          [event.personId],
+          encodeMessage({ t: 'ReadMarkerMoved', p: { channelId: event.channelId, messageId: event.messageId } }),
+        );
     }
   }
 

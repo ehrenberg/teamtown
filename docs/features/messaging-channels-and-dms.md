@@ -1,6 +1,6 @@
 # Feature: Channels and direct messages
 
-- **Status:** Draft
+- **Status:** In progress
 - **Brainstorming ID:** M1 Channels with roles (without roles and announcement channels), M2 Direct & group messages
 - **Bounded context(s):** Messaging (new), People, realtime gateway, REST
 - **Milestone:** M3a (ADR-0033)
@@ -93,12 +93,13 @@ Not being allowed to read a channel answers `404`, never `403`, so private chann
     no posts; names are unique.
   - `Message` (root, references `channelId`): `messageId`, `authorId`, `body`, `postedAt`, `editedAt?`,
     `deletedAt?`. Deleting clears the body.
-- **Domain events:** `ChannelCreated`, `ChannelChanged`, `MessagePosted`, `MessageEdited`, `MessageDeleted`,
+- **Domain events:** `ChannelChanged` (also on creation), `ChannelLeft`, `ReadMarkerMoved`, `MessagePosted`, `MessageEdited`, `MessageDeleted`,
   written to a Messaging **outbox table** in the same transaction (ADR-0018). This is the first use of the outbox;
   the relay is added to the platform.
 - **People:** a public query to list people (ID, display name, avatar colour) for picking DM members.
-- **Seeds:** `#general` and `#random` (with a fixed creator-less "system" origin) and an automatic membership on
-  the person's first login (decided 2026-11-01).
+- **Seeds:** `#general` and `#random` (created by the migration, without a creator) and an automatic membership on
+  the person's first login (decided 2026-11-01): the first channel list after login adds them, once per person, so
+  someone who leaves `#random` stays out.
 
 ## API & realtime contracts
 

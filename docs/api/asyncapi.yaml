@@ -1842,6 +1842,230 @@ channels:
             - t
             - p
           additionalProperties: false
+      MessagePosted:
+        name: MessagePosted
+        title: MessagePosted
+        summary: A message was posted in a channel or DM. Sent to its members.
+        payload:
+          type: object
+          properties:
+            t:
+              type: string
+              const: MessagePosted
+            p:
+              type: object
+              properties:
+                message:
+                  type: object
+                  properties:
+                    messageId:
+                      type: string
+                      minLength: 1
+                      maxLength: 64
+                    channelId:
+                      type: string
+                      minLength: 1
+                      maxLength: 64
+                    authorId:
+                      type: string
+                      format: uuid
+                      pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                    body:
+                      type: string
+                      maxLength: 4000
+                    postedAt:
+                      type: string
+                      format: date-time
+                      pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+                    editedAt:
+                      anyOf:
+                        - type: string
+                          format: date-time
+                          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+                        - type: "null"
+                    deleted:
+                      type: boolean
+                  required:
+                    - messageId
+                    - channelId
+                    - authorId
+                    - body
+                    - postedAt
+                    - editedAt
+                    - deleted
+                  additionalProperties: false
+              required:
+                - message
+              additionalProperties: false
+          required:
+            - t
+            - p
+          additionalProperties: false
+      MessageEdited:
+        name: MessageEdited
+        title: MessageEdited
+        summary: A message was edited by its author. Sent to the members of its channel.
+        payload:
+          type: object
+          properties:
+            t:
+              type: string
+              const: MessageEdited
+            p:
+              type: object
+              properties:
+                message:
+                  type: object
+                  properties:
+                    messageId:
+                      type: string
+                      minLength: 1
+                      maxLength: 64
+                    channelId:
+                      type: string
+                      minLength: 1
+                      maxLength: 64
+                    authorId:
+                      type: string
+                      format: uuid
+                      pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                    body:
+                      type: string
+                      maxLength: 4000
+                    postedAt:
+                      type: string
+                      format: date-time
+                      pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+                    editedAt:
+                      anyOf:
+                        - type: string
+                          format: date-time
+                          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+                        - type: "null"
+                    deleted:
+                      type: boolean
+                  required:
+                    - messageId
+                    - channelId
+                    - authorId
+                    - body
+                    - postedAt
+                    - editedAt
+                    - deleted
+                  additionalProperties: false
+              required:
+                - message
+              additionalProperties: false
+          required:
+            - t
+            - p
+          additionalProperties: false
+      MessageDeleted:
+        name: MessageDeleted
+        title: MessageDeleted
+        summary: A message was deleted by its author. Sent to the members of its channel.
+        payload:
+          type: object
+          properties:
+            t:
+              type: string
+              const: MessageDeleted
+            p:
+              type: object
+              properties:
+                channelId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                messageId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+              required:
+                - channelId
+                - messageId
+              additionalProperties: false
+          required:
+            - t
+            - p
+          additionalProperties: false
+      ChannelChanged:
+        name: ChannelChanged
+        title: ChannelChanged
+        summary: "A channel was created, renamed, archived or its members changed: reload it. Sent to its members."
+        payload:
+          type: object
+          properties:
+            t:
+              type: string
+              const: ChannelChanged
+            p:
+              type: object
+              properties:
+                channelId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+              required:
+                - channelId
+              additionalProperties: false
+          required:
+            - t
+            - p
+          additionalProperties: false
+      ChannelLeft:
+        name: ChannelLeft
+        title: ChannelLeft
+        summary: "The person left a channel or DM: drop it. Sent only to them."
+        payload:
+          type: object
+          properties:
+            t:
+              type: string
+              const: ChannelLeft
+            p:
+              type: object
+              properties:
+                channelId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+              required:
+                - channelId
+              additionalProperties: false
+          required:
+            - t
+            - p
+          additionalProperties: false
+      ReadMarkerMoved:
+        name: ReadMarkerMoved
+        title: ReadMarkerMoved
+        summary: The person read up to a message, e.g. on another device. Sent only to them.
+        payload:
+          type: object
+          properties:
+            t:
+              type: string
+              const: ReadMarkerMoved
+            p:
+              type: object
+              properties:
+                channelId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                messageId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+              required:
+                - channelId
+                - messageId
+              additionalProperties: false
+          required:
+            - t
+            - p
+          additionalProperties: false
       Ack:
         name: Ack
         title: Ack
@@ -1989,5 +2213,11 @@ operations:
       - $ref: "#/channels/realtime/messages/MeetingLogChanged"
       - $ref: "#/channels/realtime/messages/MeetingLogDetails"
       - $ref: "#/channels/realtime/messages/MeetingLogConsentRequested"
+      - $ref: "#/channels/realtime/messages/MessagePosted"
+      - $ref: "#/channels/realtime/messages/MessageEdited"
+      - $ref: "#/channels/realtime/messages/MessageDeleted"
+      - $ref: "#/channels/realtime/messages/ChannelChanged"
+      - $ref: "#/channels/realtime/messages/ChannelLeft"
+      - $ref: "#/channels/realtime/messages/ReadMarkerMoved"
       - $ref: "#/channels/realtime/messages/Ack"
       - $ref: "#/channels/realtime/messages/Nack"

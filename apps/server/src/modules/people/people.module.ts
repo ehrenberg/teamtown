@@ -9,9 +9,10 @@ import { PEOPLE_MIGRATIONS } from './infrastructure/persistence/migrations/peopl
 import { MikroOrmPersonRepository } from './infrastructure/persistence/mikro-orm-person.repository.ts';
 import { PersonEntity } from './infrastructure/persistence/person.entity.ts';
 import { MeController } from './interface/http/me.controller.ts';
+import { PeopleController } from './interface/http/people.controller.ts';
 
 @Module({
-  controllers: [MeController],
+  controllers: [MeController, PeopleController],
   providers: [
     {
       provide: PERSON_REPOSITORY,

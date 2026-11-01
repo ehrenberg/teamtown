@@ -130,7 +130,7 @@ flowchart TB
 | World     | `FloorPlanPublished`, `RoomCreated`, `RoomPolicyChanged`, `RoomDeleted`, `DeskAssigned`                                                | Presence, Messaging, Audit             |
 | Presence  | `AvatarMoved`, `AvatarEnteredRoom`, `AvatarLeftRoom`, `DoorModeChanged`, `StatusChanged`, `PersonWentOnline/Offline`                   | Meetings, gateway                      |
 | Meetings  | `ConversationFormed/Changed/Dissolved`, `RoomCallChanged`, `KnockRequested/Answered`, `DirectCallRequested`, `MeetingLogStarted/Ended` | Notifications, gateway                 |
-| Messaging | `MessagePosted`, `MessageEdited`, `MessageDeleted`, `PersonMentioned`, `ChannelCreated`                                                | Notifications, gateway, Audit          |
+| Messaging | `MessagePosted`, `MessageEdited`, `MessageDeleted`, `PersonMentioned`, `ChannelChanged`, `ChannelLeft`, `ReadMarkerMoved`              | Notifications, gateway, Audit          |
 | Access    | `RoleCreated/Changed`, `RoleAssigned/Revoked`                                                                                          | Audit, permission cache invalidation   |
 
 Naming rule: past tense, the context name implied by the module, payload with IDs plus the minimum data consumers need.

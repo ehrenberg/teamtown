@@ -1,6 +1,8 @@
 import type { NestFastifyApplication } from '@nestjs/platform-fastify';
 import { PostgreSqlContainer, type StartedPostgreSqlContainer } from '@testcontainers/postgresql';
 import {
+  ChannelListResponse,
+  ChannelSummarySchema,
   decodeServerEvent,
   encodeMessage,
   FloorListResponse,
@@ -8,6 +10,9 @@ import {
   HealthResponse,
   MeResponse,
   MeetingLogListResponse,
+  MessagePageResponse,
+  MessageSchema,
+  PeopleListResponse,
   REALTIME_PATH,
   REALTIME_SUBPROTOCOL,
   type ClientCommand,
@@ -129,6 +134,12 @@ describe('TeamTown server (integration)', () => {
     fetch(`${baseUrl}${path}`, { headers: token ? { authorization: `Bearer ${token}` } : {} });
   const remove = (path: string, token: string) =>
     fetch(`${baseUrl}${path}`, { method: 'DELETE', headers: { authorization: `Bearer ${token}` } });
+  const send = (method: 'POST' | 'PATCH' | 'PUT', path: string, token: string, body: unknown) =>
+    fetch(`${baseUrl}${path}`, {
+      method,
+      headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+    });
 
   async function connect(token: string): Promise<TestClient> {
     const client = new TestClient(realtimeUrl);
@@ -258,5 +269,81 @@ describe('TeamTown server (integration)', () => {
 
       for (const client of [lena, ben, mia]) client.close();
     }, 60_000);
+  });
+
+  describe('messaging', () => {
+    const idOf = async (token: string) => MeResponse.parse(await (await get('/me', token)).json()).personId;
+    const channelsOf = async (token: string) =>
+      ChannelListResponse.parse(await (await get('/channels', token)).json()).channels;
+
+    it('puts everyone into #general and #random and lists people for DMs', async () => {
+      const names = (await channelsOf('token-mia')).map((channel) => channel.name).sort();
+      expect(names).toEqual(['general', 'random']);
+      expect((await remove(`/channels/general/members/me`, 'token-mia')).status).toBe(403);
+
+      const people = PeopleListResponse.parse(await (await get('/people', 'token-mia')).json()).people;
+      expect(people.map((person) => person.displayName)).toContain('Lena Hoffmann');
+    });
+
+    it('keeps a private channel and its messages to its members, live and with unread counts', async () => {
+      const benId = await idOf('token-ben');
+      const ben = await connect('token-ben');
+      const created = await send('POST', '/channels', 'token-lena', { kind: 'private', name: 'Leads' });
+      const channel = ChannelSummarySchema.parse(await created.json());
+      expect(channel).toMatchObject({ name: 'leads', kind: 'private', unreadCount: 0 });
+      const path = `/channels/${channel.channelId}`;
+
+      // Not a member: the channel doesn't exist as far as Mia and Ben can tell.
+      expect((await get(`${path}/messages`, 'token-mia')).status).toBe(404);
+      expect((await send('POST', `${path}/messages`, 'token-ben', { body: 'hi' })).status).toBe(404);
+      expect((await send('POST', '/channels', 'token-mia', { kind: 'public', name: 'leads' })).status).toBe(409);
+
+      expect((await send('POST', `${path}/members`, 'token-lena', { personIds: [benId] })).status).toBe(201);
+      await ben.waitFor((event) => event.t === 'ChannelChanged' && event.p.channelId === channel.channelId);
+
+      const posted = MessageSchema.parse(
+        await (await send('POST', `${path}/messages`, 'token-lena', { body: '**Moin** <script>' })).json(),
+      );
+      const pushed = await ben.waitFor((event) => event.t === 'MessagePosted');
+      expect(pushed).toMatchObject({ p: { message: { messageId: posted.messageId, body: '**Moin** <script>' } } });
+
+      const unread = async () =>
+        (await channelsOf('token-ben')).find((c) => c.channelId === channel.channelId)?.unreadCount;
+      expect(await unread()).toBe(1);
+      expect((await send('PUT', `${path}/read-marker`, 'token-ben', { messageId: posted.messageId })).status).toBe(204);
+      expect(await unread()).toBe(0);
+      await ben.waitFor((event) => event.t === 'ReadMarkerMoved');
+
+      // Only the author edits and deletes; deleting removes the body.
+      const messagePath = `${path}/messages/${posted.messageId}`;
+      expect((await send('PATCH', messagePath, 'token-ben', { body: 'x' })).status).toBe(403);
+      expect((await send('PATCH', messagePath, 'token-lena', { body: 'Moin!' })).status).toBe(200);
+      expect((await remove(messagePath, 'token-lena')).status).toBe(204);
+      await ben.waitFor((event) => event.t === 'MessageDeleted');
+      const page = MessagePageResponse.parse(await (await get(`${path}/messages`, 'token-ben')).json());
+      expect(page.messages).toEqual([expect.objectContaining({ body: '', deleted: true })]);
+
+      ben.close();
+    });
+
+    it('opens one 1:1 DM per pair and refuses bad requests plainly', async () => {
+      const lenaId = await idOf('token-lena');
+      const benId = await idOf('token-ben');
+      const first = ChannelSummarySchema.parse(
+        await (await send('POST', '/direct-messages', 'token-lena', { personIds: [benId] })).json(),
+      );
+      const second = ChannelSummarySchema.parse(
+        await (await send('POST', '/direct-messages', 'token-ben', { personIds: [lenaId] })).json(),
+      );
+      expect(second.channelId).toBe(first.channelId);
+      expect(first).toMatchObject({ kind: 'direct', name: null });
+
+      const unknown = await send('POST', '/direct-messages', 'token-lena', {
+        personIds: ['00000000-0000-4000-8000-000000000000'],
+      });
+      expect(unknown.status).toBe(400);
+      expect(await unknown.json()).toMatchObject({ message: 'unknown-person' });
+      expect((await send('POST', '/channels', 'token-lena', { kind: 'secret' })).status).toBe(400);
+    });
   });
 });

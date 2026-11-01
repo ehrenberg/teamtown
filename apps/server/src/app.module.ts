@@ -1,6 +1,7 @@
 import { Module, type DynamicModule } from '@nestjs/common';
 import { IdentityModule, type IdentityModuleOptions } from './modules/identity/public-api.ts';
 import { MeetingsModule } from './modules/meetings/public-api.ts';
+import { MessagingModule } from './modules/messaging/public-api.ts';
 import { PeopleModule } from './modules/people/public-api.ts';
 import { PresenceModule } from './modules/presence/public-api.ts';
 import { RealtimeModule } from './modules/realtime/realtime.module.ts';
@@ -26,8 +27,18 @@ export class AppModule {
         ConfigModule.forRoot(config),
         LoggingModule.forRoot(config),
         DatabaseModule.forRoot(config, {
-          entities: [...PeopleModule.entities, ...WorldModule.entities, ...MeetingsModule.entities],
-          migrations: [...PeopleModule.migrations, ...WorldModule.migrations, ...MeetingsModule.migrations],
+          entities: [
+            ...PeopleModule.entities,
+            ...WorldModule.entities,
+            ...MeetingsModule.entities,
+            ...MessagingModule.entities,
+          ],
+          migrations: [
+            ...PeopleModule.migrations,
+            ...WorldModule.migrations,
+            ...MeetingsModule.migrations,
+            ...MessagingModule.migrations,
+          ],
         }),
         HealthModule,
         IdentityModule.forRoot(overrides),
@@ -35,6 +46,7 @@ export class AppModule {
         WorldModule,
         PresenceModule,
         MeetingsModule,
+        MessagingModule,
         RealtimeModule,
       ],
     };

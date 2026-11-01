@@ -15,6 +15,10 @@ class InMemoryPersonRepository implements PersonRepository {
     return Promise.resolve([...this.#bySubject.values()].filter((person) => ids.includes(person.id)));
   }
 
+  listAll(): Promise<Person[]> {
+    return Promise.resolve([...this.#bySubject.values()]);
+  }
+
   save(person: Person): Promise<void> {
     this.saved.push(person);
     this.#bySubject.set(person.oidcSubject, person);
