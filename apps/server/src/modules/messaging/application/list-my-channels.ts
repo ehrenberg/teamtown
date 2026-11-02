@@ -20,6 +20,11 @@ export class ListMyChannels {
       // Only once: someone who leaves #random later stays out.
       await this.channels.markSeeded(personId);
     }
+    for (const wall of await this.channels.listRoomWalls()) {
+      if (wall.isMember(personId)) continue;
+      wall.joinRoomWall(personId, this.clock.now());
+      await this.channels.save(wall);
+    }
     return this.channels.listForMember(personId);
   }
 }

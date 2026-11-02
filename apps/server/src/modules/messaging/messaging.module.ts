@@ -3,6 +3,7 @@ import { MikroORM } from '@mikro-orm/postgresql';
 import type { Clock, IdGenerator } from '@teamtown/kernel';
 import { CLOCK, ID_GENERATOR } from '../../platform/config/config.module.ts';
 import { PeopleModule, PeopleQueries } from '../people/public-api.ts';
+import { FloorQueries, WorldEventStream, WorldModule } from '../world/public-api.ts';
 import { AddChannelMembers } from './application/add-channel-members.ts';
 import { BrowseChannels } from './application/browse-channels.ts';
 import { CreateChannel } from './application/create-channel.ts';
@@ -20,13 +21,18 @@ import { OpenDirectMessage } from './application/open-direct-message.ts';
 import { CHANNEL_REPOSITORY, type ChannelRepository } from './application/ports/channel-repository.port.ts';
 import { MESSAGE_REPOSITORY, type MessageRepository } from './application/ports/message-repository.port.ts';
 import { PEOPLE_DIRECTORY, type PeopleDirectory } from './application/ports/people-directory.port.ts';
+import { ROOM_DIRECTORY, type RoomDirectory } from './application/ports/room-directory.port.ts';
 import { THREAD_REPOSITORY, type ThreadRepository } from './application/ports/thread-repository.port.ts';
 import { PostMessage } from './application/post-message.ts';
 import { ReactToMessage } from './application/react-to-message.ts';
+import { SynchronizeRoomWalls } from './application/synchronize-room-walls.ts';
 import { MoveThreadReadMarker, SetThreadFollowing } from './application/thread-follows.ts';
 import { UpdateChannel } from './application/update-channel.ts';
 import { MessagingOutbox } from './infrastructure/messaging-outbox.ts';
 import { PeopleDirectoryAdapter } from './infrastructure/people-directory.adapter.ts';
+import { RoomWallBootstrap } from './infrastructure/room-wall-bootstrap.ts';
+import { RoomWallLifecycle } from './infrastructure/room-wall-lifecycle.ts';
+import { WorldRoomDirectoryAdapter } from './infrastructure/world-room-directory.adapter.ts';
 import { MESSAGING_ENTITIES } from './infrastructure/persistence/messaging.entities.ts';
 import { MESSAGING_MIGRATIONS } from './infrastructure/persistence/migrations/messaging-initial.migration.ts';
 import { MikroOrmChannelRepository } from './infrastructure/persistence/mikro-orm-channel.repository.ts';
@@ -34,9 +40,9 @@ import { MikroOrmMessageRepository } from './infrastructure/persistence/mikro-or
 import { MikroOrmThreadRepository } from './infrastructure/persistence/mikro-orm-thread.repository.ts';
 import { ChannelsController } from './interface/http/channels.controller.ts';
 
-/** Channels, DMs, messages, threads and reactions (M3a/M3b, ADR-0033, ADR-0034). Persisted in the `messaging` schema, events via the outbox. */
+/** Channels, DMs, room walls, messages, threads and reactions (M3a–M3c). Persisted in `messaging`, events via the outbox. */
 @Module({
-  imports: [PeopleModule],
+  imports: [PeopleModule, WorldModule],
   controllers: [ChannelsController],
   providers: [
     { provide: MessagingEventStream, useValue: new MessagingEventStream() },
@@ -73,6 +79,33 @@ import { ChannelsController } from './interface/http/channels.controller.ts';
       provide: PEOPLE_DIRECTORY,
       useFactory: (people: PeopleQueries) => new PeopleDirectoryAdapter(people),
       inject: [PeopleQueries],
+    },
+    {
+      provide: ROOM_DIRECTORY,
+      useFactory: (floors: FloorQueries) => new WorldRoomDirectoryAdapter(floors),
+      inject: [FloorQueries],
+    },
+    {
+      provide: SynchronizeRoomWalls,
+      useFactory: (
+        channels: ChannelRepository,
+        rooms: RoomDirectory,
+        people: PeopleDirectory,
+        clock: Clock,
+        ids: IdGenerator,
+      ) => new SynchronizeRoomWalls(channels, rooms, people, clock, ids),
+      inject: [CHANNEL_REPOSITORY, ROOM_DIRECTORY, PEOPLE_DIRECTORY, CLOCK, ID_GENERATOR],
+    },
+    {
+      provide: RoomWallBootstrap,
+      useFactory: (synchronize: SynchronizeRoomWalls) => new RoomWallBootstrap(synchronize),
+      inject: [SynchronizeRoomWalls],
+    },
+    {
+      provide: RoomWallLifecycle,
+      useFactory: (events: WorldEventStream, synchronize: SynchronizeRoomWalls) =>
+        new RoomWallLifecycle(events, synchronize),
+      inject: [WorldEventStream, SynchronizeRoomWalls],
     },
     {
       provide: ListMyChannels,

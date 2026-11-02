@@ -24,11 +24,11 @@ reach people who aren't in the office right now.
 2. **Seed channels.** `#general` and `#random` exist from the start. Everyone becomes a member on their first
    login (ADR-0033). `#general` can't be left, so it always reaches everyone; `#random` can (decided 2026-11-01).
 3. **Direct messages.** A DM is a `direct` channel with 2 to 8 people (ADR-0033). DMs have no name; the list shows
-   the other people's names. Members of a group DM can add people (up to 8) and leave it (decided 2026-11-01):
-   - **1:1 DMs are fixed** _(proposal)_: nobody leaves them, and adding someone opens a new group DM with all three
-     (the 1:1 history stays where it is). So there is exactly one 1:1 DM per pair.
+   the other people's names. Members can add people (up to 8); group-DM members can leave (decided 2026-11-01):
+   - **Adding to a 1:1 DM converts it into a group DM** and keeps its history (P-12, decided 2026-11-02). The
+     original pair can start a new, empty 1:1 DM afterwards; the converted conversation remains a group DM.
    - **Opening a DM** with a set of people leads to the DM whose _current_ members are exactly those people, if
-     there is one; otherwise a new one is created _(proposal)_.
+     there is one; otherwise a new one is created (P-13, decided 2026-11-02).
    - Someone who left a group DM no longer sees it and gets no new messages.
 4. **Messages.** Members post messages up to 4,000 characters (decided 2026-11-01) in a Markdown subset: bold, italic,
    inline code, code block, links and lists (ADR-0033). Raw HTML is never rendered. Authors can edit their own
@@ -53,8 +53,10 @@ reach people who aren't in the office right now.
 - [x] Given a DM with the same people, when someone opens a DM with them again, then the existing DM opens.
 - [x] Given more than 8 people, when someone opens a DM with them or adds a ninth person to a group DM, then it is
       refused with a plain hint to use a private channel.
+- [x] Given a 1:1 DM, when either member adds a person, then the same conversation becomes a group DM and the new
+      member sees its history; the original pair can subsequently start a new 1:1 DM.
 - [x] Given a group DM, when a member adds a person, then that person sees the DM with its history; when a member
-      leaves, then they no longer see it. A 1:1 DM can't be left; adding someone to it opens a new group DM.
+      leaves, then they no longer see it.
 - [x] Given a message with `**bold**`, a list and `<script>`, then bold and the list render, the script tag shows
       as text.
 - [x] Given a first login, then the person is a member of `#general` and `#random`.
@@ -80,7 +82,7 @@ module decides with a simple local rule (ADR-0033), behind the same use-case che
 | Create a public or private channel, start a DM | every person                                     |
 | Read and post                                  | members (public channels: anyone can join first) |
 | Rename, archive, invite (private)              | the creator                                      |
-| Add people to a group DM, leave a group DM     | its members                                      |
+| Add people to a DM, leave a group DM           | its members                                      |
 | Edit, delete a message                         | its author                                       |
 
 Not being allowed to read a channel answers `404`, never `403`, so private channels don't leak their existence.
@@ -90,8 +92,8 @@ Not being allowed to read a channel answers `404`, never `403`, so private chann
 - **New context Messaging** (`apps/server/src/modules/messaging`), persisted in its own schema:
   - `Channel` (root): `channelId`, `kind: public | private | direct`, `name?` (not for DMs), `creatorId`,
     `memberships[] { personId, joinedAt, readMarker? }`, `archivedAt?`, `pairKey?` (sorted member IDs, unique, for
-    1:1 DMs). Invariants: DMs have at most 8 members; 1:1 DMs have exactly 2 fixed members; archived channels take
-    no posts; names are unique.
+    1:1 DMs). Invariants: DMs have at most 8 members; adding to a 1:1 DM converts it to a group and clears its
+    pair key; archived channels take no posts; names are unique.
   - `Message` (root, references `channelId`): `messageId`, `authorId`, `body`, `postedAt`, `editedAt?`,
     `deletedAt?`. Deleting clears the body.
 - **Domain events:** `ChannelChanged` (also on creation), `ChannelLeft`, `ReadMarkerMoved`, `MessagePosted`, `MessageEdited`, `MessageDeleted`,
@@ -110,7 +112,7 @@ REST (writes and reads, overview §6.3, `world-and-realtime.md` §5), schemas in
 - `GET /api/channels/browse`: public channels I can join.
 - `POST /api/channels` `{ kind: public | private, name }`, `PATCH /api/channels/{id}` `{ name?, archived? }`.
 - `POST /api/channels/{id}/members` `{ personIds }` (join yourself, invite into a private channel, or add people to
-  a group DM), `DELETE /api/channels/{id}/members/me` (leave).
+  a DM; a 1:1 DM becomes a group), `DELETE /api/channels/{id}/members/me` (leave).
 - `POST /api/direct-messages` `{ personIds }`: opens or finds the DM.
 - `GET /api/channels/{id}/messages?before={messageId}&limit=50`, `POST /api/channels/{id}/messages` `{ body }`,
   `PATCH /api/channels/{id}/messages/{messageId}` `{ body }`, `DELETE /api/channels/{id}/messages/{messageId}`.
@@ -144,13 +146,14 @@ Realtime events (push only, to the members' open connections):
   DMs. Message list grouped by author and day,
   composer at the bottom.
 - **Dialogs** (Radix): "New channel" (name, public/private), "Browse channels", "New message" (person picker, up
-  to 7 others).
+  to 7 others). A 1:1 DM offers "Add people"; confirming converts that conversation into a group DM.
 - **World:** nothing new in M3a (reactions above avatars come with M3b, room walls with M3c).
 
 ## Not yet covered by automated tests
 
 - Archive, rename, invite and group-DM changes in the browser (covered by use-case and server integration tests).
+- Converting a 1:1 DM through the browser dialog (covered by domain, use-case, integration and UI permission tests).
 
 ## Open questions
 
-- The two DM rules marked _(proposal)_: fixed 1:1 DMs, and finding a DM by its current members.
+_None._ P-12 and P-13 were decided on 2026-11-02.

@@ -7,3 +7,5 @@ export {
 } from './application/floor-queries.ts';
 export type { DoorMode } from './domain/floor-plan.ts';
 export { WorldModule } from './world.module.ts';
+export { WorldEventStream, type WorldEventListener } from './application/world-event-stream.ts';
+export type { WorldEvent } from './domain/events.ts';

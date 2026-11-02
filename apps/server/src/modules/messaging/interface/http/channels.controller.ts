@@ -87,10 +87,12 @@ const toSummary = (
   { channel, unreadCount, mentionCount, lastMessageAt }: ChannelOverview,
 ): ChannelSummary => ({
   channelId: channel.props.channelId,
-  kind: channel.isDirect ? 'direct' : (channel.props.kind as 'public' | 'private'),
+  kind: channel.isDirect ? 'direct' : (channel.props.kind as 'public' | 'private' | 'room'),
   group: channel.props.kind === 'group',
   name: channel.props.name,
   creatorId: channel.props.creatorId,
+  floorId: channel.roomLink?.floorId ?? null,
+  roomId: channel.roomLink?.roomId ?? null,
   members: channel.memberIds,
   archived: channel.isArchived,
   unreadCount,

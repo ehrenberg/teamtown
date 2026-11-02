@@ -8,8 +8,15 @@ scripts:
     code: |-
       const isSummary = (channel) => {
         pm.expect(channel.channelId).to.be.a('string').and.not.empty;
-        pm.expect(channel.kind).to.be.oneOf(['public', 'private', 'direct']);
+        pm.expect(channel.kind).to.be.oneOf(['public', 'private', 'room', 'direct']);
         pm.expect(channel.group).to.be.a('boolean');
+        if (channel.kind === 'room') {
+          pm.expect(channel.floorId).to.be.a('string').and.not.empty;
+          pm.expect(channel.roomId).to.be.a('string').and.not.empty;
+        } else {
+          pm.expect(channel.floorId).to.equal(null);
+          pm.expect(channel.roomId).to.equal(null);
+        }
         pm.expect(channel.members).to.be.an('array');
         pm.expect(channel.archived).to.be.a('boolean');
         pm.expect(channel.unreadCount).to.be.a('number').and.at.least(0);
@@ -24,4 +31,10 @@ scripts:
       pm.test('everyone is in the seed channels #general and #random', () => {
         const names = channels.map((channel) => channel.name);
         pm.expect(names).to.include.members(['general', 'random']);
+      });
+      pm.test('every published room has a room wall', () => {
+        const roomWalls = channels.filter((channel) => channel.kind === 'room');
+        pm.expect(roomWalls).not.to.be.empty;
+        const roomKeys = roomWalls.map((channel) => `${channel.floorId}/${channel.roomId}`);
+        pm.expect(new Set(roomKeys).size).to.equal(roomKeys.length);
       });

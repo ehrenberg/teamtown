@@ -12,24 +12,28 @@ export const MAX_REACTIONS = 20;
 /** A DM has at most 8 people, oneself included (ADR-0033). */
 export const MAX_DIRECT_MESSAGE_MEMBERS = 8;
 
-export const ChannelKind = z.enum(['public', 'private', 'direct']);
+export const ChannelKind = z.enum(['public', 'private', 'room', 'direct']);
 export type ChannelKind = z.infer<typeof ChannelKind>;
 
 /** A channel or DM as one of its members sees it. Times are ISO 8601. */
 export const ChannelSummarySchema = z.object({
   channelId: ChannelId,
   kind: ChannelKind,
-  /** A group DM: people can be added and leave. A 1:1 DM (`false`) stays between its two people. */
+  /** A group DM: people can be added and leave. Adding to a 1:1 DM (`false`) converts it into a group. */
   group: z.boolean(),
-  /** Without the `#`; `null` for DMs. */
+  /** Without the `#` for channels, the room title for room walls, `null` for DMs. */
   name: z.string().nullable(),
   /** `null` for the seed channels. */
   creatorId: PersonId.nullable(),
+  /** Set only for a room wall. */
+  floorId: z.string().nullable(),
+  /** Set only for a room wall. */
+  roomId: z.string().nullable(),
   members: z.array(PersonId),
   archived: z.boolean(),
   /** Messages by others after the read marker, shown in the channel (thread replies only if also sent there). */
   unreadCount: z.number().int().nonnegative(),
-  /** Of those, the ones that mention me (ADR-0034). */
+  /** Unread mentions in the channel and its followed threads (ADR-0034, P-15). */
   mentionCount: z.number().int().nonnegative(),
   lastMessageAt: z.iso.datetime().nullable(),
   readMarker: MessageId.nullable(),
@@ -67,7 +71,7 @@ export const UpdateChannelRequest = z
   .refine((request) => request.name !== undefined || request.archived !== undefined);
 export type UpdateChannelRequest = z.infer<typeof UpdateChannelRequest>;
 
-/** `POST /api/channels/{channelId}/members`: join yourself, invite into a private channel, add to a group DM. */
+/** `POST /api/channels/{channelId}/members`: join or invite to a channel, or add to a DM (converting a pair). */
 export const AddMembersRequest = z.object({
   personIds: z.array(PersonId).min(1).max(MAX_DIRECT_MESSAGE_MEMBERS),
 });
@@ -183,7 +187,7 @@ export const MessagingErrorCode = z.enum([
   'invalid-message',
   'direct-message-too-large',
   'cannot-leave-channel',
-  /** A 1:1 DM takes nobody else. */
+  /** This channel does not accept an invitation or direct join. */
   'cannot-invite',
   'unknown-person',
   /** The message to reply to is in another channel or doesn't exist. */

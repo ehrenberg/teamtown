@@ -1,8 +1,8 @@
 # Brainstorming — Idea Catalogue
 
-> **Status: all ideas here are proposals.** Nothing in this document is decided. Ideas move into
-> [mvp-scope.md](mvp-scope.md) or the [roadmap](roadmap.md) only after an explicit decision by the
-> product owner. Ideas that need a decision are tracked in [open-questions.md](open-questions.md).
+> **Status: idea catalogue.** Inclusion in [mvp-scope.md](mvp-scope.md), placement on the
+> [roadmap](roadmap.md), and linked feature specs record explicit product-owner decisions. Ideas without
+> such a decision remain proposals. Pending decisions are tracked in [open-questions.md](open-questions.md).
 
 Rating legend: **Impact** (value for users) and **Effort** each from ● (low) to ●●● (high).
 `MVP?` marks ideas that relate to an MVP area already chosen (world, A/V & meetings, channels, roles & admin).
@@ -46,7 +46,7 @@ Rating legend: **Impact** (value for users) and **Effort** each from ● (low) t
 | M1  | **Channels with roles** → [spec](../features/messaging-channels-and-dms.md)                    | Public, private and announcement channels (read-only except for publishers), with per-channel roles.                          | ●●●    | ●●     | ✔    |
 | M2  | **Direct & group messages** → [spec](../features/messaging-channels-and-dms.md)                | 1:1 and small group DMs.                                                                                                      | ●●●    | ●●     | ✔    |
 | M3  | **Threads, mentions, reactions** → [spec](../features/messaging-threads-mentions-reactions.md) | The standard set; reactions also show briefly as an emote above the avatar if the author is visible.                          | ●●●    | ●●     | ✔    |
-| M4  | **Room wall (room-linked channel)**                                                            | Each room has a persistent chat/pinboard. Meeting chat and shared links stay with the room.                                   | ●●●    | ●      | ✔    |
+| M4  | **Room wall (room-linked channel)** → [spec](../features/messaging-room-walls.md)              | Each room has a persistent chat/pinboard. Meeting chat and shared links stay with the room.                                   | ●●●    | ●      | ✔    |
 | M5  | **Sticky note on a door or desk**                                                              | Leave an async note at someone's desk ("Call me when you're back"). It shows as a post-it in the world and as a notification. | ●●     | ●      |      |
 | M6  | **Pigeonhole inbox**                                                                           | A central "mail slot": mentions, knocks you missed, notes left for you. The world metaphor for notifications.                 | ●●     | ●●     |      |
 | M7  | **Files & previews**                                                                           | Upload files, image and PDF previews, pin to a channel or room.                                                               | ●●●    | ●●     | ✔    |

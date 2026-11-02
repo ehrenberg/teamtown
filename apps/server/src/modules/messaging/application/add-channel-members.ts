@@ -8,7 +8,7 @@ export type AddChannelMembersError = ChannelError | 'not-found' | 'unknown-perso
 
 /**
  * Use case: someone joins a public channel themselves, a member adds people to a public channel (ADR-0034) or a
- * group DM, or the creator invites into a private channel (ADR-0033).
+ * DM (converting a pair to a group, P-12), or the creator invites into a private channel (ADR-0033).
  */
 export class AddChannelMembers {
   constructor(

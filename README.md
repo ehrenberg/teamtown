@@ -7,8 +7,9 @@ Open-source, self-hostable team communication in a soft low-poly isometric repli
 
 ---
 
-> 🚧 **Status: early development.** The foundation (M0) is in place; features follow milestone by milestone
-> ([roadmap](docs/product/roadmap.md)). Start with the [documentation](docs/README.md).
+> 🚧 **Status: active MVP development.** M0–M2 and M3a–M3c (channels/DMs; threads, mentions and
+> reactions; room walls) are complete. Files are next in the [roadmap](docs/product/roadmap.md).
+> Start with the [documentation](docs/README.md).
 
 ## What is TeamTown?
 

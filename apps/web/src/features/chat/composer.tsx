@@ -19,7 +19,7 @@ export const channelPath = (channelId: string) => `/channels/${encodeURIComponen
 const isSend = (event: KeyboardEvent<HTMLTextAreaElement>) =>
   event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing;
 
-/** Who may add people to the channel (ADR-0033, ADR-0034); `false` for a 1:1 DM. */
+/** Who may add people to the channel (ADR-0033, ADR-0034, P-12). */
 export function canAddPeople(channel: ChannelSummary, myPersonId: string | null): boolean {
   const isMember = myPersonId !== null && channel.members.includes(myPersonId);
   switch (channel.kind) {
@@ -27,8 +27,10 @@ export function canAddPeople(channel: ChannelSummary, myPersonId: string | null)
       return isMember;
     case 'private':
       return channel.creatorId !== null && channel.creatorId === myPersonId;
+    case 'room':
+      return false;
     case 'direct':
-      return channel.group && isMember && channel.members.length < MAX_DIRECT_MEMBERS;
+      return isMember && channel.members.length < MAX_DIRECT_MEMBERS;
   }
 }
 

@@ -278,12 +278,44 @@ describe('TeamTown server (integration)', () => {
       ChannelListResponse.parse(await (await get('/channels', token)).json()).channels;
 
     it('puts everyone into #general and #random and lists people for DMs', async () => {
-      const names = (await channelsOf('token-mia')).map((channel) => channel.name).sort();
+      const names = (await channelsOf('token-mia'))
+        .filter((channel) => channel.kind !== 'room')
+        .map((channel) => channel.name)
+        .sort();
       expect(names).toEqual(['general', 'random']);
       expect((await remove(`/channels/general/members/me`, 'token-mia')).status).toBe(403);
 
       const people = PeopleListResponse.parse(await (await get('/people', 'token-mia')).json()).people;
       expect(people.map((person) => person.displayName)).toContain('Lena Hoffmann');
+    });
+
+    it('creates one room wall per published room and lets members use it without entering the room', async () => {
+      const floors = FloorListResponse.parse(await (await get('/floors', 'token-mia')).json()).floors;
+      const expected = (
+        await Promise.all(
+          floors.map(async (floor) => {
+            const plan = FloorPlan.parse(await (await get(`/floors/${floor.floorId}/plan`, 'token-mia')).json());
+            return plan.rooms.map((room) => ({ floorId: floor.floorId, roomId: room.id, name: room.name }));
+          }),
+        )
+      ).flat();
+      const walls = (await channelsOf('token-mia')).filter((channel) => channel.kind === 'room');
+      expect(walls.map(({ floorId, roomId, name }) => ({ floorId, roomId, name }))).toEqual(
+        expect.arrayContaining(expected),
+      );
+      expect(walls).toHaveLength(expected.length);
+
+      const wall = walls.find((channel) => channel.floorId === 'ground-floor' && channel.roomId === 'elbe');
+      expect(wall).toBeDefined();
+      const posted = await send('POST', `/channels/${wall?.channelId ?? ''}/messages`, 'token-mia', {
+        body: 'Persistent room note',
+      });
+      expect(posted.status).toBe(201);
+      await channelsOf('token-ben');
+      const history = MessagePageResponse.parse(
+        await (await get(`/channels/${wall?.channelId ?? ''}/messages`, 'token-ben')).json(),
+      );
+      expect(history.messages.map((message) => message.body)).toContain('Persistent room note');
     });
 
     it('keeps a private channel and its messages to its members, live and with unread counts', async () => {
@@ -339,8 +371,24 @@ describe('TeamTown server (integration)', () => {
       expect(second.channelId).toBe(first.channelId);
       expect(first).toMatchObject({ kind: 'direct', group: false, name: null });
 
-      // Regression: a group DM is found again by its members (array parameters in raw SQL).
       const miaId = await idOf('token-mia');
+      await send('POST', `/channels/${first.channelId}/messages`, 'token-lena', { body: 'pair history' });
+      const converted = ChannelSummarySchema.parse(
+        await (await send('POST', `/channels/${first.channelId}/members`, 'token-ben', { personIds: [miaId] })).json(),
+      );
+      expect(converted).toMatchObject({ channelId: first.channelId, kind: 'direct', group: true });
+      expect(
+        MessagePageResponse.parse(
+          await (await get(`/channels/${first.channelId}/messages`, 'token-mia')).json(),
+        ).messages.map((message) => message.body),
+      ).toEqual(['pair history']);
+      const freshPair = ChannelSummarySchema.parse(
+        await (await send('POST', '/direct-messages', 'token-lena', { personIds: [benId] })).json(),
+      );
+      expect(freshPair).toMatchObject({ kind: 'direct', group: false });
+      expect(freshPair.channelId).not.toBe(first.channelId);
+
+      // Regression: a group DM is found again by its members (array parameters in raw SQL).
       const openGroup = async (token: string, personIds: string[]) =>
         ChannelSummarySchema.parse(await (await send('POST', '/direct-messages', token, { personIds })).json());
       const group = await openGroup('token-lena', [benId, miaId]);
@@ -356,7 +404,7 @@ describe('TeamTown server (integration)', () => {
     });
 
     it('keeps replies in threads, counts mentions and shows public reactions in the office (M3b)', async () => {
-      const [benId, miaId] = await Promise.all(['token-ben', 'token-mia'].map(idOf));
+      const [lenaId, benId, miaId] = await Promise.all(['token-lena', 'token-ben', 'token-mia'].map(idOf));
       const lena = await connect('token-lena');
       const ben = await connect('token-ben');
       for (const client of [lena, ben]) await client.command({ t: 'JoinFloor', p: { floorId: 'ground-floor' } });
@@ -373,7 +421,10 @@ describe('TeamTown server (integration)', () => {
       );
       const reply = MessageSchema.parse(
         await (
-          await send('POST', `${path}/messages`, 'token-ben', { body: 'Ich!', threadRootId: root.messageId })
+          await send('POST', `${path}/messages`, 'token-ben', {
+            body: `Ich! <@${lenaId}>`,
+            threadRootId: root.messageId,
+          })
         ).json(),
       );
       expect(reply).toMatchObject({ threadRootId: root.messageId, alsoInChannel: false, thread: null });
@@ -390,15 +441,17 @@ describe('TeamTown server (integration)', () => {
       const lenaThreads = async () =>
         ThreadListResponse.parse(await (await get('/threads', 'token-lena')).json()).threads;
       expect(await lenaThreads()).toMatchObject([{ channelId: crew.channelId, unreadCount: 1 }]);
+      expect((await channelsOf('token-lena')).find((c) => c.channelId === crew.channelId)?.mentionCount).toBe(1);
       const threadPath = `${path}/threads/${root.messageId}`;
       expect(
         (await send('PUT', `${threadPath}/read-marker`, 'token-lena', { messageId: reply.messageId })).status,
       ).toBe(204);
       expect((await lenaThreads())[0]?.unreadCount).toBe(0);
+      expect((await channelsOf('token-lena')).find((c) => c.channelId === crew.channelId)?.mentionCount).toBe(0);
       expect((await remove(`${threadPath}/follow`, 'token-lena')).status).toBe(204);
       expect(await lenaThreads()).toEqual([]);
 
-      // A mention of a member counts for them; the reply above didn't raise anyone's channel counter.
+      // A mention in the channel counts independently of thread-reply mentions.
       await send('POST', `${path}/messages`, 'token-mia', { body: `Hey <@${benId}>` });
       const benCrew = (await channelsOf('token-ben')).find((channel) => channel.channelId === crew.channelId);
       expect(benCrew).toMatchObject({ unreadCount: 2, mentionCount: 1 });

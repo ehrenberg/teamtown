@@ -3,13 +3,13 @@ import { buildFloorGrid, tileAt, type TileCoord } from '@teamtown/world-core';
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import logoMark from '../../../../../design/brand/logo-mark.svg';
-import { useFloorPlan, useFloors, useMe } from '../../api/queries.ts';
+import { useChannels, useFloorPlan, useFloors, useMe } from '../../api/queries.ts';
 import { useAuthClient } from '../../app/auth-context.tsx';
 import { useCallAudio } from '../../media/use-call-audio.ts';
 import { useRealtime } from '../../realtime/realtime-context.tsx';
 import { serverClock } from '../../shared/server-clock.ts';
 import { usePresenceStore } from '../../stores/presence-store.ts';
-import { Phone } from 'lucide-react';
+import { MessageSquare, Phone } from 'lucide-react';
 import { useCallStore } from '../../stores/call-store.ts';
 import { selectPanelOpen, useChatStore } from '../../stores/chat-store.ts';
 import { CallAnnouncer, CallPanel, CallSomeoneDialog, IncomingCallDialog } from './calls.tsx';
@@ -63,6 +63,7 @@ export function OfficePage({ sidebar, sidePanel }: { readonly sidebar?: ReactNod
   const realtime = useRealtime();
   const me = useMe();
   const floors = useFloors();
+  const channels = useChannels();
   const connection = usePresenceStore((state) => state.connection);
   const [selectedFloorId, setSelectedFloorId] = useState<string | null>(null);
   const [closedDoorRoomId, setClosedDoorRoomId] = useState<string | null>(null);
@@ -80,6 +81,8 @@ export function OfficePage({ sidebar, sidePanel }: { readonly sidebar?: ReactNod
   const roomNames = useMemo(() => new Map(rooms?.rooms.map((room) => [room.roomId, room.name])), [rooms]);
   const myRoomId = useMyRoom(rooms?.roomMap ?? null);
   const myRoom = rooms?.rooms.find((room) => room.roomId === myRoomId) ?? null;
+  const roomWalls = channels.data?.channels.filter((channel) => channel.kind === 'room') ?? [];
+  const myRoomWall = roomWalls.find((channel) => channel.floorId === floorId && channel.roomId === myRoomId);
   const closedDoorRoom = rooms?.rooms.find((room) => room.roomId === closedDoorRoomId) ?? null;
   const doorModeLabels = useMemo(
     () => ({ open: t('room.mode_open'), knock: t('room.mode_knock'), locked: t('room.mode_locked') }),
@@ -157,6 +160,18 @@ export function OfficePage({ sidebar, sidePanel }: { readonly sidebar?: ReactNod
         )}
         <div className="ml-auto flex items-center gap-3">
           {myRoom?.doorModeAdjustable && <DoorModeControl room={myRoom} />}
+          {myRoomWall && myRoom && (
+            <Button
+              variant="ghost"
+              aria-label={t('room.openWallFor', { room: myRoom.name })}
+              onClick={() => {
+                useChatStore.getState().open(myRoomWall.channelId);
+              }}
+            >
+              <MessageSquare aria-hidden="true" className="size-4" />
+              {t('room.openWall')}
+            </Button>
+          )}
           <Button
             variant="ghost"
             onClick={() => {
@@ -191,7 +206,16 @@ export function OfficePage({ sidebar, sidePanel }: { readonly sidebar?: ReactNod
         <ScreenShareAnnouncer />
         <KnockTray roomId={myRoomId} roomName={myRoom?.name ?? ''} />
         <PeopleList onTalkTo={talkTo} onCall={call} />
-        {rooms && <RoomsList rooms={rooms.rooms} roomMap={rooms.roomMap} myRoomId={myRoomId} onGoTo={goToRoom} />}
+        {rooms && floorId && (
+          <RoomsList
+            rooms={rooms.rooms}
+            floorId={floorId}
+            roomWalls={roomWalls}
+            roomMap={rooms.roomMap}
+            myRoomId={myRoomId}
+            onGoTo={goToRoom}
+          />
+        )}
         {sidebar}
         <ConversationAnnouncer />
         <RoomAnnouncer myRoomId={myRoomId} roomNames={roomNames} />

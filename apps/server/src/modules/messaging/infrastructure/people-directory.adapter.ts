@@ -8,4 +8,8 @@ export class PeopleDirectoryAdapter implements PeopleDirectory {
   async existing(personIds: readonly string[]): Promise<ReadonlySet<string>> {
     return new Set((await this.people.namesOf(personIds)).keys());
   }
+
+  async allIds(): Promise<string[]> {
+    return (await this.people.everyone()).map((person) => person.personId);
+  }
 }

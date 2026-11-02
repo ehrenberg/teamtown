@@ -2,20 +2,31 @@ import { Inject, Logger, Module, type OnApplicationBootstrap } from '@nestjs/com
 import { MikroORM } from '@mikro-orm/postgresql';
 import { FloorQueries } from './application/floor-queries.ts';
 import { ImportSeedFloorPlans } from './application/import-seed-floor-plans.ts';
+import { WorldEventStream } from './application/world-event-stream.ts';
 import { FLOOR_PLAN_REPOSITORY, type FloorPlanRepository } from './application/ports/floor-plan-repository.port.ts';
 import { FloorPlanEntity } from './infrastructure/persistence/floor-plan.entity.ts';
 import { WORLD_MIGRATIONS } from './infrastructure/persistence/migrations/world-initial.migration.ts';
 import { MikroOrmFloorPlanRepository } from './infrastructure/persistence/mikro-orm-floor-plan.repository.ts';
 import { loadSeedFloorPlans } from './infrastructure/seeds/seed-floor-plans.ts';
+import { WorldOutbox } from './infrastructure/world-outbox.ts';
 import { FloorsController } from './interface/http/floors.controller.ts';
 
 @Module({
   controllers: [FloorsController],
   providers: [
+    { provide: WorldEventStream, useValue: new WorldEventStream() },
+    {
+      provide: WorldOutbox,
+      useFactory: (orm: MikroORM, events: WorldEventStream) => new WorldOutbox(orm, events),
+      inject: [MikroORM, WorldEventStream],
+    },
     {
       provide: FLOOR_PLAN_REPOSITORY,
-      useFactory: (orm: MikroORM) => new MikroOrmFloorPlanRepository(orm),
-      inject: [MikroORM],
+      useFactory: (orm: MikroORM, outbox: WorldOutbox) =>
+        new MikroOrmFloorPlanRepository(orm, () => {
+          outbox.relay.kick();
+        }),
+      inject: [MikroORM, WorldOutbox],
     },
     {
       provide: FloorQueries,
@@ -28,7 +39,7 @@ import { FloorsController } from './interface/http/floors.controller.ts';
       inject: [FLOOR_PLAN_REPOSITORY],
     },
   ],
-  exports: [FloorQueries],
+  exports: [FloorQueries, WorldEventStream],
 })
 export class WorldModule implements OnApplicationBootstrap {
   static readonly entities = [FloorPlanEntity];

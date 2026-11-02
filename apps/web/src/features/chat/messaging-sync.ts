@@ -54,6 +54,7 @@ export function MessagingSync(): null {
             return;
           case 'ThreadActivity':
             void queryClient.invalidateQueries({ queryKey: ['threads'] });
+            refreshChannels();
             return;
           case 'ChannelLeft':
             if (useChatStore.getState().openChannelId === event.p.channelId) useChatStore.getState().close();

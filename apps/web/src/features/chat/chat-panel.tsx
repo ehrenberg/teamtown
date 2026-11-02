@@ -8,7 +8,7 @@ import { apiDelete, apiSend } from '../../api/api-client.ts';
 import { useChannels, useMessages, usePeople } from '../../api/queries.ts';
 import { useChatStore } from '../../stores/chat-store.ts';
 import { usePresenceStore } from '../../stores/presence-store.ts';
-import { NewMessageDialog, PeoplePickerDialog, PrivateMark, RenameChannelDialog } from './chat-dialogs.tsx';
+import { PeoplePickerDialog, PrivateMark, RenameChannelDialog } from './chat-dialogs.tsx';
 import { channelTitle, errorText, type Person } from './chat-shared.ts';
 import { channelPath, Composer } from './composer.tsx';
 import { MentionContext } from './message-body.tsx';
@@ -88,7 +88,7 @@ function ChannelHeader({ channel, title }: { readonly channel: ChannelSummary; r
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const myPersonId = usePresenceStore((state) => state.myPersonId);
-  const [dialog, setDialog] = useState<'rename' | 'invite' | 'add-to-pair' | null>(null);
+  const [dialog, setDialog] = useState<'rename' | 'invite' | null>(null);
   const [error, setError] = useState<string | null>(null);
   const path = channelPath(channel.channelId);
   const isCreator = channel.creatorId !== null && channel.creatorId === myPersonId;
@@ -133,7 +133,7 @@ function ChannelHeader({ channel, title }: { readonly channel: ChannelSummary; r
             t(channel.kind === 'private' ? 'chat.invite' : 'chat.addPeople'),
             <UserPlus aria-hidden="true" className="size-4" />,
             () => {
-              setDialog(isPair ? 'add-to-pair' : 'invite');
+              setDialog('invite');
             },
           )}
         {isCreator &&
@@ -160,7 +160,7 @@ function ChannelHeader({ channel, title }: { readonly channel: ChannelSummary; r
         })}
       </div>
       <p className="text-xs text-text-secondary">
-        {t('chat.memberCount', { count: channel.members.length })}
+        {channel.kind === 'room' ? t('chat.roomWall') : t('chat.memberCount', { count: channel.members.length })}
         {channel.archived && ` · ${t('chat.archivedHint')}`}
       </p>
       {error && (
@@ -181,12 +181,6 @@ function ChannelHeader({ channel, title }: { readonly channel: ChannelSummary; r
           await apiSend('POST', `${path}/members`, { personIds });
           refresh();
         }}
-      />
-      {/* A 1:1 DM stays between its two people: adding someone starts a group DM with all three. */}
-      <NewMessageDialog
-        open={dialog === 'add-to-pair'}
-        onOpenChange={closeDialog}
-        initial={channel.members.filter((personId) => personId !== myPersonId)}
       />
     </header>
   );

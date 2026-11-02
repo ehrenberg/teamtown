@@ -4,7 +4,12 @@ import type { MessagingEvent } from './events.ts';
 import { Message, type ReactionError } from './message.ts';
 
 /** `pair`: a 1:1 DM, `group`: a DM with 3–8 people; both are `direct` channels to the outside. */
-export type ChannelKind = 'public' | 'private' | 'pair' | 'group';
+export type ChannelKind = 'public' | 'private' | 'room' | 'pair' | 'group';
+
+export interface RoomLink {
+  readonly floorId: string;
+  readonly roomId: string;
+}
 
 /** Seed channels (ADR-0033): everyone joins them on their first visit; `#general` can't be left. */
 export const GENERAL_CHANNEL_ID = 'general';
@@ -29,10 +34,12 @@ export interface Membership {
 export interface ChannelProps {
   readonly channelId: string;
   readonly kind: ChannelKind;
-  /** Without the `#`; `null` for DMs. */
+  /** Without the `#` for channels, the room title for room walls, `null` for DMs. */
   readonly name: string | null;
   /** Moderates the channel until M4 (ADR-0033); `null` for seed channels and DMs. */
   readonly creatorId: string | null;
+  /** Present only for room walls. Optional so stored pre-M3c channels restore as non-room channels. */
+  readonly room?: RoomLink | null;
   readonly memberships: readonly Membership[];
   readonly archivedAt: Date | null;
   readonly createdAt: Date;
@@ -84,6 +91,7 @@ export class Channel {
       kind: input.kind,
       name: name.value,
       creatorId: input.creatorId,
+      room: null,
       memberships: [],
       archivedAt: null,
       createdAt: input.now,
@@ -107,6 +115,7 @@ export class Channel {
       kind: memberIds.length === 2 ? 'pair' : 'group',
       name: null,
       creatorId: null,
+      room: null,
       memberships: [],
       archivedAt: null,
       createdAt: input.now,
@@ -114,6 +123,28 @@ export class Channel {
     channel.#channelChanged = true;
     channel.#addMembers(memberIds, input.now);
     return ok(channel);
+  }
+
+  static createRoomWall(input: {
+    channelId: string;
+    floorId: string;
+    roomId: string;
+    name: string;
+    now: Date;
+  }): Channel {
+    const channel = new Channel({
+      channelId: input.channelId,
+      kind: 'room',
+      name: input.name,
+      creatorId: null,
+      room: { floorId: input.floorId, roomId: input.roomId },
+      memberships: [],
+      archivedAt: null,
+      createdAt: input.now,
+    });
+    channel.#channelChanged = true;
+    channel.#announce();
+    return channel;
   }
 
   /** The key that makes a 1:1 DM unique per pair of people. */
@@ -138,6 +169,10 @@ export class Channel {
     return this.state.kind === 'pair' || this.state.kind === 'group';
   }
 
+  get roomLink(): RoomLink | null {
+    return this.state.kind === 'room' ? (this.state.room ?? null) : null;
+  }
+
   get isArchived(): boolean {
     return this.state.archivedAt !== null;
   }
@@ -154,9 +189,23 @@ export class Channel {
     return this.state.memberships.find((membership) => membership.personId === personId) ?? null;
   }
 
-  /** Public channels are readable by everyone; private channels and DMs only by their members. */
+  /** Public channels and room walls are readable by everyone; private channels and DMs only by members. */
   canRead(personId: string): boolean {
-    return this.state.kind === 'public' || this.isMember(personId);
+    return this.state.kind === 'public' || this.state.kind === 'room' || this.isMember(personId);
+  }
+
+  /** Room-wall membership is messaging access only and never derives from room presence (P-16). */
+  joinRoomWall(personId: string, now: Date): void {
+    if (this.state.kind === 'room' && !this.isMember(personId)) this.#addMembers([personId], now);
+  }
+
+  /** World owns a room wall's title and archived state (P-18). */
+  syncRoomWall(input: { name: string; archived: boolean; now: Date }): void {
+    if (this.state.kind !== 'room') return;
+    const archivedAt = input.archived ? (this.state.archivedAt ?? input.now) : null;
+    if (this.state.name === input.name && this.state.archivedAt === archivedAt) return;
+    this.state = { ...this.state, name: input.name, archivedAt };
+    this.#changed();
   }
 
   rename(actorId: string, raw: string): Result<void, ChannelError> {
@@ -196,8 +245,8 @@ export class Channel {
   }
 
   /**
-   * Members add people to a public channel (ADR-0034) or a group DM (up to eight in total); the creator invites
-   * into a private channel.
+   * Members add people to a public channel (ADR-0034) or a DM (up to eight in total); adding to a pair converts
+   * it into a group (P-12). The creator invites into a private channel.
    */
   invite(actorId: string, personIds: readonly string[], now: Date): Result<void, ChannelError> {
     const newcomers = [...new Set(personIds)].filter((personId) => !this.isMember(personId));
@@ -208,23 +257,29 @@ export class Channel {
       case 'private':
         if (actorId !== this.state.creatorId) return err('not-channel-creator');
         break;
+      case 'room':
+        return err('cannot-invite');
+      case 'pair':
       case 'group':
         if (!this.isMember(actorId)) return err('not-channel-member');
         if (this.state.memberships.length + newcomers.length > MAX_DIRECT_MEMBERS) {
           return err('direct-message-too-large');
         }
         break;
-      default:
-        // A 1:1 DM stays between its two people.
-        return err('cannot-invite');
     }
     if (this.isArchived) return err('channel-archived');
-    if (newcomers.length > 0) this.#addMembers(newcomers, now);
+    if (newcomers.length > 0) {
+      if (this.state.kind === 'pair') {
+        this.state = { ...this.state, kind: 'group' };
+        this.#channelChanged = true;
+      }
+      this.#addMembers(newcomers, now);
+    }
     return ok(undefined);
   }
 
   leave(personId: string): Result<void, ChannelError> {
-    if (this.state.channelId === GENERAL_CHANNEL_ID || this.state.kind === 'pair') {
+    if (this.state.channelId === GENERAL_CHANNEL_ID || this.state.kind === 'room' || this.state.kind === 'pair') {
       return err('cannot-leave-channel');
     }
     if (!this.isMember(personId)) return ok(undefined);

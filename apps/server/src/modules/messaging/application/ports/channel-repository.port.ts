@@ -16,12 +16,14 @@ export interface ChannelRepository {
   findById(channelId: string): Promise<Channel | null>;
   /** Public and private channels by name. */
   findByName(name: string): Promise<Channel | null>;
+  findRoomWall(floorId: string, roomId: string): Promise<Channel | null>;
   findPair(pairKey: string): Promise<Channel | null>;
   /** The group DM whose current members are exactly these people. */
   findGroupWithMembers(memberIds: readonly string[]): Promise<Channel | null>;
   /** The person's channels, or only `channelId` if they are a member of it. */
   listForMember(personId: string, channelId?: string): Promise<ChannelOverview[]>;
   listPublic(): Promise<Channel[]>;
+  listRoomWalls(): Promise<Channel[]>;
   /**
    * Writes what changed, plus the recorded events into the outbox, in one transaction (ADR-0018).
    * `conflict`: the name or the 1:1 pair is taken meanwhile.

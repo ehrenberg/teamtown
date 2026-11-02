@@ -11,6 +11,8 @@ export const ChannelEntity = defineEntity({
     kind: p.string().length(16),
     name: p.string().length(40).nullable(),
     creatorId: p.uuid().nullable(),
+    floorId: p.string().length(63).nullable(),
+    roomId: p.string().length(63).nullable(),
     pairKey: p.string().length(80).nullable(),
     archivedAt: p.datetime().nullable(),
     createdAt: p.datetime(),

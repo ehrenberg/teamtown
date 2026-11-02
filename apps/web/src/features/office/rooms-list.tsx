@@ -1,9 +1,12 @@
 import { tileAt, type RoomMap } from '@teamtown/world-core';
+import type { ChannelSummary } from '@teamtown/contracts';
+import { AtSign } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRealtime } from '../../realtime/realtime-context.tsx';
 import { serverClock } from '../../shared/server-clock.ts';
 import { usePresenceStore } from '../../stores/presence-store.ts';
+import { useChatStore } from '../../stores/chat-store.ts';
 import { myKnock, useRoomStore } from '../../stores/room-store.ts';
 import { DOOR_MODE_ICONS } from './room-controls.tsx';
 import type { RoomInfo } from './rooms.ts';
@@ -39,11 +42,15 @@ function useOccupancy(roomMap: RoomMap): Readonly<Record<string, readonly string
 /** Non-spatial view of the rooms (principle "spatial is optional"): door modes, who is inside, go there, knock. */
 export function RoomsList({
   rooms,
+  floorId,
+  roomWalls,
   roomMap,
   myRoomId,
   onGoTo,
 }: {
   readonly rooms: readonly RoomInfo[];
+  readonly floorId: string;
+  readonly roomWalls: readonly ChannelSummary[];
   readonly roomMap: RoomMap;
   readonly myRoomId: string | null;
   readonly onGoTo: (roomId: string) => void;
@@ -72,6 +79,7 @@ export function RoomsList({
           const isMine = room.roomId === myRoomId;
           const waitingHere = waitingFor?.roomId === room.roomId;
           const names = inside.map((id) => avatars[id]?.displayName ?? '').filter(Boolean);
+          const wall = roomWalls.find((channel) => channel.floorId === floorId && channel.roomId === room.roomId);
           return (
             <li key={room.roomId} className="rounded-sm px-2 py-1.5 text-sm hover:bg-neutral-200">
               <div className="flex items-center gap-2">
@@ -92,44 +100,72 @@ export function RoomsList({
               <p className="truncate text-xs text-text-secondary">
                 {names.length > 0 ? names.join(', ') : t('room.occupants', { count: 0 })}
               </p>
-              {!isMine && (
-                <div className="mt-1 flex gap-1">
-                  {/* Also offered for closed rooms: whoever just left may return within the grace period. */}
+              <div className="mt-1 flex items-center gap-1">
+                {wall && (
                   <button
                     type="button"
-                    aria-label={t('room.goTo', { room: room.name })}
-                    disabled={!iAmHere}
+                    aria-label={t('room.openWallFor', { room: room.name })}
                     onClick={() => {
-                      onGoTo(room.roomId);
+                      useChatStore.getState().open(wall.channelId);
                     }}
                     className={LINK_BUTTON}
                   >
-                    {t('room.goThere')}
+                    {t('room.openWall')}
                   </button>
-                  {waitingHere ? (
+                )}
+                {wall && wall.mentionCount > 0 && (
+                  <span className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-espresso px-1.5 text-xs font-semibold text-cream">
+                    <AtSign aria-hidden="true" className="size-3" />
+                    {wall.mentionCount}
+                    <span className="sr-only">{t('chat.mentions', { count: wall.mentionCount })}</span>
+                  </span>
+                )}
+                {wall && wall.unreadCount > 0 && (
+                  <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-terracotta-500 px-1.5 text-xs font-semibold text-white">
+                    <span aria-hidden="true" className="size-1.5 rounded-full bg-white" />
+                    {wall.unreadCount}
+                    <span className="sr-only">{t('chat.unread', { count: wall.unreadCount })}</span>
+                  </span>
+                )}
+                {!isMine && (
+                  <>
+                    {/* Also offered for closed rooms: whoever just left may return within the grace period. */}
                     <button
                       type="button"
-                      onClick={() => void realtime.cancelKnock(waitingFor.knockId)}
+                      aria-label={t('room.goTo', { room: room.name })}
+                      disabled={!iAmHere}
+                      onClick={() => {
+                        onGoTo(room.roomId);
+                      }}
                       className={LINK_BUTTON}
                     >
-                      {t('room.cancelKnock')}
+                      {t('room.goThere')}
                     </button>
-                  ) : (
-                    mode === 'knock' &&
-                    inside.length > 0 &&
-                    !waitingFor && (
+                    {waitingHere ? (
                       <button
                         type="button"
-                        aria-label={t('room.knockOn', { room: room.name })}
-                        onClick={() => void realtime.knockOnRoom(room.roomId)}
+                        onClick={() => void realtime.cancelKnock(waitingFor.knockId)}
                         className={LINK_BUTTON}
                       >
-                        {t('room.knock')}
+                        {t('room.cancelKnock')}
                       </button>
-                    )
-                  )}
-                </div>
-              )}
+                    ) : (
+                      mode === 'knock' &&
+                      inside.length > 0 &&
+                      !waitingFor && (
+                        <button
+                          type="button"
+                          aria-label={t('room.knockOn', { room: room.name })}
+                          onClick={() => void realtime.knockOnRoom(room.roomId)}
+                          className={LINK_BUTTON}
+                        >
+                          {t('room.knock')}
+                        </button>
+                      )
+                    )}
+                  </>
+                )}
+              </div>
               {waitingHere && <p className="mt-1 text-xs">{t('room.waiting', { room: room.name })}</p>}
             </li>
           );

@@ -134,6 +134,56 @@ describe('Channel', () => {
     expect(general.leave('anna')).toEqual({ ok: false, error: 'cannot-leave-channel' });
   });
 
+  describe('room walls', () => {
+    it('links one readable system channel to a room and grants messaging access lazily', () => {
+      const wall = Channel.createRoomWall({
+        channelId: 'wall-1',
+        floorId: 'ground-floor',
+        roomId: 'focus-room',
+        name: 'Focus Room',
+        now: NOW,
+      });
+
+      expect(wall.props).toMatchObject({
+        kind: 'room',
+        name: 'Focus Room',
+        creatorId: null,
+        room: { floorId: 'ground-floor', roomId: 'focus-room' },
+      });
+      expect(wall.canRead('anna')).toBe(true);
+      wall.joinRoomWall('anna', LATER);
+      wall.joinRoomWall('anna', LATER);
+      expect(wall.memberIds).toEqual(['anna']);
+      expect(wall.leave('anna')).toEqual({ ok: false, error: 'cannot-leave-channel' });
+      expect(wall.invite('anna', ['ben'], LATER)).toEqual({ ok: false, error: 'cannot-invite' });
+      expect(wall.rename('anna', 'Other')).toEqual({ ok: false, error: 'not-channel-creator' });
+    });
+
+    it('updates and archives a room wall only through its room lifecycle', () => {
+      const wall = Channel.createRoomWall({
+        channelId: 'wall-1',
+        floorId: 'ground-floor',
+        roomId: 'focus-room',
+        name: 'Focus Room',
+        now: NOW,
+      });
+      wall.joinRoomWall('anna', NOW);
+      wall.pullChanges();
+      wall.pullEvents();
+
+      wall.syncRoomWall({ name: 'Quiet Room', archived: false, now: LATER });
+      expect(wall.props.name).toBe('Quiet Room');
+      expect(wall.pullChanges().channel).toBe(true);
+
+      wall.syncRoomWall({ name: 'Quiet Room', archived: true, now: LATER });
+      expect(wall.isArchived).toBe(true);
+      expect(wall.post({ messageId: 'm1', authorId: 'anna', body: 'Hi', now: LATER })).toEqual({
+        ok: false,
+        error: 'channel-archived',
+      });
+    });
+  });
+
   it('tells the person who left and the remaining members', () => {
     const channel = aChannel();
     channel.join('ben', LATER);
@@ -191,11 +241,16 @@ describe('Channel', () => {
       });
     });
 
-    it('is a pair that stays between its two people', () => {
+    it('converts a pair into a group when a member adds someone', () => {
       const pair = aDirect(['ben', 'anna']);
       expect(pair.pairKey).toBe('anna:ben');
       expect(pair.leave('anna')).toEqual({ ok: false, error: 'cannot-leave-channel' });
-      expect(pair.invite('anna', ['carl'], LATER)).toEqual({ ok: false, error: 'cannot-invite' });
+      expect(pair.invite('dora', ['carl'], LATER)).toEqual({ ok: false, error: 'not-channel-member' });
+      expect(pair.invite('anna', ['carl'], LATER).ok).toBe(true);
+      expect(pair.props.kind).toBe('group');
+      expect(pair.memberIds).toEqual(['ben', 'anna', 'carl']);
+      expect(pair.pairKey).toBeNull();
+      expect(pair.leave('anna').ok).toBe(true);
       expect(pair.rename('anna', 'x')).toEqual({ ok: false, error: 'not-channel-creator' });
     });
 

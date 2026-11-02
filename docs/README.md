@@ -1,7 +1,8 @@
 # TeamTown Documentation
 
-> **Project status: planning phase.** No production code exists yet. Decided items are recorded as ADRs.
-> Everything else is marked as a proposal and listed in [open questions](product/open-questions.md).
+> **Project status: active MVP development.** M0–M2 and M3a–M3c are complete; M3d files is next.
+> Decisions are recorded in ADRs and product documents. Proposals stay explicitly marked, and pending
+> decisions are tracked in [open questions](product/open-questions.md).
 
 ## Product
 

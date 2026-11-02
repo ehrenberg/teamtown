@@ -7,7 +7,7 @@ export type OpenDirectMessageError = 'direct-message-too-large' | 'invalid-reque
 
 /**
  * Use case: opens the DM whose current members are exactly the sender and these people, or creates it
- * (decided 2026-11-01; proposal in the feature spec). There is one 1:1 DM per pair.
+ * (P-13). There is one current 1:1 DM per pair; converting it to a group (P-12) frees the pair for a new DM.
  */
 export class OpenDirectMessage {
   constructor(

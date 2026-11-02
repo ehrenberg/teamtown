@@ -1,6 +1,8 @@
 import type { MikroORM } from '@mikro-orm/postgresql';
 import { unwrap } from '@teamtown/kernel';
+import { appendToOutbox } from '../../../../platform/outbox/outbox.ts';
 import type { FloorPlanRepository } from '../../application/ports/floor-plan-repository.port.ts';
+import { roomLifecycleEvents } from '../../domain/events.ts';
 import { FloorPlan } from '../../domain/floor-plan.ts';
 import { FloorPlanRecord } from './floor-plan.entity.ts';
 
@@ -11,7 +13,10 @@ import { FloorPlanRecord } from './floor-plan.entity.ts';
 export class MikroOrmFloorPlanRepository implements FloorPlanRepository {
   readonly #cache = new Map<string, FloorPlan>();
 
-  constructor(private readonly orm: MikroORM) {}
+  constructor(
+    private readonly orm: MikroORM,
+    private readonly eventsRecorded: () => void,
+  ) {}
 
   async list(): Promise<FloorPlan[]> {
     const records = await this.orm.em.fork().findAll(FloorPlanRecord, { orderBy: { level: 'asc' } });
@@ -30,22 +35,27 @@ export class MikroOrmFloorPlanRepository implements FloorPlanRepository {
   }
 
   async save(plan: FloorPlan): Promise<void> {
-    const em = this.orm.em.fork();
     const { props } = plan;
-    const record = await em.findOne(FloorPlanRecord, { floorId: props.floorId });
-    if (record) {
-      Object.assign(record, { name: props.name, level: props.level, version: props.version, plan: props });
-    } else {
-      em.create(FloorPlanRecord, {
-        floorId: props.floorId,
-        name: props.name,
-        level: props.level,
-        version: props.version,
-        plan: props,
-      });
-    }
-    await em.flush();
+    const events = await this.orm.em.fork().transactional(async (em) => {
+      const record = await em.findOne(FloorPlanRecord, { floorId: props.floorId });
+      const recorded = roomLifecycleEvents(record?.plan ?? null, props);
+      if (record) {
+        Object.assign(record, { name: props.name, level: props.level, version: props.version, plan: props });
+      } else {
+        em.create(FloorPlanRecord, {
+          floorId: props.floorId,
+          name: props.name,
+          level: props.level,
+          version: props.version,
+          plan: props,
+        });
+      }
+      await em.flush();
+      await appendToOutbox(em, 'world', recorded);
+      return recorded;
+    });
     this.#cache.set(props.floorId, plan);
+    if (events.length > 0) this.eventsRecorded();
   }
 
   #toDomain(record: FloorPlanRecord): FloorPlan {

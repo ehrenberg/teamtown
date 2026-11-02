@@ -9,13 +9,14 @@ export const CONTENT =
   'fixed top-1/2 left-1/2 flex w-[min(30rem,90vw)] -translate-x-1/2 -translate-y-1/2 flex-col gap-3 rounded-md bg-surface-raised p-5 shadow-raised';
 export const INPUT = 'min-h-6 rounded-md border border-border-subtle bg-surface-sunken px-3 py-2 text-sm';
 
-/** `#name` for channels; the other people's names for DMs. */
+/** `#name` for channels, the room name for room walls, the other people's names for DMs. */
 export function channelTitle(
   channel: ChannelSummary,
   myPersonId: string | null,
   people: ReadonlyMap<string, Person>,
   t: TFunction,
 ): string {
+  if (channel.kind === 'room') return channel.name ?? '';
   if (channel.kind !== 'direct') return `#${channel.name ?? ''}`;
   const others = channel.members
     .filter((personId) => personId !== myPersonId)

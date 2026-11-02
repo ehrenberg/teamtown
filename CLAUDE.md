@@ -4,7 +4,8 @@ TeamTown is an open-source (AGPL-3.0), self-hostable communication platform that
 with a **soft low-poly isometric 3D replica of the real office**: avatars walk around, proximity audio,
 room meetings (open/knock/locked), channels and DMs with scoped roles.
 
-**Status: M0 Foundation done** (monorepo, tooling, CI, hello apps, dev stack). Feature work starts with M1.
+**Status: M0–M2 and M3a–M3c complete.** Channels/DMs, threads/mentions/reactions and room walls are done;
+the next roadmap slice is M3d files and requires a feature spec and product-owner decisions before implementation.
 `docs/` is the source of truth for decisions.
 
 ## Golden rules

@@ -5,7 +5,16 @@
       "dependsOn": ["^build"],
       "outputs": ["dist/**"]
     },
+    "@teamtown/website#build": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", "../../docs/**", "../../design/brand/**"],
+      "outputs": ["dist/**"]
+    },
     "typecheck": {
+      "outputs": []
+    },
+    "@teamtown/website#typecheck": {
+      "inputs": ["$TURBO_DEFAULT$", "../../docs/**", "../../design/brand/**"],
       "outputs": []
     },
     "dev": {

@@ -1,8 +1,9 @@
 # Contributing to TeamTown
 
-Thanks for your interest! TeamTown is in its **planning phase**. The most valuable contributions right now
-are feedback on the [docs](docs/README.md), especially the [open questions](docs/product/open-questions.md)
-and the [idea catalogue](docs/product/brainstorming.md).
+Thanks for your interest! TeamTown is in **active MVP development**. Start with the
+[documentation](docs/README.md), the [roadmap](docs/product/roadmap.md) and the relevant feature spec. If a
+change depends on a proposal or an [open question](docs/product/open-questions.md), discuss it with the product
+owner before implementation.
 
 ## Development setup
 

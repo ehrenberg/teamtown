@@ -27,4 +27,4 @@ TeamTown handles presence, audio/video and private messages. Reports about the f
 
 ## Supported versions
 
-TeamTown is in its planning phase and has no released versions yet. Once released, security fixes target the latest release.
+TeamTown is in active development and has no released versions yet. Once released, security fixes target the latest release.

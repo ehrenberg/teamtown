@@ -30,21 +30,21 @@ and react without writing, so that chats stay readable and quick feedback costs 
    - Thread replies don't raise the channel's unread counter (except "also sent to channel" ones).
    - The sidebar gets an entry **"Threads"** above "Channels" with the number of unread replies (number **and**
      dot). It opens the threads view in the chat panel: the newest 30 followed threads, newest activity first, those
-     with unread replies marked _(proposal: all followed threads rather than only unread ones, so a thread doesn't
-     vanish while one reads it)_, each with its channel name, the root and the replies expanded, and a reply
-     composer. Reading a thread to its end moves its marker.
+     with unread replies marked (P-14, decided 2026-11-02), each with its channel name, the root and the replies
+     expanded, and a reply composer. Reading a thread to its end moves its marker.
 3. **Mentions** (ADR-0034).
    - Typing `@` in a composer opens a list of people, channel members first, filtered as one types; arrow keys and
      Enter pick, Escape closes. The message stores the person's ID, not the name (decided 2026-11-01), and shows
      "@Display Name" as a highlighted chip, so a later name change shows up everywhere.
    - A mentioned **member** sees the message highlighted and gets an `@` counter on the channel in the sidebar
-     (number **and** `@` shape) until they read past the message. Mentions in thread replies count under "Threads"
-     instead, because the mentioned member follows the thread _(proposal)_.
+     (number **and** `@` shape) until they read past the message. Mentions in thread replies count both under
+     "Threads" and on the channel's `@` counter; reading the reply in its thread clears both (P-15, decided
+     2026-11-02).
    - Editing a message counts newly added mentions; removing a mention withdraws it (decided 2026-11-01).
    - Mentioning a **non-member** notifies nobody; the mention stays in the text. After sending, the sender sees a
      hint "Cem isn't in #design" with "Add to channel" when they may add people: in public channels every member
-     (extends ADR-0033), in private channels the creator, in group DMs every member (up to 8). In a 1:1 DM the hint
-     has no button.
+     (extends ADR-0033), in private channels the creator, and in DMs every member (up to 8). Adding from a 1:1 DM
+     converts it into a group (P-12).
    - No `@channel` / `@here`, no browser or OS notifications yet (ADR-0034).
 4. **Reactions** (ADR-0034).
    - Members react to a message with any Unicode emoji: a quick bar with six emoji (👍 ❤️ 😂 🎉 👀 🙏, decided 2026-11-01)
@@ -68,8 +68,10 @@ and react without writing, so that chats stay readable and quick feedback costs 
 - [x] Given a thread one follows, when someone else replies, then the "Threads" entry counts the reply; when one
       reads the thread to its end, the counter clears in all of one's clients.
 - [x] Given a followed thread, when one stops following it, then new replies don't count anymore.
-- [x] Given a member mentioned with `@`, then they see the message highlighted and an `@` counter on the channel
-      until they read past it; they follow the thread if the mention is in a reply (counted under "Threads").
+- [x] Given a member mentioned with `@` in a thread reply, then the reply counts under Threads and on the
+      channel's `@` counter; reading it in the thread clears both counters.
+- [x] Given a member mentioned with `@` in a channel message, then they see the message highlighted and an `@`
+      counter on the channel until they read past it.
 - [x] Given a mention of a non-member, then the person isn't notified and the sender sees the hint, with "Add to
       channel" when they may add people.
 - [x] Given a message, when a member picks 👍 and then picks it again, then the chip appears with count 1 for
@@ -92,11 +94,11 @@ and react without writing, so that chats stay readable and quick feedback costs 
 Replying and reacting are posting (`message.post`, members only). Until M4 the local rules of ADR-0033 apply,
 extended by ADR-0034:
 
-| Action                                   | Allowed for                                                         |
-| ---------------------------------------- | ------------------------------------------------------------------- |
-| Reply, react, mention                    | members                                                             |
-| Follow or stop following a thread        | people who can read the channel                                     |
-| Add someone to a channel (from the hint) | public: every member (new); private: the creator; group DM: members |
+| Action                                   | Allowed for                                                   |
+| ---------------------------------------- | ------------------------------------------------------------- |
+| Reply, react, mention                    | members                                                       |
+| Follow or stop following a thread        | people who can read the channel                               |
+| Add someone to a channel (from the hint) | public: every member (new); private: the creator; DM: members |
 
 No new permissions in the catalogue. As before, not being allowed to read a channel answers `404`.
 
@@ -123,7 +125,8 @@ No new permissions in the catalogue. As before, not being allowed to read a chan
 REST, schemas in `packages/contracts/src/messaging/`:
 
 - `MessageSchema` gains `threadRootId`, `alsoInChannel`, `mentions`, `reactions [{ emoji, personIds }]` and
-  `thread { replyCount, lastReplyAt, replierIds } | null`. `ChannelSummary` gains `mentionCount`.
+  `thread { replyCount, lastReplyAt, replierIds } | null`. `ChannelSummary` gains `mentionCount`, including unread
+  mentions in followed threads (P-15).
 - `GET /api/channels/{id}/messages`: the channel without thread replies, except "also sent to channel" ones.
 - `GET /api/channels/{id}/messages/{rootId}/replies?before={messageId}&limit=50`: a thread, oldest first.
 - `POST /api/channels/{id}/messages` `{ body, threadRootId?, alsoInChannel? }`.
@@ -140,7 +143,7 @@ Realtime events (to the members' open connections unless noted):
 - `MessagePosted` for replies too (with `threadRootId`; clients count it on the root),
   `ReactionChanged { channelId, messageId, personId, emoji, added }`.
 - `ThreadActivity { channelId, rootMessageId }`: to followers and the person whose follow or marker changed; they
-  reload their threads. Mention counts come with the channel list, which `MessagePosted` already reloads.
+  reload their threads and channel mention counts. Mention counts also reload with `MessagePosted`.
 - `AvatarEmoted { floorId, personId, emoji }`: to everyone on the reactor's floor, public channels only.
 
 ## Privacy impact
@@ -172,5 +175,4 @@ Realtime events (to the members' open connections unless noted):
 
 ## Open questions
 
-- The two rules marked _(proposal)_: the threads view lists all recent followed threads (unread ones marked), and
-  mentions in thread replies count under "Threads" rather than on the channel's `@` counter.
+_None._ P-14 and P-15 were decided on 2026-11-02.

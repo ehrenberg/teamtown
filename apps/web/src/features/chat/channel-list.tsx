@@ -28,7 +28,7 @@ export function ChannelList() {
     [people.data],
   );
   const all = channels.data?.channels ?? [];
-  const named = all.filter((channel) => channel.kind !== 'direct').sort(byName);
+  const named = all.filter((channel) => channel.kind === 'public' || channel.kind === 'private').sort(byName);
   const direct = all.filter((channel) => channel.kind === 'direct').sort(byLatest);
   const closeDialog = (open: boolean) => {
     if (!open) setDialog(null);

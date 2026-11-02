@@ -52,6 +52,8 @@ M3c room walls → M3d files → M3e search. M3a channels and DMs done on 2026-1
 ([feature spec](../features/messaging-channels-and-dms.md)); the command palette entries follow with the palette.
 M3b threads, mentions and reactions done on 2026-11-01 (ADR-0034,
 [feature spec](../features/messaging-threads-mentions-reactions.md)); "Go to threads" follows with the palette.
+M3c room walls done on 2026-11-02 ([feature spec](../features/messaging-room-walls.md)); the command-palette
+entry follows with the palette.
 
 M2 and M3 can be developed in parallel by different contributors because they are separate bounded
 contexts ([domain model](../architecture/domain-model.md)).

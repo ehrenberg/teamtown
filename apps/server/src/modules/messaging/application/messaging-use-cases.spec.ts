@@ -21,6 +21,7 @@ import type { PeopleDirectory } from './ports/people-directory.port.ts';
 import type { FollowedThread, ThreadRepository } from './ports/thread-repository.port.ts';
 import { PostMessage } from './post-message.ts';
 import { ReactToMessage } from './react-to-message.ts';
+import { SynchronizeRoomWalls } from './synchronize-room-walls.ts';
 import { MoveThreadReadMarker, SetThreadFollowing } from './thread-follows.ts';
 import { UpdateChannel } from './update-channel.ts';
 
@@ -75,13 +76,27 @@ class InMemoryChannels implements ChannelRepository {
   readonly channels = new Map<string, Channel>();
   readonly seeded = new Set<string>();
 
-  constructor(private readonly messages: InMemoryMessages) {}
+  constructor(
+    private readonly messages: InMemoryMessages,
+    private readonly threads: InMemoryThreads,
+  ) {}
 
   findById(channelId: string): Promise<Channel | null> {
     return Promise.resolve(this.channels.get(channelId) ?? null);
   }
   findByName(name: string): Promise<Channel | null> {
-    return Promise.resolve([...this.channels.values()].find((c) => c.props.name === name) ?? null);
+    return Promise.resolve(
+      [...this.channels.values()].find(
+        (c) => (c.props.kind === 'public' || c.props.kind === 'private') && c.props.name === name,
+      ) ?? null,
+    );
+  }
+  findRoomWall(floorId: string, roomId: string): Promise<Channel | null> {
+    return Promise.resolve(
+      [...this.channels.values()].find(
+        (channel) => channel.roomLink?.floorId === floorId && channel.roomLink.roomId === roomId,
+      ) ?? null,
+    );
   }
   findPair(pairKey: string): Promise<Channel | null> {
     return Promise.resolve([...this.channels.values()].find((c) => c.pairKey === pairKey) ?? null);
@@ -107,13 +122,37 @@ class InMemoryChannels implements ChannelRepository {
               !m.isDeleted &&
               (!marker || m.props.postedAt > marker.postedAt),
           );
-          const mentionCount = unread.filter((m) => m.props.mentions.includes(personId)).length;
+          const mentioned = new Set(
+            unread
+              .filter((message) => message.props.mentions.includes(personId))
+              .map((message) => message.props.messageId),
+          );
+          for (const message of this.messages.messages.values()) {
+            const rootMessageId = message.props.threadRootId;
+            if (
+              !rootMessageId ||
+              message.props.channelId !== channel.props.channelId ||
+              message.props.authorId === personId ||
+              message.isDeleted ||
+              !message.props.mentions.includes(personId)
+            ) {
+              continue;
+            }
+            const follow = this.threads.threads.get(rootMessageId)?.followOf(personId);
+            if (follow?.following && (!follow.readMarker || message.props.postedAt > follow.readMarker.postedAt)) {
+              mentioned.add(message.props.messageId);
+            }
+          }
+          const mentionCount = mentioned.size;
           return { channel, unreadCount: unread.length, mentionCount, lastMessageAt: null };
         }),
     );
   }
   listPublic(): Promise<Channel[]> {
     return Promise.resolve([...this.channels.values()].filter((c) => c.props.kind === 'public'));
+  }
+  listRoomWalls(): Promise<Channel[]> {
+    return Promise.resolve([...this.channels.values()].filter((channel) => channel.props.kind === 'room'));
   }
   save(channel: Channel): Promise<Result<void, 'conflict'>> {
     channel.pullChanges();
@@ -167,6 +206,7 @@ class InMemoryThreads implements ThreadRepository {
 
 const people: PeopleDirectory = {
   existing: (ids) => Promise.resolve(new Set(ids.filter((id) => !id.startsWith('ghost')))),
+  allIds: () => Promise.resolve(['anna', 'ben', 'carl']),
 };
 
 function setup() {
@@ -175,8 +215,14 @@ function setup() {
   let counter = 0;
   const ids: IdGenerator = { next: () => `id-${String(++counter)}` };
   const messages = new InMemoryMessages();
-  const channels = new InMemoryChannels(messages);
   const threads = new InMemoryThreads(messages);
+  const channels = new InMemoryChannels(messages, threads);
+  const roomState = {
+    rooms: [
+      { floorId: 'ground-floor', roomId: 'focus-room', name: 'Focus Room' },
+      { floorId: 'upper-floor', roomId: 'lounge', name: 'Lounge' },
+    ],
+  };
   for (const channelId of [GENERAL_CHANNEL_ID, RANDOM_CHANNEL_ID]) {
     channels.channels.set(
       channelId,
@@ -200,6 +246,14 @@ function setup() {
     channels,
     messages,
     list: new ListMyChannels(channels, clock),
+    roomState,
+    syncWalls: new SynchronizeRoomWalls(
+      channels,
+      { listRooms: () => Promise.resolve(roomState.rooms) },
+      people,
+      clock,
+      ids,
+    ),
     create: new CreateChannel(channels, clock, ids),
     update: new UpdateChannel(channels, clock),
     add: new AddChannelMembers(channels, people, clock),
@@ -223,6 +277,40 @@ describe('Messaging use cases', () => {
 
   beforeEach(() => {
     app = setup();
+  });
+
+  describe('room walls (M3c)', () => {
+    it('creates one wall per room idempotently and grants every member access on listing', async () => {
+      const app = setup();
+      await app.syncWalls.execute();
+      await app.syncWalls.execute();
+
+      const walls = await app.channels.listRoomWalls();
+      expect(walls).toHaveLength(2);
+      expect(walls.map((wall) => wall.roomLink)).toEqual([
+        { floorId: 'ground-floor', roomId: 'focus-room' },
+        { floorId: 'upper-floor', roomId: 'lounge' },
+      ]);
+
+      const listed = await app.list.execute('anna');
+      expect(listed.filter(({ channel }) => channel.props.kind === 'room')).toHaveLength(2);
+      expect(walls.every((wall) => wall.isMember('anna'))).toBe(true);
+      expect(walls.every((wall) => wall.isMember('ben'))).toBe(true);
+    });
+
+    it('renames existing walls and archives removed rooms without losing identity', async () => {
+      const app = setup();
+      await app.syncWalls.execute();
+      const wall = await app.channels.findRoomWall('ground-floor', 'focus-room');
+      expect(wall).not.toBeNull();
+
+      app.roomState.rooms = [{ floorId: 'ground-floor', roomId: 'focus-room', name: 'Quiet Room' }];
+      await app.syncWalls.execute();
+
+      expect(wall?.props.name).toBe('Quiet Room');
+      expect(wall?.isArchived).toBe(false);
+      expect((await app.channels.findRoomWall('upper-floor', 'lounge'))?.isArchived).toBe(true);
+    });
   });
 
   it('adds people to the seed channels on their first visit only', async () => {
@@ -333,6 +421,19 @@ describe('Messaging use cases', () => {
       const second = unwrap(await app.openDm.execute({ personId: 'ben', personIds: ['anna'] }));
       expect(second.props.channelId).toBe(first.props.channelId);
       expect(first.props.kind).toBe('pair');
+    });
+
+    it('converts a 1:1 DM in place and permits a fresh pair afterwards', async () => {
+      const pair = unwrap(await app.openDm.execute({ personId: 'anna', personIds: ['ben'] }));
+      const converted = unwrap(
+        await app.add.execute({ personId: 'ben', channelId: pair.props.channelId, personIds: ['carl'] }),
+      );
+      expect(converted.props).toMatchObject({ channelId: pair.props.channelId, kind: 'group' });
+      expect(converted.memberIds).toEqual(['anna', 'ben', 'carl']);
+
+      const freshPair = unwrap(await app.openDm.execute({ personId: 'anna', personIds: ['ben'] }));
+      expect(freshPair.props).toMatchObject({ kind: 'pair' });
+      expect(freshPair.props.channelId).not.toBe(converted.props.channelId);
     });
 
     it('finds a group DM by its current members', async () => {
@@ -474,8 +575,21 @@ describe('Messaging use cases', () => {
       const [overview] = await app.channels.listForMember(BEN, channelId);
       expect(overview).toMatchObject({ unreadCount: 2, mentionCount: 1 });
 
-      unwrap(await app.post.execute({ personId: 'carl', channelId, body: `<@${BEN}> hier`, threadRootId: rootId }));
+      const reply = unwrap(
+        await app.post.execute({ personId: 'carl', channelId, body: `<@${BEN}> hier`, threadRootId: rootId }),
+      );
       expect((await app.threads.execute(BEN)).map((t) => t.root.props.messageId)).toEqual([rootId]);
+      expect((await app.channels.listForMember(BEN, channelId))[0]?.mentionCount).toBe(2);
+
+      unwrap(
+        await app.readThread.execute({
+          personId: BEN,
+          channelId,
+          rootMessageId: rootId,
+          messageId: reply.props.messageId,
+        }),
+      );
+      expect((await app.channels.listForMember(BEN, channelId))[0]?.mentionCount).toBe(1);
     });
 
     it('lets members react, and refuses anything but one emoji', async () => {
