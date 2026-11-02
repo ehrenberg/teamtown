@@ -30,6 +30,11 @@ const AppConfigSchema = z
     LIVEKIT_API_SECRET: z.string().min(1).optional(),
     /** Days a logged meeting is kept (ADR-0027); an admin setting from M4 on. */
     MEETING_LOG_RETENTION_DAYS: z.coerce.number().int().min(1).max(3650).default(90),
+    /** Local Docker volume for uploaded files (ADR-0017). */
+    FILES_STORAGE_PATH: z.string().min(1).default('./data/files'),
+    /** ClamAV `clamd` host for upload scanning (ADR-0035). Unset: uploads proceed unscanned (self-hoster opt-out). */
+    FILES_CLAMAV_HOST: z.string().min(1).optional(),
+    FILES_CLAMAV_PORT: z.coerce.number().int().min(1).max(65_535).default(3310),
   })
   .refine(
     (config) =>

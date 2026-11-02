@@ -117,6 +117,8 @@ describe('TeamTown server (integration)', () => {
         OIDC_AUDIENCE: 'teamtown-api',
         LOG_LEVEL: 'info',
         MEETING_LOG_RETENTION_DAYS: 90,
+        FILES_STORAGE_PATH: './data/files-test',
+        FILES_CLAMAV_PORT: 3310,
       },
       { tokenVerifier: fakeVerifier },
     );

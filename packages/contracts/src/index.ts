@@ -1,3 +1,4 @@
+export * from './files/uploads.ts';
 export * from './http/health.ts';
 export * from './meetings/meeting-logs.ts';
 export * from './messaging/channels.ts';

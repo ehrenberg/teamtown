@@ -46,6 +46,19 @@ services:
       - '7881:7881'
       - '7882:7882/udp'
 
+  # ClamAV (ADR-0035, optional): malware scanning for file uploads (M3d). Leave FILES_CLAMAV_HOST unset in the
+  # server's .env to run without it; comment this service out if you don't want it running locally at all.
+  clamav:
+    image: clamav/clamav:1.4
+    ports: ['3310:3310']
+    volumes:
+      - clamav-data:/var/lib/clamav
+    healthcheck:
+      test: ['CMD', 'clamdcheck.sh']
+      interval: 30s
+      retries: 10
+      start_period: 180s
+
   # ---- Observability (ADR-0019): always part of the stack ----
   otel-collector:
     image: otel/opentelemetry-collector-contrib:0.164.0
@@ -102,6 +115,7 @@ services:
 
 volumes:
   postgres-data:
+  clamav-data:
   prometheus-data:
   loki-data:
   tempo-data:

@@ -1,4 +1,5 @@
 import { Module, type DynamicModule } from '@nestjs/common';
+import { FilesModule } from './modules/files/public-api.ts';
 import { IdentityModule, type IdentityModuleOptions } from './modules/identity/public-api.ts';
 import { MeetingsModule } from './modules/meetings/public-api.ts';
 import { MessagingModule } from './modules/messaging/public-api.ts';
@@ -32,12 +33,14 @@ export class AppModule {
             ...WorldModule.entities,
             ...MeetingsModule.entities,
             ...MessagingModule.entities,
+            ...FilesModule.entities,
           ],
           migrations: [
             ...PeopleModule.migrations,
             ...WorldModule.migrations,
             ...MeetingsModule.migrations,
             ...MessagingModule.migrations,
+            ...FilesModule.migrations,
           ],
         }),
         HealthModule,
@@ -47,6 +50,7 @@ export class AppModule {
         PresenceModule,
         MeetingsModule,
         MessagingModule,
+        FilesModule,
         RealtimeModule,
       ],
     };
