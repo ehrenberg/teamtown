@@ -39,6 +39,9 @@ Use these terms consistently in code, UI, docs and conversations. Code identifie
 | **Mention**         | `@person` in a message; notifies members of the channel                                                  | `mentions[]`                               |
 | **Reaction**        | An emoji a person attaches to a message                                                                  | `reactions[]`                              |
 | **Emote**           | A reaction shown briefly above the avatar (public channels only, never stored)                           | `AvatarEmoted`                             |
+| **Attachment**      | A file attached to a message, previewed inline for images and PDF, downloaded otherwise                  | `Attachment`, `Message.attachments[]`      |
+| **Upload**          | A file in temporary storage before a message claims it as an attachment                                  | `Upload`                                   |
+| **Pin**             | A message marked to stay easy to find in its channel, DM or room wall                                    | `Message.pinned`                           |
 | **Person**          | A member's profile (name, avatar look, locale, desk)                                                     | `Person`                                   |
 | **Guest**           | An external person with access limited to explicitly shared resources                                    | `role: guest`                              |
 | **Role**            | A named set of permissions                                                                               | `Role`                                     |
@@ -70,10 +73,12 @@ flowchart TB
     presence -->|AvatarMoved<br/>AvatarEnteredRoom / LeftRoom<br/>StatusChanged| meetings[Meetings]
     meetings -->|KnockRequested<br/>CallIncoming| notifications[Notifications]
     messaging -->|MessagePosted<br/>PersonMentioned| notifications
+    messaging -->|MessageDeleted| files[Files]
     access -. AccessPolicy port .-> world
     access -. AccessPolicy port .-> presence
     access -. AccessPolicy port .-> meetings
     access -. AccessPolicy port .-> messaging
+    access -. AccessPolicy port .-> files
     world & access & messaging -->|admin events| audit[Audit]
 ```
 
@@ -118,10 +123,18 @@ flowchart TB
 
 - **`Channel`** (root): `kind`, `name`, `visibility`, `memberships[]`, `archived`.
 - **`Message`** (root, references `channelId`): `author`, `body` (Markdown subset), `threadRootId?`,
-  `alsoInChannel`, `mentions[]`, `reactions[]`, `attachments[]`, `editedAt?`, `deletedAt?`; a root's thread summary
-  (reply count, newest reply, repliers) is derived from its replies.
+  `alsoInChannel`, `mentions[]`, `reactions[]`, `attachments[]`, `pinned`, `editedAt?`, `deletedAt?`; a root's
+  thread summary (reply count, newest reply, repliers) is derived from its replies. Deleting a message unpins it.
   - A separate aggregate so that high-volume messages don't lock the channel.
 - **`Thread`** (root, per thread root): its follows per person, `following` and `readMarker?` (ADR-0034).
+
+### Files
+
+- **`Upload`** (root): `uploadId`, `uploaderId`, `fileName`, `contentType`, `byteSize`, `storageKey`,
+  `status: pending | claimed`, `createdAt`, `expiresAt`. A `pending` upload past its `expiresAt` is deleted.
+  Claimed by a `Message` in Messaging, which references it by ID only; Files never reads message content.
+  Before an `Upload` is created, its bytes are checked by the `MalwareScanner` port (ADR-0035; default adapter:
+  ClamAV); an infected result discards the bytes instead of creating the upload.
 
 ### Access
 
@@ -130,13 +143,14 @@ flowchart TB
 
 ## 5. Domain events (initial catalogue)
 
-| Context   | Event                                                                                                                                                          | Main consumers                                  |
-| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
-| Identity  | `PersonAuthenticated`                                                                                                                                          | People (create profile on first login)          |
-| World     | `FloorPlanPublished`, `RoomCreated`, `RoomRenamed`, `RoomPolicyChanged`, `RoomDeleted`, `DeskAssigned`                                                         | Presence, Messaging, Audit                      |
-| Presence  | `AvatarMoved`, `AvatarEnteredRoom`, `AvatarLeftRoom`, `DoorModeChanged`, `StatusChanged`, `PersonWentOnline/Offline`                                           | Meetings, gateway                               |
-| Meetings  | `ConversationFormed/Changed/Dissolved`, `RoomCallChanged`, `KnockRequested/Answered`, `DirectCallRequested`, `MeetingLogStarted/Ended`                         | Notifications, gateway                          |
-| Messaging | `MessagePosted`, `MessageEdited`, `MessageDeleted`, `PersonMentioned`, `ChannelChanged`, `ChannelLeft`, `ReadMarkerMoved`, `ReactionChanged`, `ThreadActivity` | Notifications, gateway, Presence (emote), Audit |
-| Access    | `RoleCreated/Changed`, `RoleAssigned/Revoked`                                                                                                                  | Audit, permission cache invalidation            |
+| Context   | Event                                                                                                                                                                               | Main consumers                                  |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| Identity  | `PersonAuthenticated`                                                                                                                                                               | People (create profile on first login)          |
+| World     | `FloorPlanPublished`, `RoomCreated`, `RoomRenamed`, `RoomPolicyChanged`, `RoomDeleted`, `DeskAssigned`                                                                              | Presence, Messaging, Audit                      |
+| Presence  | `AvatarMoved`, `AvatarEnteredRoom`, `AvatarLeftRoom`, `DoorModeChanged`, `StatusChanged`, `PersonWentOnline/Offline`                                                                | Meetings, gateway                               |
+| Meetings  | `ConversationFormed/Changed/Dissolved`, `RoomCallChanged`, `KnockRequested/Answered`, `DirectCallRequested`, `MeetingLogStarted/Ended`                                              | Notifications, gateway                          |
+| Messaging | `MessagePosted`, `MessageEdited`, `MessageDeleted`, `MessagePinChanged`, `PersonMentioned`, `ChannelChanged`, `ChannelLeft`, `ReadMarkerMoved`, `ReactionChanged`, `ThreadActivity` | Notifications, gateway, Presence (emote), Audit |
+| Access    | `RoleCreated/Changed`, `RoleAssigned/Revoked`                                                                                                                                       | Audit, permission cache invalidation            |
+| Files     | `UploadExpired`                                                                                                                                                                     | Messaging (drop expired attachmentUploadIds)    |
 
 Naming rule: past tense, the context name implied by the module, payload with IDs plus the minimum data consumers need.

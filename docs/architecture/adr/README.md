@@ -39,3 +39,4 @@ See [ADR-0001](0001-record-architecture-decisions.md) for the process. New ADRs 
 | [0032](0032-livekit-room-per-conversation.md)        | One LiveKit room per proximity conversation                             | Accepted                                     |
 | [0033](0033-write-milestone-rules.md)                | Write (M3): slicing, channel rules before roles, chat panel             | Accepted                                     |
 | [0034](0034-threads-mentions-reactions.md)           | Threads inline, followed threads, @person mentions, any-emoji reactions | Accepted                                     |
+| [0035](0035-upload-malware-scanning-clamav.md)       | Malware scanning of uploads with an optional ClamAV service             | Accepted                                     |
