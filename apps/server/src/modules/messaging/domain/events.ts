@@ -3,6 +3,14 @@
  * payloads are plain JSON: times are ISO strings. `recipients` are the members who should hear of it.
  */
 
+export interface AttachmentSnapshot {
+  readonly fileId: string;
+  readonly fileName: string;
+  readonly contentType: string;
+  readonly byteSize: number;
+  readonly previewKind: 'image' | 'pdf' | 'none';
+}
+
 export interface MessageSnapshot {
   readonly messageId: string;
   readonly channelId: string;
@@ -12,6 +20,8 @@ export interface MessageSnapshot {
   readonly alsoInChannel: boolean;
   readonly mentions: string[];
   readonly reactions: { readonly emoji: string; readonly personIds: string[] }[];
+  readonly attachments: AttachmentSnapshot[];
+  readonly pinned: boolean;
   readonly postedAt: string;
   readonly editedAt: string | null;
   readonly deleted: boolean;
@@ -77,6 +87,15 @@ export interface ThreadActivity {
   readonly recipients: readonly string[];
 }
 
+/** A message was pinned or unpinned (P-24). */
+export interface MessagePinChanged {
+  readonly type: 'MessagePinChanged';
+  readonly channelId: string;
+  readonly messageId: string;
+  readonly pinned: boolean;
+  readonly recipients: readonly string[];
+}
+
 export type MessagingEvent =
   | MessagePosted
   | MessageEdited
@@ -85,4 +104,5 @@ export type MessagingEvent =
   | ChannelLeft
   | ReadMarkerMoved
   | ReactionChanged
-  | ThreadActivity;
+  | ThreadActivity
+  | MessagePinChanged;

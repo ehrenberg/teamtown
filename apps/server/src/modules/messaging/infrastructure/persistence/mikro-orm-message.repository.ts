@@ -1,8 +1,8 @@
 import type { EntityManager, MikroORM } from '@mikro-orm/postgresql';
 import { appendToOutbox } from '../../../../platform/outbox/outbox.ts';
 import type { MessagePage, MessageRepository, ThreadSummary } from '../../application/ports/message-repository.port.ts';
-import { Message, type Reaction } from '../../domain/message.ts';
-import { MessageRecord, ReactionRecord } from './messaging.entities.ts';
+import { Message, type Attachment, type Reaction } from '../../domain/message.ts';
+import { AttachmentRecord, MessageRecord, ReactionRecord } from './messaging.entities.ts';
 
 /** Repliers a root shows (spec: up to three avatars). */
 const REPLIERS_SHOWN = 3;
@@ -30,6 +30,16 @@ export class MikroOrmMessageRepository implements MessageRepository {
 
   replies(rootMessageId: string, before: Message | null, limit: number): Promise<MessagePage> {
     return this.#page({ threadRootId: rootMessageId }, before, limit);
+  }
+
+  async findPinned(channelId: string): Promise<Message[]> {
+    const em = this.orm.em.fork();
+    const records = await em.find(
+      MessageRecord,
+      { channelId, pinned: true },
+      { orderBy: { postedAt: 'desc', messageId: 'desc' } },
+    );
+    return toDomain(em, records);
   }
 
   async threadSummaries(rootMessageIds: readonly string[]): Promise<ReadonlyMap<string, ThreadSummary>> {
@@ -77,10 +87,33 @@ export class MikroOrmMessageRepository implements MessageRepository {
         threadRootId: props.threadRootId,
         alsoInChannel: props.alsoInChannel,
         mentions: [...props.mentions],
+        pinned: props.pinned,
         postedAt: props.postedAt,
         editedAt: props.editedAt,
         deletedAt: props.deletedAt,
       });
+      // Attachments are set once, at posting, and never change again (P-23); a delete removes them (P-21).
+      if (props.deletedAt) {
+        await em.nativeDelete(AttachmentRecord, { messageId: props.messageId });
+      } else {
+        for (const [order, attachment] of props.attachments.entries()) {
+          await em.execute(
+            `insert into "messaging"."attachment"
+               ("message_id", "file_id", "order", "file_name", "content_type", "byte_size", "preview_kind")
+             values (?, ?, ?, ?, ?, ?, ?)
+             on conflict ("message_id", "file_id") do nothing`,
+            [
+              props.messageId,
+              attachment.fileId,
+              order,
+              attachment.fileName,
+              attachment.contentType,
+              attachment.byteSize,
+              attachment.previewKind,
+            ],
+          );
+        }
+      }
       // Only the changes, so that people reacting at the same time don't overwrite each other.
       for (const change of reactionChanges) {
         const key = { messageId: props.messageId, emoji: change.emoji, personId: change.personId };
@@ -123,10 +156,8 @@ export class MikroOrmMessageRepository implements MessageRepository {
 }
 
 async function toDomain(em: EntityManager, records: readonly MessageRecord[]): Promise<Message[]> {
-  const reactions = await reactionsOf(
-    em,
-    records.map((record) => record.messageId),
-  );
+  const messageIds = records.map((record) => record.messageId);
+  const [reactions, attachments] = await Promise.all([reactionsOf(em, messageIds), attachmentsOf(em, messageIds)]);
   return records.map((record) =>
     Message.restore({
       messageId: record.messageId,
@@ -137,11 +168,36 @@ async function toDomain(em: EntityManager, records: readonly MessageRecord[]): P
       alsoInChannel: record.alsoInChannel,
       mentions: record.mentions,
       reactions: reactions.get(record.messageId) ?? [],
+      attachments: attachments.get(record.messageId) ?? [],
+      pinned: record.pinned,
       postedAt: record.postedAt,
       editedAt: record.editedAt ?? null,
       deletedAt: record.deletedAt ?? null,
     }),
   );
+}
+
+/** Attachments per message, in the order they were sent. */
+async function attachmentsOf(em: EntityManager, messageIds: readonly string[]): Promise<Map<string, Attachment[]>> {
+  const byMessage = new Map<string, Attachment[]>();
+  if (messageIds.length === 0) return byMessage;
+  const records = await em.find(
+    AttachmentRecord,
+    { messageId: { $in: [...messageIds] } },
+    { orderBy: { messageId: 'asc', order: 'asc' } },
+  );
+  for (const record of records) {
+    const attachments = byMessage.get(record.messageId) ?? [];
+    attachments.push({
+      fileId: record.fileId,
+      fileName: record.fileName,
+      contentType: record.contentType,
+      byteSize: record.byteSize,
+      previewKind: record.previewKind as Attachment['previewKind'],
+    });
+    byMessage.set(record.messageId, attachments);
+  }
+  return byMessage;
 }
 
 /** Reactions per message: emoji in the order of their first reaction, people in the order they reacted. */

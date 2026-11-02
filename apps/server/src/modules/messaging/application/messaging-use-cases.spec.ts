@@ -1,21 +1,25 @@
-import { FixedClock, ok, unwrap, type IdGenerator, type Result } from '@teamtown/kernel';
+import { err, FixedClock, ok, unwrap, type IdGenerator, type Result } from '@teamtown/kernel';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { Channel, GENERAL_CHANNEL_ID, RANDOM_CHANNEL_ID } from '../domain/channel.ts';
 import type { MessagingEvent } from '../domain/events.ts';
-import type { Message } from '../domain/message.ts';
+import type { Attachment, Message } from '../domain/message.ts';
 import { Thread } from '../domain/thread.ts';
 import { AddChannelMembers } from './add-channel-members.ts';
 import { CreateChannel } from './create-channel.ts';
 import { DeleteMessage } from './delete-message.ts';
 import { EditMessage } from './edit-message.ts';
+import { GetAttachmentContent } from './get-attachment-content.ts';
 import { LeaveChannel } from './leave-channel.ts';
 import { ListMessages } from './list-messages.ts';
 import { ListMyChannels } from './list-my-channels.ts';
+import { ListPinnedMessages } from './list-pinned-messages.ts';
 import { ListReplies } from './list-replies.ts';
 import { ListThreads } from './list-threads.ts';
 import { MoveReadMarker } from './move-read-marker.ts';
 import { OpenDirectMessage } from './open-direct-message.ts';
+import { PinMessage } from './pin-message.ts';
 import type { ChannelOverview, ChannelRepository } from './ports/channel-repository.port.ts';
+import type { AttachmentContent, ClaimAttachmentsError, FileAttachments } from './ports/file-attachments.port.ts';
 import type { MessagePage, MessageRepository, ThreadSummary } from './ports/message-repository.port.ts';
 import type { PeopleDirectory } from './ports/people-directory.port.ts';
 import type { FollowedThread, ThreadRepository } from './ports/thread-repository.port.ts';
@@ -39,6 +43,13 @@ class InMemoryMessages implements MessageRepository {
   }
   replies(rootMessageId: string, before: Message | null, limit: number): Promise<MessagePage> {
     return this.#page((m) => m.props.threadRootId === rootMessageId, before, limit);
+  }
+  findPinned(channelId: string): Promise<Message[]> {
+    return Promise.resolve(
+      [...this.messages.values()]
+        .filter((m) => m.props.channelId === channelId && m.props.pinned)
+        .sort((a, b) => b.props.postedAt.getTime() - a.props.postedAt.getTime()),
+    );
   }
   threadSummaries(rootMessageIds: readonly string[]): Promise<ReadonlyMap<string, ThreadSummary>> {
     const summaries = new Map<string, ThreadSummary>();
@@ -209,6 +220,45 @@ const people: PeopleDirectory = {
   allIds: () => Promise.resolve(['anna', 'ben', 'carl']),
 };
 
+/** A minimal Files fake: claims by upload ID (`ok-*` succeed, `taken-*` are already claimed by someone else). */
+class FakeFileAttachments implements FileAttachments {
+  readonly claimed = new Map<string, string>();
+
+  claim(input: {
+    uploadIds: readonly string[];
+    messageId: string;
+    uploaderId: string;
+  }): Promise<Result<Attachment[], ClaimAttachmentsError>> {
+    for (const uploadId of input.uploadIds) {
+      if (uploadId.startsWith('missing-')) return Promise.resolve(err('upload-not-found'));
+      if (this.claimed.has(uploadId)) return Promise.resolve(err('already-claimed'));
+    }
+    for (const uploadId of input.uploadIds) this.claimed.set(uploadId, input.messageId);
+    return Promise.resolve(
+      ok(
+        input.uploadIds.map((uploadId) => ({
+          fileId: uploadId,
+          fileName: `${uploadId}.pdf`,
+          contentType: 'application/pdf',
+          byteSize: 10,
+          previewKind: 'pdf' as const,
+        })),
+      ),
+    );
+  }
+
+  deleteForMessage(messageId: string): Promise<void> {
+    for (const [uploadId, claimedBy] of this.claimed) {
+      if (claimedBy === messageId) this.claimed.delete(uploadId);
+    }
+    return Promise.resolve();
+  }
+
+  getContent(): Promise<Result<AttachmentContent, 'not-found'>> {
+    return Promise.resolve(err('not-found'));
+  }
+}
+
 function setup() {
   outbox.length = 0;
   const clock = new FixedClock(new Date('2026-11-01T10:00:00Z'));
@@ -217,6 +267,7 @@ function setup() {
   const messages = new InMemoryMessages();
   const threads = new InMemoryThreads(messages);
   const channels = new InMemoryChannels(messages, threads);
+  const fileAttachments = new FakeFileAttachments();
   const roomState = {
     rooms: [
       { floorId: 'ground-floor', roomId: 'focus-room', name: 'Focus Room' },
@@ -260,15 +311,19 @@ function setup() {
     leave: new LeaveChannel(channels),
     openDm: new OpenDirectMessage(channels, people, clock, ids),
     history: new ListMessages(channels, messages),
-    post: new PostMessage(channels, messages, threads, clock, ids),
+    post: new PostMessage(channels, messages, threads, fileAttachments, clock, ids),
     edit: new EditMessage(channels, messages, threads, clock),
-    remove: new DeleteMessage(channels, messages, clock),
+    remove: new DeleteMessage(channels, messages, fileAttachments, clock),
     read: new MoveReadMarker(channels, messages),
     replies: new ListReplies(channels, messages),
     react: new ReactToMessage(channels, messages),
     threads: new ListThreads(channels, messages, threads),
     follow: new SetThreadFollowing(channels, messages, threads),
     readThread: new MoveThreadReadMarker(channels, messages, threads),
+    pin: new PinMessage(channels, messages),
+    pinned: new ListPinnedMessages(channels, messages),
+    attachmentContent: new GetAttachmentContent(channels, messages, fileAttachments),
+    fileAttachments,
   };
 }
 
@@ -622,6 +677,85 @@ describe('Messaging use cases', () => {
       });
       expect(
         await app.react.execute({ personId: BEN, channelId, messageId: rootMessageId, emoji: '👍', add: true }),
+      ).toEqual({ ok: false, error: 'not-found' });
+    });
+  });
+
+  describe('files and pinning (M3d)', () => {
+    const BEN = '0b0b0b0b-0000-4000-8000-000000000002';
+
+    async function aTeam() {
+      const team = unwrap(await app.create.execute({ personId: 'anna', kind: 'public', name: 'team' }));
+      const channelId = team.props.channelId;
+      unwrap(await app.add.execute({ personId: 'anna', channelId, personIds: [BEN] }));
+      return channelId;
+    }
+
+    it('claims uploads as attachments when posting, and clears them from Files on delete', async () => {
+      const channelId = await aTeam();
+      const posted = unwrap(
+        await app.post.execute({ personId: 'anna', channelId, body: 'See attached', attachmentUploadIds: ['ok-1'] }),
+      );
+      expect(posted.props.attachments).toMatchObject([{ fileId: 'ok-1', fileName: 'ok-1.pdf' }]);
+      expect(app.fileAttachments.claimed.has('ok-1')).toBe(true);
+
+      unwrap(await app.remove.execute({ personId: 'anna', channelId, messageId: posted.props.messageId }));
+      expect(app.fileAttachments.claimed.has('ok-1')).toBe(false);
+    });
+
+    it('rejects posting with an upload nobody can claim, and with too many attachments', async () => {
+      const channelId = await aTeam();
+      expect(
+        await app.post.execute({ personId: 'anna', channelId, body: 'Oops', attachmentUploadIds: ['missing-1'] }),
+      ).toEqual({ ok: false, error: 'upload-not-found' });
+
+      const eleven = Array.from({ length: 11 }, (_, i) => `ok-${String(i)}`);
+      expect(
+        await app.post.execute({ personId: 'anna', channelId, body: 'Too many', attachmentUploadIds: eleven }),
+      ).toEqual({ ok: false, error: 'too-many-attachments' });
+    });
+
+    it('lets only the creator pin in a channel, and lists pinned messages newest first (P-24, P-25)', async () => {
+      const channelId = await aTeam();
+      const first = unwrap(await app.post.execute({ personId: 'anna', channelId, body: 'First' }));
+      app.tick();
+      const second = unwrap(await app.post.execute({ personId: 'anna', channelId, body: 'Second' }));
+
+      expect(
+        await app.pin.execute({ personId: BEN, channelId, messageId: first.props.messageId, pinned: true }),
+      ).toEqual({
+        ok: false,
+        error: 'not-channel-creator',
+      });
+      unwrap(await app.pin.execute({ personId: 'anna', channelId, messageId: first.props.messageId, pinned: true }));
+      unwrap(await app.pin.execute({ personId: 'anna', channelId, messageId: second.props.messageId, pinned: true }));
+
+      const pinned = unwrap(await app.pinned.execute({ personId: BEN, channelId }));
+      expect(pinned.map((m) => m.props.body)).toEqual(['Second', 'First']);
+    });
+
+    it('unpins a message when it is deleted', async () => {
+      const channelId = await aTeam();
+      const message = unwrap(await app.post.execute({ personId: 'anna', channelId, body: 'Pin me' }));
+      unwrap(await app.pin.execute({ personId: 'anna', channelId, messageId: message.props.messageId, pinned: true }));
+      unwrap(await app.remove.execute({ personId: 'anna', channelId, messageId: message.props.messageId }));
+
+      expect(unwrap(await app.pinned.execute({ personId: 'anna', channelId }))).toEqual([]);
+    });
+
+    it('answers not-found for an attachment of a private channel one cannot read', async () => {
+      const secret = unwrap(await app.create.execute({ personId: 'anna', kind: 'private', name: 'files-secret' }));
+      const channelId = secret.props.channelId;
+      const message = unwrap(
+        await app.post.execute({ personId: 'anna', channelId, body: 'secret file', attachmentUploadIds: ['ok-9'] }),
+      );
+      expect(
+        await app.attachmentContent.execute({
+          personId: BEN,
+          channelId,
+          messageId: message.props.messageId,
+          fileId: 'ok-9',
+        }),
       ).toEqual({ ok: false, error: 'not-found' });
     });
   });

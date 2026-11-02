@@ -1,7 +1,7 @@
 import { err, ok, type Result } from '@teamtown/kernel';
 import { channelName } from './channel-name.ts';
 import type { MessagingEvent } from './events.ts';
-import { Message, type ReactionError } from './message.ts';
+import { Message, type Attachment, type ReactionError } from './message.ts';
 
 /** `pair`: a 1:1 DM, `group`: a DM with 3–8 people; both are `direct` channels to the outside. */
 export type ChannelKind = 'public' | 'private' | 'room' | 'pair' | 'group';
@@ -301,8 +301,12 @@ export class Channel {
     body: string;
     threadRoot?: Message | null | undefined;
     alsoInChannel?: boolean | undefined;
+    attachments?: readonly Attachment[] | undefined;
     now: Date;
-  }): Result<Message, 'not-channel-member' | 'channel-archived' | 'invalid-message' | 'invalid-thread-root'> {
+  }): Result<
+    Message,
+    'not-channel-member' | 'channel-archived' | 'invalid-message' | 'invalid-thread-root' | 'too-many-attachments'
+  > {
     if (!this.isMember(input.authorId)) return err('not-channel-member');
     if (this.isArchived) return err('channel-archived');
     const root = input.threadRoot ?? null;
@@ -315,10 +319,26 @@ export class Channel {
         body: input.body,
         threadRootId: root?.props.messageId ?? null,
         alsoInChannel: input.alsoInChannel ?? false,
+        attachments: input.attachments,
         now: input.now,
       },
       this.memberIds,
     );
+  }
+
+  /**
+   * Pins or unpins a message (P-24). Until M4: in a public or private channel only the creator may, like its
+   * other moderation; a DM or room wall has no creator, so any member may (P-25, P-26).
+   */
+  pin(actorId: string, message: Message, pinned: boolean): Result<void, ChannelError> {
+    if (!this.isMember(actorId)) return err('not-channel-member');
+    if (this.isArchived) return err('channel-archived');
+    if (this.state.kind === 'public' || this.state.kind === 'private') {
+      const allowed = this.#moderate(actorId);
+      if (!allowed.ok) return allowed;
+    }
+    const set = message.setPinned(pinned, this.memberIds);
+    return set.ok ? ok(undefined) : err('invalid-request');
   }
 
   /** Members react; archived channels take no new reactions. Public reactions may show in the office. */

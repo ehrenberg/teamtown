@@ -48,6 +48,7 @@ export const MessageEntity = defineEntity({
     threadRootId: p.string().length(64).nullable(),
     alsoInChannel: p.boolean(),
     mentions: p.array().columnType('uuid[]'),
+    pinned: p.boolean(),
     postedAt: p.datetime(),
     editedAt: p.datetime().nullable(),
     deletedAt: p.datetime().nullable(),
@@ -55,6 +56,24 @@ export const MessageEntity = defineEntity({
 });
 export class MessageRecord extends MessageEntity.class {}
 MessageEntity.setClass(MessageRecord);
+
+/** Attachments as they were when the message was sent (M3d); never changed by an edit, deleted with the message. */
+export const AttachmentEntity = defineEntity({
+  name: 'AttachmentRecord',
+  schema: 'messaging',
+  tableName: 'attachment',
+  properties: {
+    messageId: p.string().length(64).primary(),
+    fileId: p.string().length(64).primary(),
+    order: p.integer(),
+    fileName: p.string().length(255),
+    contentType: p.string().length(128),
+    byteSize: p.integer(),
+    previewKind: p.string().length(8),
+  },
+});
+export class AttachmentRecord extends AttachmentEntity.class {}
+AttachmentEntity.setClass(AttachmentRecord);
 
 export const ReactionEntity = defineEntity({
   name: 'ReactionRecord',
@@ -86,4 +105,11 @@ export const ThreadFollowEntity = defineEntity({
 export class ThreadFollowRecord extends ThreadFollowEntity.class {}
 ThreadFollowEntity.setClass(ThreadFollowRecord);
 
-export const MESSAGING_ENTITIES = [ChannelEntity, MembershipEntity, MessageEntity, ReactionEntity, ThreadFollowEntity];
+export const MESSAGING_ENTITIES = [
+  ChannelEntity,
+  MembershipEntity,
+  MessageEntity,
+  AttachmentEntity,
+  ReactionEntity,
+  ThreadFollowEntity,
+];

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { MAX_ATTACHMENTS_PER_MESSAGE, PreviewKind, UploadId } from '../files/uploads.ts';
 import { PersonId } from '../people/me.ts';
 
 /** Channels and direct messages (M3a, ADR-0033, docs/features/messaging-channels-and-dms.md). */
@@ -95,6 +96,16 @@ export const ReactionSchema = z.object({
   personIds: z.array(PersonId),
 });
 
+/** A file attached to a message (M3d); set only when posted, never changed by an edit. */
+export const AttachmentSchema = z.object({
+  fileId: UploadId,
+  fileName: z.string().min(1).max(255),
+  contentType: z.string().min(1).max(128),
+  byteSize: z.number().int().nonnegative(),
+  previewKind: PreviewKind,
+});
+export type AttachmentContract = z.infer<typeof AttachmentSchema>;
+
 /** What a root shows about its replies. Deleted replies count: they keep their place. */
 export const ThreadSummarySchema = z.object({
   replyCount: z.number().int().positive(),
@@ -116,6 +127,10 @@ export const MessageSchema = z.object({
   alsoInChannel: z.boolean(),
   mentions: z.array(PersonId),
   reactions: z.array(ReactionSchema),
+  /** Set once, when the message was sent (P-23); empty once deleted. */
+  attachments: z.array(AttachmentSchema),
+  /** Whether the message is pinned to its channel, DM or room wall (P-24). */
+  pinned: z.boolean(),
   /** Roots with replies only; always `null` for replies and in realtime events. */
   thread: ThreadSummarySchema.nullable(),
   postedAt: z.iso.datetime(),
@@ -147,12 +162,18 @@ export type MessageBodyRequest = z.infer<typeof MessageBodyRequest>;
 /**
  * `POST /api/channels/{channelId}/messages`; answered with the message. With `threadRootId` it is a reply; a reply
  * to a reply goes to the same root. `alsoInChannel` shows the reply in the channel, too (ADR-0034).
+ * `attachmentUploadIds` claims those pending uploads as attachments (M3d, P-22, P-23).
  */
 export const PostMessageRequest = MessageBodyRequest.extend({
   threadRootId: MessageId.optional(),
   alsoInChannel: z.boolean().optional(),
+  attachmentUploadIds: z.array(UploadId).max(MAX_ATTACHMENTS_PER_MESSAGE).optional(),
 });
 export type PostMessageRequest = z.infer<typeof PostMessageRequest>;
+
+/** `GET /api/channels/{channelId}/pinned-messages`: newest first (P-24). */
+export const PinnedMessagesResponse = z.object({ messages: z.array(MessageSchema) });
+export type PinnedMessagesResponse = z.infer<typeof PinnedMessagesResponse>;
 
 /** `GET /api/threads`: the threads I follow, newest activity first (ADR-0034). */
 export const ThreadListResponse = z.object({
@@ -194,5 +215,10 @@ export const MessagingErrorCode = z.enum([
   'invalid-thread-root',
   'invalid-emoji',
   'too-many-reactions',
+  /** M3d (P-23): more than 10 attachment uploads on one message. */
+  'too-many-attachments',
+  'upload-not-found',
+  'not-uploader',
+  'already-claimed',
 ]);
 export type MessagingErrorCode = z.infer<typeof MessagingErrorCode>;

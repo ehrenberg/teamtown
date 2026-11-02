@@ -1,13 +1,13 @@
 import { Module } from '@nestjs/common';
 import { MikroORM } from '@mikro-orm/postgresql';
 import type { Clock, IdGenerator } from '@teamtown/kernel';
-import { MessagingEventStream, MessagingModule } from '../messaging/public-api.ts';
 import { PeopleModule } from '../people/public-api.ts';
 import { APP_CONFIG, type AppConfig } from '../../platform/config/app-config.ts';
 import { CLOCK, ID_GENERATOR } from '../../platform/config/config.module.ts';
 import { CancelUpload } from './application/cancel-upload.ts';
 import { ClaimUploads } from './application/claim-uploads.ts';
 import { DeleteAttachmentsOfMessage } from './application/delete-attachments-of-message.ts';
+import { GetClaimedAttachmentContent } from './application/get-claimed-attachment-content.ts';
 import { GetUploadContent } from './application/get-upload-content.ts';
 import { FILE_STORAGE, type FileStorage } from './application/ports/file-storage.port.ts';
 import { MALWARE_SCANNER, type MalwareScanner } from './application/ports/malware-scanner.port.ts';
@@ -17,16 +17,20 @@ import { UploadFile } from './application/upload-file.ts';
 import { ClamavScannerAdapter } from './infrastructure/clamav-scanner.adapter.ts';
 import { DisabledMalwareScanner } from './infrastructure/disabled-malware-scanner.adapter.ts';
 import { LocalFileStorageAdapter } from './infrastructure/local-file-storage.adapter.ts';
-import { MessageDeletedListener } from './infrastructure/message-deleted-listener.ts';
 import { FILES_ENTITIES } from './infrastructure/persistence/files.entities.ts';
 import { FILES_MIGRATIONS } from './infrastructure/persistence/migrations/files-initial.migration.ts';
 import { MikroOrmUploadRepository } from './infrastructure/persistence/mikro-orm-upload.repository.ts';
 import { UploadExpiry } from './infrastructure/upload-expiry.ts';
 import { FilesController } from './interface/http/files.controller.ts';
 
-/** Uploads behind a `FileStorage` port (ADR-0017), scanned behind a `MalwareScanner` port (ADR-0035, M3d). */
+/**
+ * Uploads behind a `FileStorage` port (ADR-0017), scanned behind a `MalwareScanner` port (ADR-0035, M3d).
+ * Files has no dependency on Messaging: Messaging calls `ClaimUploads` and `DeleteAttachmentsOfMessage`
+ * through this module's public-api when it posts or deletes a message with attachments, so the module
+ * boundary stays one-directional (Messaging depends on Files, never the other way round).
+ */
 @Module({
-  imports: [MessagingModule, PeopleModule],
+  imports: [PeopleModule],
   controllers: [FilesController],
   providers: [
     {
@@ -69,6 +73,12 @@ import { FilesController } from './interface/http/files.controller.ts';
       inject: [UPLOAD_REPOSITORY, FILE_STORAGE],
     },
     {
+      provide: GetClaimedAttachmentContent,
+      useFactory: (uploads: UploadRepository, storage: FileStorage) =>
+        new GetClaimedAttachmentContent(uploads, storage),
+      inject: [UPLOAD_REPOSITORY, FILE_STORAGE],
+    },
+    {
       provide: ClaimUploads,
       useFactory: (uploads: UploadRepository) => new ClaimUploads(uploads),
       inject: [UPLOAD_REPOSITORY],
@@ -89,14 +99,8 @@ import { FilesController } from './interface/http/files.controller.ts';
       useFactory: (uploads: UploadRepository, storage: FileStorage) => new DeleteAttachmentsOfMessage(uploads, storage),
       inject: [UPLOAD_REPOSITORY, FILE_STORAGE],
     },
-    {
-      provide: MessageDeletedListener,
-      useFactory: (events: MessagingEventStream, deleteAttachments: DeleteAttachmentsOfMessage) =>
-        new MessageDeletedListener(events, deleteAttachments),
-      inject: [MessagingEventStream, DeleteAttachmentsOfMessage],
-    },
   ],
-  exports: [ClaimUploads],
+  exports: [ClaimUploads, DeleteAttachmentsOfMessage, GetClaimedAttachmentContent],
 })
 export class FilesModule {
   static readonly entities = FILES_ENTITIES;

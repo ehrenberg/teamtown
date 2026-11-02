@@ -175,7 +175,11 @@ describe('Files use cases', () => {
     const claimed = unwrap(
       await claim.execute({ uploadIds: [annasUpload.props.uploadId], messageId: 'm1', uploaderId: 'anna' }),
     );
-    expect(claimed[0]?.props).toMatchObject({ status: 'claimed', claimedByMessageId: 'm1' });
+    expect(claimed[0]).toMatchObject({ fileId: annasUpload.props.uploadId, fileName: 'a.pdf' });
+    expect((await uploads.findById(annasUpload.props.uploadId))?.props).toMatchObject({
+      status: 'claimed',
+      claimedByMessageId: 'm1',
+    });
   });
 
   it('only lets the uploader read their own upload', async () => {

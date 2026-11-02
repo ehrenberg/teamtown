@@ -136,6 +136,67 @@ describe('Message', () => {
     expect(react(message, 'ben', '🙂').ok).toBe(true);
   });
 
+  it('carries up to 10 attachments, set only when posted', () => {
+    const attachment = {
+      fileId: 'f1',
+      fileName: 'a.pdf',
+      contentType: 'application/pdf',
+      byteSize: 10,
+      previewKind: 'pdf' as const,
+    };
+    const message = unwrap(
+      Message.create(
+        {
+          messageId: 'm1',
+          channelId: 'c1',
+          authorId: 'anna',
+          body: 'See attached',
+          threadRootId: null,
+          alsoInChannel: false,
+          attachments: [attachment],
+          now: NOW,
+        },
+        MEMBERS,
+      ),
+    );
+    expect(message.props.attachments).toEqual([attachment]);
+    expect(message.snapshot.attachments).toEqual([attachment]);
+
+    const eleven = Array.from({ length: 11 }, (_, i) => ({ ...attachment, fileId: `f${String(i)}` }));
+    expect(
+      Message.create(
+        {
+          messageId: 'm2',
+          channelId: 'c1',
+          authorId: 'anna',
+          body: 'Too many',
+          threadRootId: null,
+          alsoInChannel: false,
+          attachments: eleven,
+          now: NOW,
+        },
+        MEMBERS,
+      ),
+    ).toEqual({ ok: false, error: 'too-many-attachments' });
+  });
+
+  it('is pinned and unpinned, but not once deleted', () => {
+    const message = unwrap(post('Hallo'));
+    message.pullEvents();
+
+    expect(message.setPinned(true, MEMBERS).ok).toBe(true);
+    expect(message.props.pinned).toBe(true);
+    expect(message.pullEvents()).toMatchObject([
+      { type: 'MessagePinChanged', messageId: 'm1', pinned: true, recipients: MEMBERS },
+    ]);
+    expect(message.setPinned(true, MEMBERS).ok).toBe(true);
+    expect(message.pullEvents()).toEqual([]);
+
+    message.delete('anna', LATER, MEMBERS);
+    expect(message.props.pinned).toBe(false);
+    expect(message.setPinned(true, MEMBERS)).toEqual({ ok: false, error: 'invalid-message' });
+  });
+
   it('drops mentions and reactions when deleted', () => {
     const message = unwrap(post(`<@${BEN}> look`));
     react(message, 'ben', '👀');

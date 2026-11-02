@@ -364,6 +364,15 @@ export class RealtimeGateway implements OnApplicationBootstrap, OnApplicationShu
             p: { channelId: event.channelId, rootMessageId: event.rootMessageId },
           }),
         );
+        return;
+      case 'MessagePinChanged':
+        this.#sendToPeople(
+          event.recipients,
+          encodeMessage({
+            t: 'MessagePinChanged',
+            p: { channelId: event.channelId, messageId: event.messageId, pinned: event.pinned },
+          }),
+        );
     }
   }
 

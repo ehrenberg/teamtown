@@ -15,6 +15,7 @@ import {
   Post,
   Put,
   Query,
+  StreamableFile,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -32,6 +33,7 @@ import {
   type ChannelSummary,
   type MessageContract,
   type MessagePageResponse,
+  type PinnedMessagesResponse,
   type ThreadListResponse,
 } from '@teamtown/contracts';
 import type { Result } from '@teamtown/kernel';
@@ -43,14 +45,17 @@ import { BrowseChannels } from '../../application/browse-channels.ts';
 import { CreateChannel } from '../../application/create-channel.ts';
 import { DeleteMessage } from '../../application/delete-message.ts';
 import { EditMessage } from '../../application/edit-message.ts';
+import { GetAttachmentContent } from '../../application/get-attachment-content.ts';
 import { GetChannel } from '../../application/get-channel.ts';
 import { LeaveChannel } from '../../application/leave-channel.ts';
 import { ListMessages } from '../../application/list-messages.ts';
 import { ListMyChannels } from '../../application/list-my-channels.ts';
+import { ListPinnedMessages } from '../../application/list-pinned-messages.ts';
 import { ListReplies } from '../../application/list-replies.ts';
 import { ListThreads } from '../../application/list-threads.ts';
 import { MoveReadMarker } from '../../application/move-read-marker.ts';
 import { OpenDirectMessage } from '../../application/open-direct-message.ts';
+import { PinMessage } from '../../application/pin-message.ts';
 import type { ChannelOverview } from '../../application/ports/channel-repository.port.ts';
 import type { MessagePage, ThreadSummary } from '../../application/ports/message-repository.port.ts';
 import { PostMessage } from '../../application/post-message.ts';
@@ -66,8 +71,15 @@ const FORBIDDEN = new Set([
   'not-message-author',
   'cannot-invite',
   'cannot-leave-channel',
+  'not-uploader',
 ]);
-const CONFLICT = new Set(['channel-name-taken', 'channel-archived', 'too-many-reactions']);
+const CONFLICT = new Set([
+  'channel-name-taken',
+  'channel-archived',
+  'too-many-reactions',
+  'too-many-attachments',
+  'already-claimed',
+]);
 
 /** Maps a use-case error to its HTTP status; the code is the `message` (contracts: `MessagingErrorCode`). */
 function fail(code: string): never {
@@ -145,6 +157,9 @@ export class ChannelsController {
     @Inject(ListThreads) private readonly listThreads: ListThreads,
     @Inject(SetThreadFollowing) private readonly setThreadFollowing: SetThreadFollowing,
     @Inject(MoveThreadReadMarker) private readonly moveThreadReadMarker: MoveThreadReadMarker,
+    @Inject(PinMessage) private readonly pinMessage: PinMessage,
+    @Inject(ListPinnedMessages) private readonly listPinnedMessages: ListPinnedMessages,
+    @Inject(GetAttachmentContent) private readonly getAttachmentContent: GetAttachmentContent,
   ) {}
 
   @Get('channels')
@@ -311,6 +326,51 @@ export class ChannelsController {
     return this.#react(principal, { channelId, messageId, emoji, add: false });
   }
 
+  @Get('channels/:channelId/pinned-messages')
+  async pinned(
+    @CurrentPrincipal() principal: Principal,
+    @Param('channelId') channelId: string,
+  ): Promise<PinnedMessagesResponse> {
+    const personId = await this.#personId(principal);
+    const messages = valueOf(await this.listPinnedMessages.execute({ personId, channelId }));
+    return { messages: messages.map((message) => toMessage(message)) };
+  }
+
+  @Put('channels/:channelId/messages/:messageId/pin')
+  @HttpCode(204)
+  async pin(
+    @CurrentPrincipal() principal: Principal,
+    @Param('channelId') channelId: string,
+    @Param('messageId') messageId: string,
+  ): Promise<void> {
+    await this.#setPinned(principal, channelId, messageId, true);
+  }
+
+  @Delete('channels/:channelId/messages/:messageId/pin')
+  @HttpCode(204)
+  async unpin(
+    @CurrentPrincipal() principal: Principal,
+    @Param('channelId') channelId: string,
+    @Param('messageId') messageId: string,
+  ): Promise<void> {
+    await this.#setPinned(principal, channelId, messageId, false);
+  }
+
+  @Get('channels/:channelId/messages/:messageId/attachments/:fileId')
+  async attachment(
+    @CurrentPrincipal() principal: Principal,
+    @Param('channelId') channelId: string,
+    @Param('messageId') messageId: string,
+    @Param('fileId') fileId: string,
+  ): Promise<StreamableFile> {
+    const personId = await this.#personId(principal);
+    const content = valueOf(await this.getAttachmentContent.execute({ personId, channelId, messageId, fileId }));
+    return new StreamableFile(content.stream as unknown as Buffer, {
+      type: content.contentType,
+      disposition: `inline; filename="${encodeURIComponent(content.fileName)}"`,
+    });
+  }
+
   @Get('threads')
   async threads(@CurrentPrincipal() principal: Principal): Promise<ThreadListResponse> {
     const personId = await this.#personId(principal);
@@ -357,6 +417,11 @@ export class ChannelsController {
     const { messageId } = parseRequest(MoveThreadReadMarkerRequest, body);
     const personId = await this.#personId(principal);
     valueOf(await this.moveThreadReadMarker.execute({ personId, channelId, rootMessageId, messageId }));
+  }
+
+  async #setPinned(principal: Principal, channelId: string, messageId: string, pinned: boolean): Promise<void> {
+    const personId = await this.#personId(principal);
+    valueOf(await this.pinMessage.execute({ personId, channelId, messageId, pinned }));
   }
 
   async #react(

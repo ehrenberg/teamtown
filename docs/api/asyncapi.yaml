@@ -1906,6 +1906,42 @@ channels:
                           - emoji
                           - personIds
                         additionalProperties: false
+                    attachments:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          fileId:
+                            type: string
+                            minLength: 1
+                            maxLength: 64
+                          fileName:
+                            type: string
+                            minLength: 1
+                            maxLength: 255
+                          contentType:
+                            type: string
+                            minLength: 1
+                            maxLength: 128
+                          byteSize:
+                            type: integer
+                            minimum: 0
+                            maximum: 9007199254740991
+                          previewKind:
+                            type: string
+                            enum:
+                              - image
+                              - pdf
+                              - none
+                        required:
+                          - fileId
+                          - fileName
+                          - contentType
+                          - byteSize
+                          - previewKind
+                        additionalProperties: false
+                    pinned:
+                      type: boolean
                     thread:
                       anyOf:
                         - type: object
@@ -1951,6 +1987,8 @@ channels:
                     - alsoInChannel
                     - mentions
                     - reactions
+                    - attachments
+                    - pinned
                     - thread
                     - postedAt
                     - editedAt
@@ -2027,6 +2065,42 @@ channels:
                           - emoji
                           - personIds
                         additionalProperties: false
+                    attachments:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          fileId:
+                            type: string
+                            minLength: 1
+                            maxLength: 64
+                          fileName:
+                            type: string
+                            minLength: 1
+                            maxLength: 255
+                          contentType:
+                            type: string
+                            minLength: 1
+                            maxLength: 128
+                          byteSize:
+                            type: integer
+                            minimum: 0
+                            maximum: 9007199254740991
+                          previewKind:
+                            type: string
+                            enum:
+                              - image
+                              - pdf
+                              - none
+                        required:
+                          - fileId
+                          - fileName
+                          - contentType
+                          - byteSize
+                          - previewKind
+                        additionalProperties: false
+                    pinned:
+                      type: boolean
                     thread:
                       anyOf:
                         - type: object
@@ -2072,6 +2146,8 @@ channels:
                     - alsoInChannel
                     - mentions
                     - reactions
+                    - attachments
+                    - pinned
                     - thread
                     - postedAt
                     - editedAt
@@ -2256,6 +2332,38 @@ channels:
               required:
                 - channelId
                 - rootMessageId
+              additionalProperties: false
+          required:
+            - t
+            - p
+          additionalProperties: false
+      MessagePinChanged:
+        name: MessagePinChanged
+        title: MessagePinChanged
+        summary: A message was pinned or unpinned. Sent to the members of its channel.
+        payload:
+          type: object
+          properties:
+            t:
+              type: string
+              const: MessagePinChanged
+            p:
+              type: object
+              properties:
+                channelId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                messageId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                pinned:
+                  type: boolean
+              required:
+                - channelId
+                - messageId
+                - pinned
               additionalProperties: false
           required:
             - t
@@ -2450,6 +2558,7 @@ operations:
       - $ref: "#/channels/realtime/messages/ReadMarkerMoved"
       - $ref: "#/channels/realtime/messages/ReactionChanged"
       - $ref: "#/channels/realtime/messages/ThreadActivity"
+      - $ref: "#/channels/realtime/messages/MessagePinChanged"
       - $ref: "#/channels/realtime/messages/AvatarEmoted"
       - $ref: "#/channels/realtime/messages/Ack"
       - $ref: "#/channels/realtime/messages/Nack"

@@ -265,4 +265,37 @@ describe('Channel', () => {
       expect(group.canRead('carl')).toBe(false);
     });
   });
+
+  describe('pin', () => {
+    it('lets only the creator pin in a public or private channel (P-25)', () => {
+      const channel = aChannel('private');
+      channel.invite('anna', ['ben'], LATER);
+      const message = unwrap(channel.post({ messageId: 'm1', authorId: 'anna', body: 'Hi', now: LATER }));
+
+      expect(channel.pin('ben', message, true)).toEqual({ ok: false, error: 'not-channel-creator' });
+      expect(channel.pin('anna', message, true)).toEqual({ ok: true, value: undefined });
+      expect(message.props.pinned).toBe(true);
+      expect(channel.pin('anna', message, false).ok).toBe(true);
+      expect(message.props.pinned).toBe(false);
+    });
+
+    it('lets any member pin in a DM or room wall (P-26)', () => {
+      const dm = aDirect(['anna', 'ben']);
+      const message = unwrap(dm.post({ messageId: 'm1', authorId: 'anna', body: 'Hi', now: LATER }));
+      expect(dm.pin('ben', message, true)).toEqual({ ok: true, value: undefined });
+
+      const wall = Channel.createRoomWall({ channelId: 'w1', floorId: 'f1', roomId: 'r1', name: 'Room', now: NOW });
+      wall.joinRoomWall('carl', NOW);
+      const wallMessage = unwrap(wall.post({ messageId: 'm2', authorId: 'carl', body: 'Hi', now: LATER }));
+      expect(wall.pin('carl', wallMessage, true)).toEqual({ ok: true, value: undefined });
+    });
+
+    it('refuses pinning for a non-member or in an archived channel', () => {
+      const channel = aChannel('public');
+      const message = unwrap(channel.post({ messageId: 'm1', authorId: 'anna', body: 'Hi', now: LATER }));
+      expect(channel.pin('ben', message, true)).toEqual({ ok: false, error: 'not-channel-member' });
+      channel.setArchived('anna', true, LATER);
+      expect(channel.pin('anna', message, true)).toEqual({ ok: false, error: 'channel-archived' });
+    });
+  });
 });

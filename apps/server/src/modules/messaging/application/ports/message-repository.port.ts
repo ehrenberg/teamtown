@@ -27,6 +27,8 @@ export interface MessageRepository {
   /** The newest `limit` replies of a thread, or those before `before`. */
   replies(rootMessageId: string, before: Message | null, limit: number): Promise<MessagePage>;
   threadSummaries(rootMessageIds: readonly string[]): Promise<ReadonlyMap<string, ThreadSummary>>;
+  /** A channel's pinned messages, newest first (P-24). */
+  findPinned(channelId: string): Promise<Message[]>;
   /** Writes the message, its reaction changes and its recorded events into the outbox in one transaction (ADR-0018). */
   save(message: Message): Promise<void>;
 }

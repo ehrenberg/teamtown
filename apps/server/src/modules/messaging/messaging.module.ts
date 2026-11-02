@@ -2,6 +2,12 @@ import { Module } from '@nestjs/common';
 import { MikroORM } from '@mikro-orm/postgresql';
 import type { Clock, IdGenerator } from '@teamtown/kernel';
 import { CLOCK, ID_GENERATOR } from '../../platform/config/config.module.ts';
+import {
+  ClaimUploads,
+  DeleteAttachmentsOfMessage,
+  FilesModule,
+  GetClaimedAttachmentContent,
+} from '../files/public-api.ts';
 import { PeopleModule, PeopleQueries } from '../people/public-api.ts';
 import { FloorQueries, WorldEventStream, WorldModule } from '../world/public-api.ts';
 import { AddChannelMembers } from './application/add-channel-members.ts';
@@ -9,16 +15,20 @@ import { BrowseChannels } from './application/browse-channels.ts';
 import { CreateChannel } from './application/create-channel.ts';
 import { DeleteMessage } from './application/delete-message.ts';
 import { EditMessage } from './application/edit-message.ts';
+import { GetAttachmentContent } from './application/get-attachment-content.ts';
 import { GetChannel } from './application/get-channel.ts';
 import { LeaveChannel } from './application/leave-channel.ts';
 import { ListMessages } from './application/list-messages.ts';
 import { ListMyChannels } from './application/list-my-channels.ts';
+import { ListPinnedMessages } from './application/list-pinned-messages.ts';
 import { ListReplies } from './application/list-replies.ts';
 import { ListThreads } from './application/list-threads.ts';
 import { MessagingEventStream } from './application/messaging-event-stream.ts';
 import { MoveReadMarker } from './application/move-read-marker.ts';
 import { OpenDirectMessage } from './application/open-direct-message.ts';
+import { PinMessage } from './application/pin-message.ts';
 import { CHANNEL_REPOSITORY, type ChannelRepository } from './application/ports/channel-repository.port.ts';
+import { FILE_ATTACHMENTS, type FileAttachments } from './application/ports/file-attachments.port.ts';
 import { MESSAGE_REPOSITORY, type MessageRepository } from './application/ports/message-repository.port.ts';
 import { PEOPLE_DIRECTORY, type PeopleDirectory } from './application/ports/people-directory.port.ts';
 import { ROOM_DIRECTORY, type RoomDirectory } from './application/ports/room-directory.port.ts';
@@ -28,6 +38,7 @@ import { ReactToMessage } from './application/react-to-message.ts';
 import { SynchronizeRoomWalls } from './application/synchronize-room-walls.ts';
 import { MoveThreadReadMarker, SetThreadFollowing } from './application/thread-follows.ts';
 import { UpdateChannel } from './application/update-channel.ts';
+import { FilesAttachmentsAdapter } from './infrastructure/files-attachments.adapter.ts';
 import { MessagingOutbox } from './infrastructure/messaging-outbox.ts';
 import { PeopleDirectoryAdapter } from './infrastructure/people-directory.adapter.ts';
 import { RoomWallBootstrap } from './infrastructure/room-wall-bootstrap.ts';
@@ -42,10 +53,19 @@ import { ChannelsController } from './interface/http/channels.controller.ts';
 
 /** Channels, DMs, room walls, messages, threads and reactions (M3a–M3c). Persisted in `messaging`, events via the outbox. */
 @Module({
-  imports: [PeopleModule, WorldModule],
+  imports: [PeopleModule, WorldModule, FilesModule],
   controllers: [ChannelsController],
   providers: [
     { provide: MessagingEventStream, useValue: new MessagingEventStream() },
+    {
+      provide: FILE_ATTACHMENTS,
+      useFactory: (
+        claim: ClaimUploads,
+        deleteAttachments: DeleteAttachmentsOfMessage,
+        getContent: GetClaimedAttachmentContent,
+      ) => new FilesAttachmentsAdapter(claim, deleteAttachments, getContent),
+      inject: [ClaimUploads, DeleteAttachmentsOfMessage, GetClaimedAttachmentContent],
+    },
     {
       provide: MessagingOutbox,
       useFactory: (orm: MikroORM, events: MessagingEventStream) => new MessagingOutbox(orm, events),
@@ -161,10 +181,11 @@ import { ChannelsController } from './interface/http/channels.controller.ts';
         channels: ChannelRepository,
         messages: MessageRepository,
         threads: ThreadRepository,
+        fileAttachments: FileAttachments,
         clock: Clock,
         ids: IdGenerator,
-      ) => new PostMessage(channels, messages, threads, clock, ids),
-      inject: [CHANNEL_REPOSITORY, MESSAGE_REPOSITORY, THREAD_REPOSITORY, CLOCK, ID_GENERATOR],
+      ) => new PostMessage(channels, messages, threads, fileAttachments, clock, ids),
+      inject: [CHANNEL_REPOSITORY, MESSAGE_REPOSITORY, THREAD_REPOSITORY, FILE_ATTACHMENTS, CLOCK, ID_GENERATOR],
     },
     {
       provide: EditMessage,
@@ -174,9 +195,30 @@ import { ChannelsController } from './interface/http/channels.controller.ts';
     },
     {
       provide: DeleteMessage,
-      useFactory: (channels: ChannelRepository, messages: MessageRepository, clock: Clock) =>
-        new DeleteMessage(channels, messages, clock),
-      inject: [CHANNEL_REPOSITORY, MESSAGE_REPOSITORY, CLOCK],
+      useFactory: (
+        channels: ChannelRepository,
+        messages: MessageRepository,
+        fileAttachments: FileAttachments,
+        clock: Clock,
+      ) => new DeleteMessage(channels, messages, fileAttachments, clock),
+      inject: [CHANNEL_REPOSITORY, MESSAGE_REPOSITORY, FILE_ATTACHMENTS, CLOCK],
+    },
+    {
+      provide: PinMessage,
+      useFactory: (channels: ChannelRepository, messages: MessageRepository) => new PinMessage(channels, messages),
+      inject: [CHANNEL_REPOSITORY, MESSAGE_REPOSITORY],
+    },
+    {
+      provide: ListPinnedMessages,
+      useFactory: (channels: ChannelRepository, messages: MessageRepository) =>
+        new ListPinnedMessages(channels, messages),
+      inject: [CHANNEL_REPOSITORY, MESSAGE_REPOSITORY],
+    },
+    {
+      provide: GetAttachmentContent,
+      useFactory: (channels: ChannelRepository, messages: MessageRepository, fileAttachments: FileAttachments) =>
+        new GetAttachmentContent(channels, messages, fileAttachments),
+      inject: [CHANNEL_REPOSITORY, MESSAGE_REPOSITORY, FILE_ATTACHMENTS],
     },
     {
       provide: MoveReadMarker,

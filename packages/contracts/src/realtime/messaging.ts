@@ -52,6 +52,12 @@ export const ThreadActivityEvent = z.object({
   p: z.object({ channelId: ChannelId, rootMessageId: MessageId }),
 });
 
+/** A message was pinned or unpinned (M3d, P-24). */
+export const MessagePinChangedEvent = z.object({
+  t: z.literal('MessagePinChanged'),
+  p: z.object({ channelId: ChannelId, messageId: MessageId, pinned: z.boolean() }),
+});
+
 const FloorId = z.string().min(1).max(64);
 
 /**

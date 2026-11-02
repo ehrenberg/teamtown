@@ -4,6 +4,8 @@ import type { MessageSnapshot, MessagingEvent } from './events.ts';
 export const MAX_MESSAGE_LENGTH = 4000;
 /** Different emoji per message (decided 2026-11-01, ADR-0034). */
 export const MAX_REACTIONS = 20;
+/** Attachments per message (P-23). */
+export const MAX_ATTACHMENTS = 10;
 
 /** `<@personId>` in a body is a mention; it is stored by ID so name changes show everywhere (ADR-0034). */
 const MENTION = /<@([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})>/gi;
@@ -14,6 +16,15 @@ export interface Reaction {
   readonly emoji: string;
   /** In the order people reacted. */
   readonly personIds: readonly string[];
+}
+
+/** A file attached to a message (M3d); references a claimed upload from the Files context by ID only. */
+export interface Attachment {
+  readonly fileId: string;
+  readonly fileName: string;
+  readonly contentType: string;
+  readonly byteSize: number;
+  readonly previewKind: 'image' | 'pdf' | 'none';
 }
 
 export interface MessageProps {
@@ -29,6 +40,10 @@ export interface MessageProps {
   /** People mentioned in the body. */
   readonly mentions: readonly string[];
   readonly reactions: readonly Reaction[];
+  /** Set only when the message is sent (P-23); never changed by an edit. Cleared when deleted (P-21). */
+  readonly attachments: readonly Attachment[];
+  /** Kept to the channel or room wall it belongs to (P-24); cleared when deleted. */
+  readonly pinned: boolean;
   readonly postedAt: Date;
   readonly editedAt: Date | null;
   readonly deletedAt: Date | null;
@@ -36,6 +51,7 @@ export interface MessageProps {
 
 export type MessageError = 'invalid-message' | 'not-message-author';
 export type ReactionError = 'invalid-message' | 'invalid-emoji' | 'too-many-reactions';
+export type AttachError = 'too-many-attachments';
 
 /** One person's reaction that was added or removed since loading. */
 export interface ReactionChange {
@@ -44,8 +60,11 @@ export interface ReactionChange {
   readonly added: boolean;
 }
 
-/** Drops blank lines around the text but keeps indentation inside it (code blocks). */
-function messageBody(raw: string): Result<string, 'invalid-message'> {
+/**
+ * Drops blank lines around the text but keeps indentation inside it (code blocks). Exported so the application
+ * layer can validate the body before claiming attachments (`PostMessage`), without a second source of truth.
+ */
+export function messageBody(raw: string): Result<string, 'invalid-message'> {
   const body = raw.replace(/^\s*\n/, '').trimEnd();
   return body.trim().length > 0 && body.length <= MAX_MESSAGE_LENGTH ? ok(body) : err('invalid-message');
 }
@@ -73,12 +92,15 @@ export class Message {
       body: string;
       threadRootId: string | null;
       alsoInChannel: boolean;
+      attachments?: readonly Attachment[] | undefined;
       now: Date;
     },
     recipients: readonly string[],
-  ): Result<Message, 'invalid-message'> {
+  ): Result<Message, 'invalid-message' | AttachError> {
     const body = messageBody(input.body);
     if (!body.ok) return body;
+    const attachments = input.attachments ?? [];
+    if (attachments.length > MAX_ATTACHMENTS) return err('too-many-attachments');
     const message = new Message({
       messageId: input.messageId,
       channelId: input.channelId,
@@ -88,6 +110,8 @@ export class Message {
       alsoInChannel: input.threadRootId !== null && input.alsoInChannel,
       mentions: mentionsIn(body.value),
       reactions: [],
+      attachments,
+      pinned: false,
       postedAt: input.now,
       editedAt: null,
       deletedAt: null,
@@ -128,6 +152,8 @@ export class Message {
       alsoInChannel: this.state.alsoInChannel,
       mentions: [...this.state.mentions],
       reactions: this.state.reactions.map((reaction) => ({ ...reaction, personIds: [...reaction.personIds] })),
+      attachments: this.state.attachments.map((attachment) => ({ ...attachment })),
+      pinned: this.state.pinned,
       postedAt: this.state.postedAt.toISOString(),
       editedAt: this.state.editedAt?.toISOString() ?? null,
       deleted: this.isDeleted,
@@ -151,7 +177,11 @@ export class Message {
     return ok(undefined);
   }
 
-  /** Removes body, mentions and reactions for good; it stays as "Message deleted" so its thread keeps its place. */
+  /**
+   * Removes body, mentions, reactions and attachments for good; it stays as "Message deleted" so its thread
+   * keeps its place. Unpins it, too (P-21, P-24): a deleted message cannot stay pinned. The caller still asks
+   * Files to delete the attachment bytes (`DeleteAttachmentsOfMessage`), since Messaging never touches them.
+   */
   delete(personId: string, now: Date, recipients: readonly string[]): Result<void, 'not-message-author'> {
     if (personId !== this.state.authorId) return err('not-message-author');
     if (this.isDeleted) return ok(undefined);
@@ -160,11 +190,34 @@ export class Message {
         this.#reactionChanges.push({ emoji: reaction.emoji, personId: reactor, added: false });
       }
     }
-    this.state = { ...this.state, body: '', mentions: [], reactions: [], deletedAt: now };
+    this.state = {
+      ...this.state,
+      body: '',
+      mentions: [],
+      reactions: [],
+      attachments: [],
+      pinned: false,
+      deletedAt: now,
+    };
     this.#events.push({
       type: 'MessageDeleted',
       channelId: this.state.channelId,
       messageId: this.state.messageId,
+      recipients,
+    });
+    return ok(undefined);
+  }
+
+  /** Pins or unpins the message; permission is checked by `Channel.pin` (P-24, P-25, P-26). */
+  setPinned(pinned: boolean, recipients: readonly string[]): Result<void, 'invalid-message'> {
+    if (this.isDeleted) return err('invalid-message');
+    if (this.state.pinned === pinned) return ok(undefined);
+    this.state = { ...this.state, pinned };
+    this.#events.push({
+      type: 'MessagePinChanged',
+      channelId: this.state.channelId,
+      messageId: this.state.messageId,
+      pinned,
       recipients,
     });
     return ok(undefined);
