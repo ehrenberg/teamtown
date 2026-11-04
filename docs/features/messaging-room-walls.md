@@ -1,6 +1,6 @@
 # Feature: Room walls
 
-- **Status:** Done (2026-11-02), except the command-palette entry and a screen-reader check (see below)
+- **Status:** Done (2026-11-02), except a screen-reader check (see below); the command-palette entry followed with [M3e](messaging-search.md)
 - **Brainstorming ID:** M4 Room wall (room-linked channel)
 - **Bounded context(s):** World, Messaging, REST, web client
 - **Milestone:** M3c (ADR-0033)

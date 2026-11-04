@@ -1,6 +1,6 @@
 # Feature: Search and command palette
 
-- **Status:** In progress
+- **Status:** Done (2026-11-04)
 - **Brainstorming ID:** M8 Full-text search, X2 Command palette (first part)
 - **Bounded context(s):** Messaging, web client
 - **Milestone:** M3e (ADR-0033, ADR-0024)
@@ -37,25 +37,25 @@ back to what was said without remembering where, and without using the office.
 
 ## Acceptance criteria
 
-- [ ] Given a person presses `Ctrl/⌘+K` while typing in the composer, then the palette opens; Escape closes it and the
+- [x] Given a person presses `Ctrl/⌘+K` while typing in the composer, then the palette opens; Escape closes it and the
       focus returns to the composer.
-- [ ] Given a message "Die Rechnungen sind da", when someone who can read it searches "rechnung", then it is found.
-- [ ] Given a message in a private channel or a DM, when someone who isn't a member searches its words, then it is not
+- [x] Given a message "Die Rechnungen sind da", when someone who can read it searches "rechnung", then it is found.
+- [x] Given a message in a private channel or a DM, when someone who isn't a member searches its words, then it is not
       found, and asking for that `channelId` directly answers `404`.
-- [ ] Given a public channel the person hasn't joined, when they open a result from it, then they read the conversation
+- [x] Given a public channel the person hasn't joined, when they open a result from it, then they read the conversation
       at that message and can join it.
-- [ ] Given a message with an attachment "Angebot-2026.pdf" and no text, when someone searches "angebot", then it is
+- [x] Given a message with an attachment "Angebot-2026.pdf" and no text, when someone searches "angebot", then it is
       found, and the result names the file.
-- [ ] Given a deleted message, then its words no longer find it.
-- [ ] Given a reply in a thread, when its result is opened, then the conversation scrolls to the root with the thread
+- [x] Given a deleted message, then its words no longer find it.
+- [x] Given a reply in a thread, when its result is opened, then the conversation scrolls to the root with the thread
       open.
-- [ ] Given a conversation is open and "Only in …" is on, then only messages of that conversation are found.
-- [ ] Given more than 20 matches, then "Show more" adds the next 20.
-- [ ] Non-spatial path: everything works without the 3D view; the palette **is** the keyboard path, and it also gives
+- [x] Given a conversation is open and "Only in …" is on, then only messages of that conversation are found.
+- [x] Given more than 20 matches, then "Show more" adds the next 20.
+- [x] Non-spatial path: everything works without the 3D view; the palette **is** the keyboard path, and it also gives
       M3a–M3c their pending entries (channels, DMs, threads, room walls).
-- [ ] Accessibility: the field is a labelled combobox with a listbox; arrow keys and Enter work; the number of results
+- [x] Accessibility: the field is a labelled combobox with a listbox; arrow keys and Enter work; the number of results
       is announced; the focus is trapped in the dialog and returned afterwards.
-- [ ] i18n: all new strings exist in English and German, using German **du**.
+- [x] i18n: all new strings exist in English and German, using German **du**.
 
 ## Permissions
 

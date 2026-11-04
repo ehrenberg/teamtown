@@ -1,6 +1,6 @@
 # Feature: Threads, mentions and reactions
 
-- **Status:** Done (2026-11-01), except the command palette entry and a screen reader check (see below)
+- **Status:** Done (2026-11-01), except a screen reader check (see below); the command palette entry followed with [M3e](messaging-search.md)
 - **Brainstorming ID:** M3 Threads, mentions, reactions
 - **Bounded context(s):** Messaging, Presence (avatar emote), realtime gateway, REST
 - **Milestone:** M3b (ADR-0033, ADR-0034)

@@ -55,7 +55,8 @@ M3b threads, mentions and reactions done on 2026-11-01 (ADR-0034,
 M3c room walls done on 2026-11-02 ([feature spec](../features/messaging-room-walls.md)); the command-palette
 entry follows with the palette. M3d files, including pinning and upload malware scanning, specified on 2026-11-02 (P-19–P-26, ADR-0035,
 [feature spec](../features/messaging-files.md)); done on 2026-11-04, including P-27 and P-28. M3e search and the first part of the command palette specified on 2026-11-04 (P-29–P-32,
-[feature spec](../features/messaging-search.md)); implementation is next.
+[feature spec](../features/messaging-search.md)) and done on 2026-11-04, including the palette entries M3a–M3c
+deferred. **M3 Write is complete.**
 
 M2 and M3 can be developed in parallel by different contributors because they are separate bounded
 contexts ([domain model](../architecture/domain-model.md)).

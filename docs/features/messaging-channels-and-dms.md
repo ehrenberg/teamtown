@@ -1,6 +1,6 @@
 # Feature: Channels and direct messages
 
-- **Status:** Done (2026-11-01), except the command palette entries (see below)
+- **Status:** Done (2026-11-01); the command palette entries followed with [M3e](messaging-search.md)
 - **Brainstorming ID:** M1 Channels with roles (without roles and announcement channels), M2 Direct & group messages
 - **Bounded context(s):** Messaging (new), People, realtime gateway, REST
 - **Milestone:** M3a (ADR-0033)
