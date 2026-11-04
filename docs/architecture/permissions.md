@@ -1,7 +1,7 @@
 # Permissions Model (Scoped RBAC)
 
 Decided: **scoped role-based access control** ([ADR-0011](adr/0011-authorization-scoped-rbac.md)).
-The concrete permission and role catalogue below is a **proposal**.
+The permission and role catalogue below is decided (P-33, [ADR-0036](adr/0036-govern-milestone-rules.md)).
 
 ## 1. Concepts
 
@@ -23,7 +23,7 @@ This rule is decided ([ADR-0026](adr/0026-admin-access-and-meeting-logs.md)): no
 
 **No explicit deny.** Only grants exist, which keeps the model explainable: "Why can Ben do X?" always has a positive answer listing the granting assignments.
 
-## 2. Permission catalogue (proposal)
+## 2. Permission catalogue
 
 | Area      | Permissions                                                                                                                                                                                                                    |
 | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -33,17 +33,17 @@ This rule is decided ([ADR-0026](adr/0026-admin-access-and-meeting-logs.md)): no
 | Messaging | `channel.create.public`, `channel.create.private`, `channel.read`, `channel.manage`, `message.post`, `message.post.announcement`, `message.edit.own`, `message.delete.own`, `message.delete.any`, `message.pin`, `file.upload` |
 | Direct    | `dm.start`, `call.direct`                                                                                                                                                                                                      |
 
-## 3. Built-in roles (proposal)
+## 3. Built-in roles
 
-| Role                  | Typical scope  | Contains (summary)                                                                                                              |
-| --------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| **Owner**             | town           | everything, cannot be removed (at least one owner)                                                                              |
-| **Admin**             | town           | everything except ownership transfer                                                                                            |
-| **Member**            | town           | world view, enter rooms, calls, DMs, post in readable channels, create public channels, claim desk                              |
-| **Guest**             | room / channel | enter the shared room, join its call, read and post in the shared channel; can only reply to DMs that members start _(decided)_ |
-| **Room Host**         | room           | `room.admit`, `room.lock`, `meeting.log.start`, `call.mute.others`, `call.remove.others`                                        |
-| **Channel Moderator** | channel        | `channel.manage`, `message.delete.any`, `message.pin`                                                                           |
-| **Editor**            | town or floor  | `world.edit`                                                                                                                    |
+| Role                  | Typical scope  | Contains (summary)                                                                                                                                                                                                                    |
+| --------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Owner**             | town           | everything, cannot be removed (at least one owner)                                                                                                                                                                                    |
+| **Admin**             | town           | everything except ownership transfer                                                                                                                                                                                                  |
+| **Member**            | town           | world view, enter rooms, switch doors and answer knocks from inside, start logged meetings, calls, DMs, post in readable channels, create public and private channels, claim desk; everyone but guests holds it without an assignment |
+| **Guest**             | room / channel | enter the shared room, join its call, read and post in the shared channel; can only reply to DMs that members start _(decided)_                                                                                                       |
+| **Room Host**         | room           | `room.admit`, `room.lock`, `meeting.log.start`, `call.mute.others`, `call.remove.others`                                                                                                                                              |
+| **Channel Moderator** | channel        | `channel.manage`, `message.delete.any`, `message.pin`                                                                                                                                                                                 |
+| **Editor**            | town or floor  | `world.edit`                                                                                                                                                                                                                          |
 
 Admins can create **custom roles** by composing permissions, for example "Team Lead" = Room Host +
 Channel Moderator for the team's floor.
