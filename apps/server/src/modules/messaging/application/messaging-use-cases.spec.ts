@@ -703,6 +703,34 @@ describe('Messaging use cases', () => {
       expect(app.fileAttachments.claimed.has('ok-1')).toBe(false);
     });
 
+    it('posts a file without text, but not an empty message (P-27)', async () => {
+      const channelId = await aTeam();
+      const posted = unwrap(
+        await app.post.execute({ personId: 'anna', channelId, body: '', attachmentUploadIds: ['ok-2'] }),
+      );
+      expect(posted.props.body).toBe('');
+      expect(await app.post.execute({ personId: 'anna', channelId, body: '' })).toEqual({
+        ok: false,
+        error: 'invalid-message',
+      });
+    });
+
+    it('claims nothing when the thread root lives in another channel', async () => {
+      const channelId = await aTeam();
+      const other = unwrap(await app.create.execute({ personId: 'anna', kind: 'public', name: 'elsewhere' }));
+      const root = unwrap(await app.post.execute({ personId: 'anna', channelId: other.props.channelId, body: 'Root' }));
+      expect(
+        await app.post.execute({
+          personId: 'anna',
+          channelId,
+          body: 'Reply',
+          threadRootId: root.props.messageId,
+          attachmentUploadIds: ['ok-3'],
+        }),
+      ).toEqual({ ok: false, error: 'invalid-thread-root' });
+      expect(app.fileAttachments.claimed.has('ok-3')).toBe(false);
+    });
+
     it('rejects posting with an upload nobody can claim, and with too many attachments', async () => {
       const channelId = await aTeam();
       expect(

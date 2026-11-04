@@ -136,6 +136,31 @@ describe('Message', () => {
     expect(react(message, 'ben', '🙂').ok).toBe(true);
   });
 
+  it('needs no text when it carries an attachment, and may lose its text later (P-27)', () => {
+    const attachment = {
+      fileId: 'f1',
+      fileName: 'a.pdf',
+      contentType: 'application/pdf',
+      byteSize: 10,
+      previewKind: 'pdf' as const,
+    };
+    const input = {
+      messageId: 'm1',
+      channelId: 'c1',
+      authorId: 'anna',
+      threadRootId: null,
+      alsoInChannel: false,
+      now: NOW,
+    };
+    expect(Message.create({ ...input, body: ' \n' }, [])).toEqual({ ok: false, error: 'invalid-message' });
+    const fileOnly = unwrap(Message.create({ ...input, body: ' \n', attachments: [attachment] }, []));
+    expect(fileOnly.props.body).toBe('');
+
+    const captioned = unwrap(Message.create({ ...input, body: 'See this', attachments: [attachment] }, []));
+    expect(captioned.edit('anna', '', NOW, []).ok).toBe(true);
+    expect(captioned.props.body).toBe('');
+  });
+
   it('carries up to 10 attachments, set only when posted', () => {
     const attachment = {
       fileId: 'f1',

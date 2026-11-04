@@ -155,14 +155,17 @@ export const MessagePageQuery = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(50),
 });
 
-/** `PATCH /api/channels/{channelId}/messages/{messageId}`; answered with the message. */
-export const MessageBodyRequest = z.object({ body: z.string().min(1).max(MAX_MESSAGE_LENGTH) });
+/**
+ * `PATCH /api/channels/{channelId}/messages/{messageId}`; answered with the message. Only a message with attachments
+ * may be left without text (P-27), which the server checks (`invalid-message`).
+ */
+export const MessageBodyRequest = z.object({ body: z.string().max(MAX_MESSAGE_LENGTH) });
 export type MessageBodyRequest = z.infer<typeof MessageBodyRequest>;
 
 /**
  * `POST /api/channels/{channelId}/messages`; answered with the message. With `threadRootId` it is a reply; a reply
  * to a reply goes to the same root. `alsoInChannel` shows the reply in the channel, too (ADR-0034).
- * `attachmentUploadIds` claims those pending uploads as attachments (M3d, P-22, P-23).
+ * `attachmentUploadIds` claims those pending uploads as attachments (M3d, P-22, P-23); then `body` may be empty (P-27).
  */
 export const PostMessageRequest = MessageBodyRequest.extend({
   threadRootId: MessageId.optional(),

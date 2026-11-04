@@ -44,17 +44,18 @@ export class PostMessage {
     if (!channel.isMember(input.personId)) return err('not-channel-member');
     if (channel.isArchived) return err('channel-archived');
     // Validated again by `Message.create`; checked here first so a failing body never claims attachments.
-    const bodyCheck = messageBody(input.body);
+    const uploadIds = input.attachmentUploadIds ?? [];
+    const bodyCheck = messageBody(input.body, uploadIds.length > 0);
     if (!bodyCheck.ok) return bodyCheck;
 
     let root: Message | null = null;
     if (input.threadRootId !== undefined) {
       const target = await this.messages.findById(input.threadRootId);
       root = target?.isReply ? await this.messages.findById(target.threadId) : target;
-      if (!root) return err('invalid-thread-root');
+      // `Channel.post` checks this, too, but only after the claim, which would strand the uploads.
+      if (root?.props.channelId !== channel.props.channelId) return err('invalid-thread-root');
     }
 
-    const uploadIds = input.attachmentUploadIds ?? [];
     if (uploadIds.length > MAX_ATTACHMENTS) return err('too-many-attachments');
     const messageId = this.ids.next();
     let attachments: Attachment[] = [];

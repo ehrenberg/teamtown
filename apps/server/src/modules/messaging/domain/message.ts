@@ -63,10 +63,13 @@ export interface ReactionChange {
 /**
  * Drops blank lines around the text but keeps indentation inside it (code blocks). Exported so the application
  * layer can validate the body before claiming attachments (`PostMessage`), without a second source of truth.
+ * A message with attachments may have no text (P-27).
  */
-export function messageBody(raw: string): Result<string, 'invalid-message'> {
+export function messageBody(raw: string, hasAttachments = false): Result<string, 'invalid-message'> {
   const body = raw.replace(/^\s*\n/, '').trimEnd();
-  return body.trim().length > 0 && body.length <= MAX_MESSAGE_LENGTH ? ok(body) : err('invalid-message');
+  if (body.length > MAX_MESSAGE_LENGTH) return err('invalid-message');
+  if (body.trim().length === 0) return hasAttachments ? ok('') : err('invalid-message');
+  return ok(body);
 }
 
 export function mentionsIn(body: string): string[] {
@@ -97,9 +100,9 @@ export class Message {
     },
     recipients: readonly string[],
   ): Result<Message, 'invalid-message' | AttachError> {
-    const body = messageBody(input.body);
-    if (!body.ok) return body;
     const attachments = input.attachments ?? [];
+    const body = messageBody(input.body, attachments.length > 0);
+    if (!body.ok) return body;
     if (attachments.length > MAX_ATTACHMENTS) return err('too-many-attachments');
     const message = new Message({
       messageId: input.messageId,
@@ -168,7 +171,7 @@ export class Message {
   edit(personId: string, raw: string, now: Date, recipients: readonly string[]): Result<void, MessageError> {
     if (personId !== this.state.authorId) return err('not-message-author');
     if (this.isDeleted) return err('invalid-message');
-    const body = messageBody(raw);
+    const body = messageBody(raw, this.state.attachments.length > 0);
     if (!body.ok) return body;
     if (body.value === this.state.body) return ok(undefined);
     // Mentions follow the body: new ones count, removed ones are withdrawn (decided 2026-11-01).
