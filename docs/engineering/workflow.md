@@ -19,6 +19,21 @@ Decided: code on **GitHub** under the owner's personal account ([`ehrenberg/team
   i18n (EN + DE), and a privacy impact check ("does this persist or log personal data?").
 - At least one approving review. CI must be green.
 
+## Review before a PR
+
+The review instance is local and advisory ([ADR-0037](../architecture/adr/0037-pr-review-with-ponytail.md)):
+
+1. Run `/pr-review` in Claude Code on the finished branch. It runs the CI checks, Ponytail's review and the TeamTown
+   rules, and ends with a verdict.
+2. Fix the **Must fix** findings, and decide on the rest.
+3. Note the verdict in the PR description. The human review follows as usual.
+
+Without Claude Code, go through the rules in section 4 of `.claude/skills/pr-review/SKILL.md` by hand.
+
+**Ponytail** is enabled for this repository in `.claude/settings.json`, pinned to a release, at level `lite`: Claude Code
+asks once to trust it. To update it, read what the new release's hooks do, change `ref` and commit that. To opt out,
+set `"ponytail@ponytail": false` in your `.claude/settings.local.json`.
+
 ## Definition of Done
 
 - [ ] Acceptance criteria of the feature spec met
@@ -27,6 +42,7 @@ Decided: code on **GitHub** under the owner's personal account ([`ehrenberg/team
 - [ ] UI: keyboard-accessible, both languages, uses design tokens, works in list mode
 - [ ] Docs updated (feature spec, glossary, ADR if an architecture decision changed)
 - [ ] No personal or presence data persisted or logged
+- [ ] `/pr-review` ran, and its Must fix findings are resolved
 
 ## CI pipeline (GitHub Actions)
 
@@ -41,4 +57,4 @@ Decided: code on **GitHub** under the owner's personal account ([`ehrenberg/team
 1. Idea in [brainstorming.md](../product/brainstorming.md) → decision by the product owner
 2. Feature spec from [docs/features/_template.md](../features/_template.md) (Claude Code: `/feature-spec`)
 3. Implementation following the module layout (Claude Code: `/new-module`, `/realtime-message`)
-4. PR with DoD checklist
+4. `/pr-review`, then a PR with DoD checklist

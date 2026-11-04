@@ -35,7 +35,8 @@ Commit with `git commit -s`. The hooks format and lint your staged files and che
 ## Pull requests
 
 Small, focused PRs with Conventional Commit titles (`feat(messaging): …`). Fill in the PR checklist
-(Definition of Done in [workflow.md](docs/engineering/workflow.md)).
+(Definition of Done in [workflow.md](docs/engineering/workflow.md)), and run the review described there first
+(`/pr-review` in Claude Code).
 
 Every commit must be signed off according to the [Developer Certificate of Origin](https://developercertificate.org/)
 (`git commit -s`). Contributions are licensed under the AGPL-3.0.

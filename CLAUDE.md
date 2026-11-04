@@ -47,7 +47,7 @@ implementation.
 - **Media:** LiveKit (one room per floor for proximity, per meeting room, per direct call)
 - **Frontend:** React + React Three Fiber (orthographic iso camera) · Zustand (live state) + TanStack Query (server state) ·
   i18next (EN + DE with "du") · Radix + Tailwind · Lucide icons · Electron desktop (unsigned builds at first)
-- **Tooling:** pnpm + Turborepo · dependency-cruiser · Vitest · Testcontainers · Playwright · k6 · Postman CLI (`postman/`)
+- **Tooling:** pnpm + Turborepo · dependency-cruiser · Vitest · Testcontainers · Playwright · k6 · Postman CLI (`postman/`) · Ponytail plugin + `/pr-review` (ADR-0037)
 - **Ops:** Docker Compose with Caddy, file volume (S3 optional), and an always-on observability stack
   (OTel, Prometheus, Loki, Tempo, Grafana) on a netcup VPS (`demo.` / `auth.teamtown.bastianswelt.de`).
   The owner's PHP webhosting serves **static files only** (Astro + Starlight site at `teamtown.bastianswelt.de`).
@@ -99,8 +99,15 @@ apps/server/src/modules/<context>/{domain,application,infrastructure,interface}/
 - Voice: warm and clear, lightly playful; errors are always plain (`docs/design/brand-guide.md` §6).
 - New dependencies must be AGPL-compatible, with the reason stated in the PR.
 
+## Ponytail
+
+The Ponytail plugin is enabled at level `lite` (ADR-0037): it steers towards the smallest complete change and names
+smaller options. It never overrides this file: specs, ADRs and the golden rules decide what gets built, and leaving
+something out that a spec asks for is a product decision for the owner.
+
 ## Project skills
 
+- `/pr-review`: review a branch before its PR (CI checks, Ponytail, TeamTown rules); run it before every PR (ADR-0037)
 - `/adr`: record a new architecture decision (only after the owner decided)
 - `/feature-spec`: turn a brainstorming idea into a feature spec
 - `/new-module`: scaffold a bounded-context module in the server

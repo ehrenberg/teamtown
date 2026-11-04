@@ -15,6 +15,7 @@ These rules are binding. Rules marked **(proposal)** still need confirmation.
 - **No magic values:** named constants or configuration.
 - **Comments explain _why_, not _what_.** If code needs a _what_ comment, rename or extract.
 - **No dead code, no commented-out code.** Git remembers.
+- **A deliberate limit gets a comment:** `shortcut: <the limit>, <when to upgrade>`. Reviews treat it as a decision.
 - **Immutability by default:** `readonly` properties, no mutation of function arguments.
 - **Prettier** formats, **ESLint** enforces. CI fails on warnings.
 
