@@ -35,3 +35,6 @@ apps/website/src/assets/brand/
 # Playwright output
 tests/e2e/test-results/
 tests/e2e/playwright-report/
+
+# Local file storage of the dev server (FILES_STORAGE_PATH)
+apps/server/data/

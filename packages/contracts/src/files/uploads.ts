@@ -29,6 +29,8 @@ export const FilesErrorCode = z.enum([
   'file-too-large',
   'unsupported-file-type',
   'infected-file',
+  /** The scanner is on but gave no verdict, so the file was not accepted (ADR-0035). */
+  'scan-failed',
   'upload-not-found',
   'not-uploader',
   'already-claimed',

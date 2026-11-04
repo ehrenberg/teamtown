@@ -22,9 +22,8 @@ const toSnapshot = (upload: Upload): UploadSnapshot => ({
 });
 
 /**
- * Use case: claims pending uploads as a message's attachments (P-23). Exported for Messaging to call when it
- * posts a message with `attachmentUploadIds` (follow-up: docs/features/messaging-files.md). All uploads are
- * checked before any is claimed, so a message never ends up with only some of its attachments claimed.
+ * Use case: claims pending uploads as a message's attachments (P-23), for Messaging when it posts a message with
+ * `attachmentUploadIds`. All uploads are checked before any is claimed, so a message never ends up with only some of its attachments claimed.
  */
 export class ClaimUploads {
   constructor(private readonly uploads: UploadRepository) {}

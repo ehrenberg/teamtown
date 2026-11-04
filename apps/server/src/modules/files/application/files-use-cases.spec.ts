@@ -58,9 +58,9 @@ class FakeStorage implements FileStorage {
 }
 
 class FakeScanner implements MalwareScanner {
-  result: ScanResult = 'clean';
+  result: ScanResult | Error = 'clean';
   scan(): Promise<ScanResult> {
-    return Promise.resolve(this.result);
+    return this.result instanceof Error ? Promise.reject(this.result) : Promise.resolve(this.result);
   }
 }
 
@@ -70,6 +70,7 @@ const ids: IdGenerator = (() => {
 })();
 
 const NOW = new Date('2026-11-02T10:00:00Z');
+const PDF = Buffer.from('%PDF-1.7 hello');
 
 describe('Files use cases', () => {
   let uploads: InMemoryUploads;
@@ -91,11 +92,11 @@ describe('Files use cases', () => {
       uploaderId: 'anna',
       fileName: 'plan.pdf',
       contentType: 'application/pdf',
-      bytes: Buffer.from('hello'),
+      bytes: PDF,
     });
     const upload = unwrap(result);
     expect(upload.props.status).toBe('pending');
-    expect(storage.bytes.get(upload.props.storageKey)?.toString()).toBe('hello');
+    expect(storage.bytes.get(upload.props.storageKey)?.toString()).toBe(PDF.toString());
     expect((await uploads.findById(upload.props.uploadId))?.props.fileName).toBe('plan.pdf');
   });
 
@@ -105,9 +106,34 @@ describe('Files use cases', () => {
       uploaderId: 'anna',
       fileName: 'plan.pdf',
       contentType: 'application/pdf',
-      bytes: Buffer.from('hello'),
+      bytes: PDF,
     });
     expect(result).toEqual({ ok: false, error: 'infected-file' });
+    expect(storage.bytes.size).toBe(0);
+    expect(uploads.records.size).toBe(0);
+  });
+
+  it('rejects a file whose bytes do not match its declared type, keeping nothing (P-20)', async () => {
+    const result = await uploadFile.execute({
+      uploaderId: 'anna',
+      fileName: 'photo.png',
+      contentType: 'image/png',
+      bytes: Buffer.from('MZ this is an executable'),
+    });
+    expect(result).toEqual({ ok: false, error: 'unsupported-file-type' });
+    expect(storage.bytes.size).toBe(0);
+    expect(uploads.records.size).toBe(0);
+  });
+
+  it('keeps nothing when the scan cannot give a verdict: only a clean result lets a file through (ADR-0035)', async () => {
+    scanner.result = new Error('clamd answered with an error');
+    const result = await uploadFile.execute({
+      uploaderId: 'anna',
+      fileName: 'plan.pdf',
+      contentType: 'application/pdf',
+      bytes: PDF,
+    });
+    expect(result).toEqual({ ok: false, error: 'scan-failed' });
     expect(storage.bytes.size).toBe(0);
     expect(uploads.records.size).toBe(0);
   });
@@ -117,7 +143,7 @@ describe('Files use cases', () => {
       uploaderId: 'anna',
       fileName: 'tool.exe',
       contentType: 'application/x-msdownload',
-      bytes: Buffer.from('hello'),
+      bytes: PDF,
     });
     expect(result).toEqual({ ok: false, error: 'unsupported-file-type' });
     expect(storage.bytes.size).toBe(0);
@@ -129,7 +155,7 @@ describe('Files use cases', () => {
         uploaderId: 'anna',
         fileName: 'plan.pdf',
         contentType: 'application/pdf',
-        bytes: Buffer.from('hello'),
+        bytes: PDF,
       }),
     );
     const cancel = new CancelUpload(uploads, storage);
@@ -151,7 +177,7 @@ describe('Files use cases', () => {
         uploaderId: 'anna',
         fileName: 'a.pdf',
         contentType: 'application/pdf',
-        bytes: Buffer.from('a'),
+        bytes: PDF,
       }),
     );
     const bensUpload = unwrap(
@@ -159,7 +185,7 @@ describe('Files use cases', () => {
         uploaderId: 'ben',
         fileName: 'b.pdf',
         contentType: 'application/pdf',
-        bytes: Buffer.from('b'),
+        bytes: PDF,
       }),
     );
     const claim = new ClaimUploads(uploads);
@@ -188,7 +214,7 @@ describe('Files use cases', () => {
         uploaderId: 'anna',
         fileName: 'plan.pdf',
         contentType: 'application/pdf',
-        bytes: Buffer.from('hello'),
+        bytes: PDF,
       }),
     );
     const getContent = new GetUploadContent(uploads, storage);
@@ -206,7 +232,7 @@ describe('Files use cases', () => {
         uploaderId: 'anna',
         fileName: 'plan.pdf',
         contentType: 'application/pdf',
-        bytes: Buffer.from('hello'),
+        bytes: PDF,
       }),
     );
     const purge = new PurgeExpiredUploads(uploads, storage, clock);
@@ -224,7 +250,7 @@ describe('Files use cases', () => {
         uploaderId: 'anna',
         fileName: 'plan.pdf',
         contentType: 'application/pdf',
-        bytes: Buffer.from('hello'),
+        bytes: PDF,
       }),
     );
     unwrap(

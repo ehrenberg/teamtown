@@ -6,6 +6,7 @@ import {
   Delete,
   ForbiddenException,
   Get,
+  Header,
   HttpCode,
   Inject,
   InternalServerErrorException,
@@ -80,6 +81,9 @@ const CONFLICT = new Set([
   'too-many-attachments',
   'already-claimed',
 ]);
+
+/** Allowed types the client previews (P-20); everything else is only ever downloaded. */
+const PREVIEWABLE = /^(image\/|application\/pdf$)/;
 
 /** Maps a use-case error to its HTTP status; the code is the `message` (contracts: `MessagingErrorCode`). */
 function fail(code: string): never {
@@ -357,6 +361,7 @@ export class ChannelsController {
   }
 
   @Get('channels/:channelId/messages/:messageId/attachments/:fileId')
+  @Header('x-content-type-options', 'nosniff')
   async attachment(
     @CurrentPrincipal() principal: Principal,
     @Param('channelId') channelId: string,
@@ -367,7 +372,7 @@ export class ChannelsController {
     const content = valueOf(await this.getAttachmentContent.execute({ personId, channelId, messageId, fileId }));
     return new StreamableFile(content.stream as unknown as Buffer, {
       type: content.contentType,
-      disposition: `inline; filename="${encodeURIComponent(content.fileName)}"`,
+      disposition: `${PREVIEWABLE.test(content.contentType) ? 'inline' : 'attachment'}; filename*=UTF-8''${encodeURIComponent(content.fileName)}`,
     });
   }
 

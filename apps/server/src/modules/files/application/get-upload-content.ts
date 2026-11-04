@@ -6,11 +6,8 @@ import type { UploadRepository } from './ports/upload-repository.port.ts';
 export type GetUploadContentError = 'not-found' | 'forbidden';
 
 /**
- * Use case: reads an upload's bytes for download or preview.
- *
- * TODO(messaging-integration): once a message's attachments are wired up, access should follow the message's
- * channel read permission (anyone who can read the message), not just the uploader. That needs Messaging to
- * expose a read check through its public-api; until then, only the uploader may read their own upload.
+ * Use case: an uploader reads their own upload. Everyone else reads an attachment through the message that carries
+ * it (Messaging's `GetAttachmentContent`), which checks access to that message.
  */
 export class GetUploadContent {
   constructor(

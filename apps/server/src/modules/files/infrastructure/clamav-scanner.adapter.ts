@@ -38,7 +38,11 @@ export class ClamavScannerAdapter implements MalwareScanner {
       socket.once('close', () => {
         if (settled) return;
         settled = true;
-        resolvePromise(response.includes('FOUND') ? 'infected' : 'clean');
+        // clamd answers `stream: OK` or `stream: <signature> FOUND`; anything else (ERROR, nothing at all) is no verdict.
+        const verdict = response.replace(/\0/g, '').trim();
+        if (verdict.endsWith('FOUND')) resolvePromise('infected');
+        else if (verdict.endsWith(': OK')) resolvePromise('clean');
+        else reject(new Error(`ClamAV gave no verdict: ${verdict}`));
       });
 
       socket.connect(this.port, this.host, () => {

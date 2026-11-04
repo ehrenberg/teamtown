@@ -9,9 +9,12 @@ import {
   InternalServerErrorException,
   NotFoundException,
   Param,
+  PayloadTooLargeException,
   Post,
   Req,
+  ServiceUnavailableException,
   StreamableFile,
+  UnprocessableEntityException,
   UseGuards,
 } from '@nestjs/common';
 import type { UploadContract } from '@teamtown/contracts';
@@ -30,8 +33,15 @@ const FORBIDDEN = new Set(['not-uploader', 'forbidden', 'already-claimed']);
 function fail(code: string): never {
   if (code === 'not-found') throw new NotFoundException();
   if (FORBIDDEN.has(code)) throw new ForbiddenException(code);
+  if (code === 'file-too-large') throw new PayloadTooLargeException(code);
+  if (code === 'infected-file') throw new UnprocessableEntityException(code);
+  if (code === 'scan-failed') throw new ServiceUnavailableException(code);
   throw new BadRequestException(code);
 }
+
+/** The multipart plugin's error past the per-file limit (it has a `code`; its `message` is plain prose). */
+const isFileTooLarge = (error: unknown): boolean =>
+  typeof error === 'object' && error !== null && 'code' in error && error.code === 'FST_REQ_FILE_TOO_LARGE';
 
 function valueOf<T>(result: Result<T, string>): T {
   if (!result.ok) fail(result.error);
@@ -48,9 +58,8 @@ const toUpload = (upload: Upload): UploadContract => ({
 });
 
 /**
- * Uploads behind the Files context (M3d, ADR-0017, ADR-0035). Access scoped to the uploader for now; reading a
- * claimed attachment through the channel that posted it arrives with the Messaging integration follow-up
- * (docs/features/messaging-files.md).
+ * Uploads behind the Files context (M3d, ADR-0017, ADR-0035). These routes serve the uploader only; whoever can read
+ * a message gets its attachments from Messaging (`GET /api/channels/…/attachments/{fileId}`).
  */
 @Controller('files')
 @UseGuards(AuthGuard)
@@ -72,9 +81,7 @@ export class FilesController {
     try {
       bytes = await part.toBuffer();
     } catch (error) {
-      if (error instanceof Error && error.message.includes('FST_REQ_FILE_TOO_LARGE')) {
-        throw new BadRequestException('file-too-large');
-      }
+      if (isFileTooLarge(error)) fail('file-too-large');
       throw error;
     }
 
@@ -103,7 +110,7 @@ export class FilesController {
   async preview(@CurrentPrincipal() principal: Principal, @Param('fileId') fileId: string): Promise<StreamableFile> {
     const personId = await this.#personId(principal);
     const { upload, stream } = valueOf(await this.getUploadContent.execute({ fileId, requesterId: personId }));
-    // Only images have a preview today; PDF first-page thumbnails are a follow-up (docs/features/messaging-files.md).
+    // Only images: the client draws a PDF's first page itself (P-28).
     if (upload.previewKind !== 'image') throw new NotFoundException();
     return new StreamableFile(stream as unknown as Buffer, { type: upload.props.contentType });
   }

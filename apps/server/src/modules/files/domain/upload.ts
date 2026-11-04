@@ -5,8 +5,7 @@ export const MAX_UPLOAD_BYTES = 100 * 1024 * 1024;
 
 /**
  * Common images, PDF, plain text and office/archive formats; executables and active web content are
- * rejected (P-20). Checked against the content type the client declared; sniffing the actual bytes is a
- * follow-up (docs/features/messaging-files.md).
+ * rejected (P-20). The declared type must be on this list, and the bytes must fit it (`bytesMatchContentType`).
  */
 export const ALLOWED_CONTENT_TYPES = new Set([
   'image/png',
@@ -25,6 +24,51 @@ export const ALLOWED_CONTENT_TYPES = new Set([
   'application/vnd.oasis.opendocument.presentation',
   'application/zip',
 ]);
+
+const ZIP_BASED_TYPES = new Set([
+  'application/zip',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'application/vnd.oasis.opendocument.text',
+  'application/vnd.oasis.opendocument.spreadsheet',
+  'application/vnd.oasis.opendocument.presentation',
+]);
+
+/** How much of a text file is checked for the NUL bytes that mark binary content. */
+const TEXT_SNIFF_BYTES = 8 * 1024;
+
+const startsWith = (bytes: Uint8Array, prefix: readonly number[], offset = 0): boolean =>
+  prefix.every((byte, index) => bytes[offset + index] === byte);
+
+const ascii = (text: string): number[] => Array.from(text, (char) => char.charCodeAt(0));
+
+/**
+ * Whether the bytes are what the client declared (P-20: the server checks the content, not only the label).
+ * Images and PDF have a signature; office formats are ZIP containers; text has none, so it must merely not be binary.
+ */
+export function bytesMatchContentType(contentType: string, bytes: Uint8Array): boolean {
+  if (ZIP_BASED_TYPES.has(contentType)) {
+    return startsWith(bytes, ascii('PK\x03\x04')) || startsWith(bytes, ascii('PK\x05\x06'));
+  }
+  if (contentType.startsWith('text/')) {
+    return ALLOWED_CONTENT_TYPES.has(contentType) && !bytes.subarray(0, TEXT_SNIFF_BYTES).includes(0);
+  }
+  switch (contentType) {
+    case 'image/png':
+      return startsWith(bytes, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+    case 'image/jpeg':
+      return startsWith(bytes, [0xff, 0xd8, 0xff]);
+    case 'image/gif':
+      return startsWith(bytes, ascii('GIF87a')) || startsWith(bytes, ascii('GIF89a'));
+    case 'image/webp':
+      return startsWith(bytes, ascii('RIFF')) && startsWith(bytes, ascii('WEBP'), 8);
+    case 'application/pdf':
+      return startsWith(bytes, ascii('%PDF-'));
+    default:
+      return false;
+  }
+}
 
 /** Uploads nobody claims expire after this long (P-22). */
 export const UPLOAD_EXPIRY_MS = 24 * 60 * 60 * 1000;
