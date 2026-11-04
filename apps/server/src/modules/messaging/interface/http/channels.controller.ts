@@ -28,6 +28,7 @@ import {
   MoveThreadReadMarkerRequest,
   OpenDirectMessageRequest,
   PostMessageRequest,
+  SearchMessagesQuery,
   UpdateChannelRequest,
   type BrowseChannelsResponse,
   type ChannelListResponse,
@@ -35,6 +36,7 @@ import {
   type MessageContract,
   type MessagePageResponse,
   type PinnedMessagesResponse,
+  type SearchMessagesResponse,
   type ThreadListResponse,
 } from '@teamtown/contracts';
 import type { Result } from '@teamtown/kernel';
@@ -61,6 +63,7 @@ import type { ChannelOverview } from '../../application/ports/channel-repository
 import type { MessagePage, ThreadSummary } from '../../application/ports/message-repository.port.ts';
 import { PostMessage } from '../../application/post-message.ts';
 import { ReactToMessage } from '../../application/react-to-message.ts';
+import { SearchMessages } from '../../application/search-messages.ts';
 import { MoveThreadReadMarker, SetThreadFollowing } from '../../application/thread-follows.ts';
 import { UpdateChannel } from '../../application/update-channel.ts';
 import type { Channel } from '../../domain/channel.ts';
@@ -98,12 +101,15 @@ function valueOf<T>(result: Result<T, string>): T {
   return result.value;
 }
 
+const toSummaryKind = (channel: Channel): ChannelSummary['kind'] =>
+  channel.isDirect ? 'direct' : (channel.props.kind as 'public' | 'private' | 'room');
+
 const toSummary = (
   personId: string,
   { channel, unreadCount, mentionCount, lastMessageAt }: ChannelOverview,
 ): ChannelSummary => ({
   channelId: channel.props.channelId,
-  kind: channel.isDirect ? 'direct' : (channel.props.kind as 'public' | 'private' | 'room'),
+  kind: toSummaryKind(channel),
   group: channel.props.kind === 'group',
   name: channel.props.name,
   creatorId: channel.props.creatorId,
@@ -164,7 +170,28 @@ export class ChannelsController {
     @Inject(PinMessage) private readonly pinMessage: PinMessage,
     @Inject(ListPinnedMessages) private readonly listPinnedMessages: ListPinnedMessages,
     @Inject(GetAttachmentContent) private readonly getAttachmentContent: GetAttachmentContent,
+    @Inject(SearchMessages) private readonly searchMessages: SearchMessages,
   ) {}
+
+  @Get('search/messages')
+  async search(@CurrentPrincipal() principal: Principal, @Query() query: unknown): Promise<SearchMessagesResponse> {
+    const { q, channelId, limit, offset } = parseRequest(SearchMessagesQuery, query);
+    const personId = await this.#personId(principal);
+    const page = valueOf(await this.searchMessages.execute({ personId, query: q, channelId, limit, offset }));
+    return {
+      results: page.results.map(({ message, snippet, channel }) => ({
+        message: toMessage(message),
+        snippet,
+        channel: {
+          channelId: channel.props.channelId,
+          kind: toSummaryKind(channel),
+          name: channel.props.name,
+          members: channel.memberIds,
+        },
+      })),
+      hasMore: page.hasMore,
+    };
+  }
 
   @Get('channels')
   async list(@CurrentPrincipal() principal: Principal): Promise<ChannelListResponse> {

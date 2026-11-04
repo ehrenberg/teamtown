@@ -155,7 +155,7 @@ export class MikroOrmMessageRepository implements MessageRepository {
   }
 }
 
-async function toDomain(em: EntityManager, records: readonly MessageRecord[]): Promise<Message[]> {
+export async function toDomain(em: EntityManager, records: readonly MessageRecord[]): Promise<Message[]> {
   const messageIds = records.map((record) => record.messageId);
   const [reactions, attachments] = await Promise.all([reactionsOf(em, messageIds), attachmentsOf(em, messageIds)]);
   return records.map((record) =>

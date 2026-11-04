@@ -21,6 +21,9 @@ import { LeaveChannel } from './application/leave-channel.ts';
 import { ListMessages } from './application/list-messages.ts';
 import { ListMyChannels } from './application/list-my-channels.ts';
 import { ListPinnedMessages } from './application/list-pinned-messages.ts';
+import { SearchMessages } from './application/search-messages.ts';
+import { MESSAGE_SEARCH, type MessageSearch } from './application/ports/message-search.port.ts';
+import { PostgresMessageSearch } from './infrastructure/persistence/postgres-message-search.ts';
 import { ListReplies } from './application/list-replies.ts';
 import { ListThreads } from './application/list-threads.ts';
 import { MessagingEventStream } from './application/messaging-event-stream.ts';
@@ -207,6 +210,16 @@ import { ChannelsController } from './interface/http/channels.controller.ts';
       provide: PinMessage,
       useFactory: (channels: ChannelRepository, messages: MessageRepository) => new PinMessage(channels, messages),
       inject: [CHANNEL_REPOSITORY, MESSAGE_REPOSITORY],
+    },
+    {
+      provide: MESSAGE_SEARCH,
+      useFactory: (orm: MikroORM) => new PostgresMessageSearch(orm),
+      inject: [MikroORM],
+    },
+    {
+      provide: SearchMessages,
+      useFactory: (channels: ChannelRepository, search: MessageSearch) => new SearchMessages(channels, search),
+      inject: [CHANNEL_REPOSITORY, MESSAGE_SEARCH],
     },
     {
       provide: ListPinnedMessages,

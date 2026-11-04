@@ -12,6 +12,7 @@ import {
   MeetingLogListResponse,
   MessagePageResponse,
   MessageSchema,
+  SearchMessagesResponse,
   PeopleListResponse,
   ThreadListResponse,
   REALTIME_PATH,
@@ -403,6 +404,49 @@ describe('TeamTown server (integration)', () => {
       expect(unknown.status).toBe(400);
       expect(await unknown.json()).toMatchObject({ message: 'unknown-person' });
       expect((await send('POST', '/channels', 'token-lena', { kind: 'secret' })).status).toBe(400);
+    });
+
+    it('finds messages by inflected words and file names, but never what one may not read (M3e)', async () => {
+      const search = async (token: string, query: string) =>
+        SearchMessagesResponse.parse(
+          await (await get(`/search/messages?q=${encodeURIComponent(query)}`, token)).json(),
+        ).results.map((result) => result.message.body);
+      const post = async (channelId: string, token: string, body: string) =>
+        MessageSchema.parse(await (await send('POST', `/channels/${channelId}/messages`, token, { body })).json());
+
+      const open = ChannelSummarySchema.parse(
+        await (await send('POST', '/channels', 'token-lena', { kind: 'public', name: 'suche-offen' })).json(),
+      );
+      const closed = ChannelSummarySchema.parse(
+        await (await send('POST', '/channels', 'token-lena', { kind: 'private', name: 'suche-geheim' })).json(),
+      );
+      await post(open.channelId, 'token-lena', 'Die Rechnungen sind da');
+      await post(open.channelId, 'token-lena', 'The invoices arrived');
+      await post(closed.channelId, 'token-lena', 'Die geheimen Rechnungen');
+
+      // German and English forms, and the start of a word while typing.
+      expect(await search('token-lena', 'rechnung')).toEqual(
+        expect.arrayContaining(['Die Rechnungen sind da', 'Die geheimen Rechnungen']),
+      );
+      expect(await search('token-lena', 'invoice')).toEqual(['The invoices arrived']);
+      expect(await search('token-lena', 'rechn')).toContain('Die Rechnungen sind da');
+
+      // Mia isn't in the private channel, but may read the public one she hasn't joined.
+      expect(await search('token-mia', 'rechnung')).toEqual(['Die Rechnungen sind da']);
+      expect((await get(`/search/messages?q=rechnung&channelId=${closed.channelId}`, 'token-mia')).status).toBe(404);
+      expect((await get('/search/messages?q=x', 'token-mia')).status).toBe(400);
+
+      // "Only in this conversation", and a deleted message is gone.
+      const scoped = SearchMessagesResponse.parse(
+        await (await get(`/search/messages?q=rechnung&channelId=${open.channelId}`, 'token-lena')).json(),
+      );
+      expect(scoped.results).toMatchObject([
+        { channel: { channelId: open.channelId, name: 'suche-offen' }, snippet: 'Die Rechnungen sind da' },
+      ]);
+      const doomed = await post(open.channelId, 'token-lena', 'Vergänglicher Satz');
+      expect(await search('token-lena', 'vergänglich')).toEqual(['Vergänglicher Satz']);
+      await remove(`/channels/${open.channelId}/messages/${doomed.messageId}`, 'token-lena');
+      expect(await search('token-lena', 'vergänglich')).toEqual([]);
     });
 
     it('keeps replies in threads, counts mentions and shows public reactions in the office (M3b)', async () => {

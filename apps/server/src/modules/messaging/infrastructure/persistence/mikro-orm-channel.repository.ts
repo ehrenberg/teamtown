@@ -111,6 +111,18 @@ export class MikroOrmChannelRepository implements ChannelRepository {
     return this.#load({ kind: 'public' });
   }
 
+  async listReadableIds(personId: string): Promise<string[]> {
+    // The same rule as `Channel.canRead`, in SQL.
+    const rows = await this.orm.em.fork().execute<{ channel_id: string }[]>(
+      `select c."channel_id" from "messaging"."channel" c
+        where c."kind" in ('public', 'room')
+           or exists (select 1 from "messaging"."membership" m
+                       where m."channel_id" = c."channel_id" and m."person_id" = ?)`,
+      [personId],
+    );
+    return rows.map((row) => row.channel_id);
+  }
+
   listRoomWalls(): Promise<Channel[]> {
     return this.#load({ kind: 'room' });
   }

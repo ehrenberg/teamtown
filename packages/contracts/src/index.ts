@@ -2,6 +2,7 @@ export * from './files/uploads.ts';
 export * from './http/health.ts';
 export * from './meetings/meeting-logs.ts';
 export * from './messaging/channels.ts';
+export * from './messaging/search.ts';
 export * from './people/me.ts';
 export * from './people/people.ts';
 export * from './realtime/calls.ts';

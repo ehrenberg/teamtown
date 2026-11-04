@@ -20,6 +20,13 @@ import { OpenDirectMessage } from './open-direct-message.ts';
 import { PinMessage } from './pin-message.ts';
 import type { ChannelOverview, ChannelRepository } from './ports/channel-repository.port.ts';
 import type { AttachmentContent, ClaimAttachmentsError, FileAttachments } from './ports/file-attachments.port.ts';
+import type {
+  MessageSearch,
+  MessageSearchHit,
+  MessageSearchPage,
+  MessageSearchQuery,
+} from './ports/message-search.port.ts';
+import { SearchMessages } from './search-messages.ts';
 import type { MessagePage, MessageRepository, ThreadSummary } from './ports/message-repository.port.ts';
 import type { PeopleDirectory } from './ports/people-directory.port.ts';
 import type { FollowedThread, ThreadRepository } from './ports/thread-repository.port.ts';
@@ -159,6 +166,11 @@ class InMemoryChannels implements ChannelRepository {
         }),
     );
   }
+  listReadableIds(personId: string): Promise<string[]> {
+    return Promise.resolve(
+      [...this.channels.values()].filter((c) => c.canRead(personId)).map((channel) => channel.props.channelId),
+    );
+  }
   listPublic(): Promise<Channel[]> {
     return Promise.resolve([...this.channels.values()].filter((c) => c.props.kind === 'public'));
   }
@@ -268,6 +280,7 @@ function setup() {
   const threads = new InMemoryThreads(messages);
   const channels = new InMemoryChannels(messages, threads);
   const fileAttachments = new FakeFileAttachments();
+  const messageSearch = new FakeMessageSearch();
   const roomState = {
     rooms: [
       { floorId: 'ground-floor', roomId: 'focus-room', name: 'Focus Room' },
@@ -323,8 +336,21 @@ function setup() {
     pin: new PinMessage(channels, messages),
     pinned: new ListPinnedMessages(channels, messages),
     attachmentContent: new GetAttachmentContent(channels, messages, fileAttachments),
+    messageSearch,
+    search: new SearchMessages(channels, messageSearch),
     fileAttachments,
   };
+}
+
+/** Answers with whatever it was told to, and notes where it was allowed to look. */
+class FakeMessageSearch implements MessageSearch {
+  hits: MessageSearchHit[] = [];
+  lastQuery: MessageSearchQuery | null = null;
+
+  search(query: MessageSearchQuery): Promise<MessageSearchPage> {
+    this.lastQuery = query;
+    return Promise.resolve({ hits: this.hits, hasMore: false });
+  }
 }
 
 describe('Messaging use cases', () => {
@@ -678,6 +704,44 @@ describe('Messaging use cases', () => {
       expect(
         await app.react.execute({ personId: BEN, channelId, messageId: rootMessageId, emoji: '👍', add: true }),
       ).toEqual({ ok: false, error: 'not-found' });
+    });
+  });
+
+  describe('search (M3e)', () => {
+    const search = { limit: 20, offset: 0 };
+
+    it("looks only in what the person may read: public channels, but not others' private ones (P-31)", async () => {
+      const open = unwrap(await app.create.execute({ personId: 'anna', kind: 'public', name: 'open' }));
+      const secret = unwrap(await app.create.execute({ personId: 'anna', kind: 'private', name: 'secret' }));
+
+      unwrap(await app.search.execute({ ...search, personId: 'carl', query: 'plan' }));
+
+      const reach = app.messageSearch.lastQuery?.channelIds;
+      expect(reach).toContain(open.props.channelId);
+      expect(reach).not.toContain(secret.props.channelId);
+    });
+
+    it('answers not-found for a conversation the person cannot read, without searching (P-32)', async () => {
+      const secret = unwrap(await app.create.execute({ personId: 'anna', kind: 'private', name: 'secret' }));
+
+      expect(
+        await app.search.execute({ ...search, personId: 'carl', query: 'plan', channelId: secret.props.channelId }),
+      ).toEqual({ ok: false, error: 'not-found' });
+      expect(app.messageSearch.lastQuery).toBeNull();
+    });
+
+    it('names the conversation of each hit, and has nothing to do for mere punctuation', async () => {
+      const team = unwrap(await app.create.execute({ personId: 'anna', kind: 'public', name: 'team' }));
+      const channelId = team.props.channelId;
+      const message = unwrap(await app.post.execute({ personId: 'anna', channelId, body: 'The plan' }));
+      app.messageSearch.hits = [{ message, snippet: 'The plan' }];
+
+      const page = unwrap(await app.search.execute({ ...search, personId: 'anna', query: 'plan', channelId }));
+      expect(page.results.map((result) => result.channel.props.name)).toEqual(['team']);
+
+      app.messageSearch.lastQuery = null;
+      expect(unwrap(await app.search.execute({ ...search, personId: 'anna', query: '!!' })).results).toEqual([]);
+      expect(app.messageSearch.lastQuery).toBeNull();
     });
   });
 

@@ -23,6 +23,8 @@ export interface ChannelRepository {
   /** The person's channels, or only `channelId` if they are a member of it. */
   listForMember(personId: string, channelId?: string): Promise<ChannelOverview[]>;
   listPublic(): Promise<Channel[]>;
+  /** Every channel `Channel.canRead` allows the person, without loading them all (for search). */
+  listReadableIds(personId: string): Promise<string[]>;
   listRoomWalls(): Promise<Channel[]>;
   /**
    * Writes what changed, plus the recorded events into the outbox, in one transaction (ADR-0018).
