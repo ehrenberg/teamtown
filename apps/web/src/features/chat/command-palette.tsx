@@ -12,7 +12,8 @@ import { Search } from 'lucide-react';
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { apiGet, apiSend } from '../../api/api-client.ts';
-import { useBrowseChannels, useChannels, usePeople } from '../../api/queries.ts';
+import { useBrowseChannels, useChannels, useMyAccess, usePeople } from '../../api/queries.ts';
+import { useAdminStore } from '../../stores/admin-store.ts';
 import { useChatStore } from '../../stores/chat-store.ts';
 import { usePresenceStore } from '../../stores/presence-store.ts';
 import { channelTitle, messageExcerpt, OVERLAY } from './chat-shared.ts';
@@ -78,6 +79,7 @@ function PaletteBody({ onRun }: { readonly onRun: () => void }) {
   const channels = useChannels();
   const browse = useBrowseChannels(true);
   const people = usePeople();
+  const access = useMyAccess();
   const peopleById = useMemo(
     () => new Map(people.data?.people.map((person) => [person.personId, person])),
     [people.data],
@@ -112,19 +114,23 @@ function PaletteBody({ onRun }: { readonly onRun: () => void }) {
     });
   };
 
+  const goTo = (id: string, label: string, run: () => void, allowed = true): Entry[] =>
+    allowed && label.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase())
+      ? [{ id, section: t('palette.goTo'), content: label, run }]
+      : [];
+
   const entries: Entry[] = [
-    ...(query.trim() === '' || t('palette.goToThreads').toLocaleLowerCase().includes(query.trim().toLocaleLowerCase())
-      ? [
-          {
-            id: 'threads',
-            section: t('palette.goTo'),
-            content: t('palette.goToThreads'),
-            run: () => {
-              useChatStore.getState().openThreads();
-            },
-          },
-        ]
-      : []),
+    ...goTo('threads', t('palette.goToThreads'), () => {
+      useChatStore.getState().openThreads();
+    }),
+    ...goTo(
+      'administration',
+      t('admin.title'),
+      () => {
+        useAdminStore.getState().setOpen(true);
+      },
+      access.data?.canManageRoles === true,
+    ),
     ...pickChannels(query, channels.data?.channels ?? [], browse.data?.channels ?? [], titleOf).map((entry) => ({
       id: `channel-${entry.channelId}`,
       section: t('palette.channels'),

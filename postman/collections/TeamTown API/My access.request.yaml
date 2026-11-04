@@ -1,0 +1,13 @@
+$kind: http-request
+method: GET
+url: '{{baseUrl}}/access/me'
+order: 300
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test('responds 200', () => pm.response.to.have.status(200));
+      pm.test('says what the person may administer', () => {
+        pm.expect(pm.response.json().canManageRoles).to.be.a('boolean');
+        pm.expect(pm.response.json().canManageOwners).to.be.a('boolean');
+      });

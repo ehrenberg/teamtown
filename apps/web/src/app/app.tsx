@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { AudioCheckScreen } from '../features/audio-check/audio-check-screen.tsx';
 import { SignInScreen } from '../features/auth/sign-in-screen.tsx';
+import { Administration } from '../features/admin/admin-view.tsx';
 import { ChannelList } from '../features/chat/channel-list.tsx';
 import { ChatPanel } from '../features/chat/chat-panel.tsx';
 import { CommandPalette } from '../features/chat/command-palette.tsx';
@@ -27,7 +28,16 @@ export function App() {
   return (
     <RealtimeProvider>
       <MessagingSync />
-      <OfficePage sidebar={<ChannelList />} sidePanel={<ChatPanel />} headerActions={<CommandPalette />} />
+      <OfficePage
+        sidebar={<ChannelList />}
+        sidePanel={<ChatPanel />}
+        headerActions={
+          <>
+            <CommandPalette />
+            <Administration />
+          </>
+        }
+      />
     </RealtimeProvider>
   );
 }

@@ -1,5 +1,6 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import {
+  AccessOverviewResponse,
   BrowseChannelsResponse,
   ChannelListResponse,
   ChannelSummarySchema,
@@ -9,6 +10,7 @@ import {
   MeResponse,
   MeetingLogListResponse,
   MessagePageResponse,
+  MyAccessResponse,
   PeopleListResponse,
   PinnedMessagesResponse,
   ThreadListResponse,
@@ -26,6 +28,17 @@ export const useServerHealth = () =>
   });
 
 export const useMe = () => useQuery({ queryKey: ['me'], queryFn: () => apiGet('/me', MeResponse) });
+
+/** What the person may administer (ADR-0038). */
+export const useMyAccess = () =>
+  useQuery({ queryKey: ['access', 'me'], queryFn: () => apiGet('/access/me', MyAccessResponse) });
+
+export const useAccessOverview = (enabled: boolean) =>
+  useQuery({
+    queryKey: ['access', 'overview'],
+    queryFn: () => apiGet('/access/overview', AccessOverviewResponse),
+    enabled,
+  });
 
 export const useFloors = () => useQuery({ queryKey: ['floors'], queryFn: () => apiGet('/floors', FloorListResponse) });
 

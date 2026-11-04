@@ -54,9 +54,9 @@ export async function apiDelete(path: string, fetchImpl: typeof fetch = fetch): 
   }
 }
 
-type SendMethod = 'POST' | 'PATCH' | 'PUT';
+type SendMethod = 'POST' | 'PATCH' | 'PUT' | 'DELETE';
 
-/** POST, PATCH or PUT a JSON body; with a schema, the answer is validated against its contract. */
+/** POST, PATCH, PUT or DELETE with a JSON body; with a schema, the answer is validated against its contract. */
 export async function apiSend(
   method: SendMethod,
   path: string,

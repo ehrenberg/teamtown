@@ -358,5 +358,49 @@
     "searchError": "The search didn't work. Please try again.",
     "resultCount_one": "{{count}} message found",
     "resultCount_other": "{{count}} messages found"
+  },
+  "admin": {
+    "title": "Administration",
+    "backToOffice": "Back to the office",
+    "sections": "Sections",
+    "people": "People",
+    "groups": "Groups",
+    "loading": "Loading…",
+    "loadError": "This couldn't be loaded. Please try again.",
+    "searchPeople": "Search people",
+    "noRoles": "No roles beyond Member.",
+    "noGroups": "No groups yet. Groups let you give several people a role at once.",
+    "scopeTown": "Whole town",
+    "privateChannel": "Private channel",
+    "unknownPlace": "Place no longer exists",
+    "someone": "Someone",
+    "assign": "Assign",
+    "add": "Add",
+    "pickPerson": "Pick a person",
+    "roleFor": "Role for {{who}}",
+    "scopeFor": "Where it applies for {{who}}",
+    "takeBack": "Take {{role}} ({{place}}) back from {{who}}",
+    "groupName": "Group name",
+    "createGroup": "Create group",
+    "deleteGroup": "Delete group {{name}}",
+    "membersOf": "Members of {{name}}",
+    "removeMember": "Remove {{name}} from {{group}}",
+    "addMemberTo": "Add a person to {{name}}",
+    "role": {
+      "owner": "Owner",
+      "admin": "Admin",
+      "room-host": "Room Host",
+      "channel-moderator": "Channel Moderator",
+      "editor": "Editor"
+    },
+    "error": {
+      "generic": "That didn't work. Please try again.",
+      "invalid-request": "That didn't work. Please try again.",
+      "not-allowed": "You don't have the rights for this.",
+      "last-owner": "A town needs at least one Owner. Appoint another one first.",
+      "group-name-taken": "There's already a group with this name.",
+      "invalid-group-name": "Group names have 1 to 80 characters.",
+      "role-not-assignable": "This role can't be given here."
+    }
   }
 }

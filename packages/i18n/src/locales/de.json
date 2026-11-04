@@ -358,5 +358,49 @@
     "searchError": "Die Suche hat nicht geklappt. Bitte versuch es noch mal.",
     "resultCount_one": "{{count}} Nachricht gefunden",
     "resultCount_other": "{{count}} Nachrichten gefunden"
+  },
+  "admin": {
+    "title": "Verwaltung",
+    "backToOffice": "Zurück ins Büro",
+    "sections": "Bereiche",
+    "people": "Personen",
+    "groups": "Gruppen",
+    "loading": "Wird geladen …",
+    "loadError": "Das konnte nicht geladen werden. Bitte versuch es noch mal.",
+    "searchPeople": "Personen suchen",
+    "noRoles": "Keine Rollen außer Mitglied.",
+    "noGroups": "Noch keine Gruppen. Mit Gruppen gibst du mehreren Personen auf einmal eine Rolle.",
+    "scopeTown": "Ganze Stadt",
+    "privateChannel": "Privater Channel",
+    "unknownPlace": "Ort gibt es nicht mehr",
+    "someone": "Jemand",
+    "assign": "Zuweisen",
+    "add": "Hinzufügen",
+    "pickPerson": "Person auswählen",
+    "roleFor": "Rolle für {{who}}",
+    "scopeFor": "Wo sie für {{who}} gilt",
+    "takeBack": "{{role}} ({{place}}) von {{who}} zurücknehmen",
+    "groupName": "Gruppenname",
+    "createGroup": "Gruppe anlegen",
+    "deleteGroup": "Gruppe {{name}} löschen",
+    "membersOf": "Mitglieder von {{name}}",
+    "removeMember": "{{name}} aus {{group}} entfernen",
+    "addMemberTo": "Person zu {{name}} hinzufügen",
+    "role": {
+      "owner": "Owner",
+      "admin": "Admin",
+      "room-host": "Raum-Host",
+      "channel-moderator": "Channel-Moderation",
+      "editor": "Editor"
+    },
+    "error": {
+      "generic": "Das hat nicht geklappt. Bitte versuch es noch mal.",
+      "invalid-request": "Das hat nicht geklappt. Bitte versuch es noch mal.",
+      "not-allowed": "Dafür hast du keine Berechtigung.",
+      "last-owner": "Eine Stadt braucht mindestens einen Owner. Ernenne zuerst einen weiteren.",
+      "group-name-taken": "Es gibt schon eine Gruppe mit diesem Namen.",
+      "invalid-group-name": "Gruppennamen haben 1 bis 80 Zeichen.",
+      "role-not-assignable": "Diese Rolle lässt sich hier nicht vergeben."
+    }
   }
 }
