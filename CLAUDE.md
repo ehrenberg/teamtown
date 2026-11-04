@@ -4,8 +4,9 @@ TeamTown is an open-source (AGPL-3.0), self-hostable communication platform that
 with a **soft low-poly isometric 3D replica of the real office**: avatars walk around, proximity audio,
 room meetings (open/knock/locked), channels and DMs with scoped roles.
 
-**Status: M0–M2 and M3a–M3c complete.** Channels/DMs, threads/mentions/reactions and room walls are done;
-the next roadmap slice is M3d files and requires a feature spec and product-owner decisions before implementation.
+**Status: M0–M2 and M3a–M3d complete.** Channels/DMs, threads/mentions/reactions, room walls, files and pinning
+are done; the next roadmap slice is M3e search and requires a feature spec and product-owner decisions before
+implementation.
 `docs/` is the source of truth for decisions.
 
 ## Golden rules
@@ -90,6 +91,8 @@ apps/server/src/modules/<context>/{domain,application,infrastructure,interface}/
 ## Conventions
 
 - Conventional Commits with the context as scope: `feat(meetings): add knock requests`.
+- Commit every finished implementation without being asked (`git commit -s`, focused commits, on a short-lived branch per
+  `docs/engineering/workflow.md`). Pushing and PRs still need a request.
 - Tests: domain and world-core are test-driven; every bug fix gets a regression test (`docs/engineering/testing-strategy.md`).
 - UI: use design tokens only (no raw hex), keyboard-accessible, EN + DE strings, status = colour **and** shape.
 - Voice: warm and clear, lightly playful; errors are always plain (`docs/design/brand-guide.md` §6).

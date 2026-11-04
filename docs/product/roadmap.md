@@ -54,7 +54,7 @@ M3b threads, mentions and reactions done on 2026-11-01 (ADR-0034,
 [feature spec](../features/messaging-threads-mentions-reactions.md)); "Go to threads" follows with the palette.
 M3c room walls done on 2026-11-02 ([feature spec](../features/messaging-room-walls.md)); the command-palette
 entry follows with the palette. M3d files, including pinning and upload malware scanning, specified on 2026-11-02 (P-19–P-26, ADR-0035,
-[feature spec](../features/messaging-files.md)); implementation is next.
+[feature spec](../features/messaging-files.md)); done on 2026-11-04, including P-27 and P-28. M3e search is next.
 
 M2 and M3 can be developed in parallel by different contributors because they are separate bounded
 contexts ([domain model](../architecture/domain-model.md)).

@@ -1,6 +1,6 @@
 # Feature: Files
 
-- **Status:** Draft
+- **Status:** Done (2026-11-04)
 - **Brainstorming ID:** M7 Files & previews
 - **Bounded context(s):** Files, Messaging, REST, web client
 - **Milestone:** M3d (ADR-0033, ADR-0035)
@@ -26,11 +26,14 @@ so that I can hand over documents and images without leaving the chat.
    (P-20). _The exact extension list is an implementation detail within the decided category and may be adjusted
    without a new product decision._
 4. **Previews.** Images and PDFs get a preview: images show inline (bounded size, click to open full size); PDFs
-   show a first-page thumbnail that opens the file on click. Every other allowed type shows a file chip (name,
-   type icon, size) with a direct download; there is no in-app viewer for them (P-20).
+   show a first-page thumbnail, drawn in the client with pdf.js (P-28), that opens the file on click. Every other allowed type shows a file chip (name,
+   type icon, size) with a direct download; there is no in-app viewer for them (P-20). Previews load when they
+   scroll near the view, and images and PDFs also get the chip, so every file has a download.
 5. **Attachments in the message.** An attachment belongs to exactly one message and is shown with it, in the
    channel, in a thread or "also sent to channel". It has no separate caption; the message body is the caption.
-   Editing a message never changes its attachments (adding or removing a file requires a new message).
+   Editing a message never changes its attachments (adding or removing a file requires a new message). A message
+   with at least one attachment may have no text, also after an edit; a message without attachments still needs
+   text (P-27).
 6. **Deleting.** Deleting a message deletes its attachments' bytes and metadata immediately and irreversibly,
    matching the existing message-body deletion (P-21). A deleted message shows "Message deleted" as it already
    does; no file chip remains.
@@ -42,8 +45,9 @@ so that I can hand over documents and images without leaving the chat.
 9. **Malware scanning (ADR-0035).** Every upload is scanned by ClamAV as part of `POST /api/files/uploads`, before
    the file reaches `pending`. A clean result proceeds as above. An infected result rejects the upload immediately
    with a plain-language error; no bytes are kept, and the file never becomes attachable or downloadable. If the
-   scanner is disabled (self-hoster opted out), uploads proceed unscanned; the server logs a startup warning in
-   that case.
+   scanner is enabled but gives no verdict (unreachable, or it answers with an error), the upload fails with a
+   plain-language error (`scan-failed`, 503): only a clean result lets a file through. If the scanner is disabled
+   (self-hoster opted out), uploads proceed unscanned; the server logs a startup warning in that case.
 10. **Pinning (P-24, P-25).** Any message — with or without an attachment — can be pinned to the channel, DM or
     room wall it belongs to. A **"Pinned"** view, reachable from the chat header, lists all of a conversation's
     pinned messages, newest first, each linking back to its place in the conversation (or its thread, if the
@@ -55,33 +59,33 @@ so that I can hand over documents and images without leaving the chat.
 
 ## Acceptance criteria
 
-- [ ] Given a member attaches a 50 MB image and sends the message, then every member who can read the channel
+- [x] Given a member attaches a 50 MB image and sends the message, then every member who can read the channel
       sees the image inline as a preview.
-- [ ] Given a member attaches a 150 MB file, then the composer rejects it before uploading, with a plain-language
+- [x] Given a member attaches a 150 MB file, then the composer rejects it before uploading, with a plain-language
       error, and the message is not blocked from sending without it.
-- [ ] Given a member attaches 11 files to one message, then the composer rejects the 11th attachment with a
+- [x] Given a member attaches 11 files to one message, then the composer rejects the 11th attachment with a
       plain-language error.
-- [ ] Given a member attaches an `.exe` file, then the upload is rejected by the composer and, if attempted
+- [x] Given a member attaches an `.exe` file, then the upload is rejected by the composer and, if attempted
       directly against the API, by the server, with a plain-language error.
-- [ ] Given a member uploads a file but never sends the message, then the file is deleted automatically no later
+- [x] Given a member uploads a file but never sends the message, then the file is deleted automatically no later
       than 24 hours after the upload.
-- [ ] Given a message with attachments, when its author deletes the message, then the attachment bytes and
+- [x] Given a message with attachments, when its author deletes the message, then the attachment bytes and
       metadata are deleted immediately and the message shows "Message deleted".
-- [ ] Given a private channel a person cannot read, then requesting one of its attachments directly returns `404`.
-- [ ] Given a member uploads a file that ClamAV flags as infected, then the upload is rejected immediately with a
+- [x] Given a private channel a person cannot read, then requesting one of its attachments directly returns `404`.
+- [x] Given a member uploads a file that ClamAV flags as infected, then the upload is rejected immediately with a
       plain-language error, no bytes are kept, and the file cannot be attached to any message.
-- [ ] Given a channel's creator, when they pin or unpin a message, then it appears or disappears in that channel's
+- [x] Given a channel's creator, when they pin or unpin a message, then it appears or disappears in that channel's
       "Pinned" view for everyone who can read the channel.
-- [ ] Given a member who is not the channel's creator, when they try to pin a message via the API, then the
+- [x] Given a member who is not the channel's creator, when they try to pin a message via the API, then the
       request is rejected (`403`).
-- [ ] Given a pinned message, when its author deletes it, then it is removed from the "Pinned" view along with the
+- [x] Given a pinned message, when its author deletes it, then it is removed from the "Pinned" view along with the
       message.
-- [ ] Non-spatial path: attaching, previewing and downloading files works the same in the chat panel regardless of
+- [x] Non-spatial path: attaching, previewing and downloading files works the same in the chat panel regardless of
       whether the 3D world is visible; no action requires the world.
-- [ ] Accessibility: the attach action and each attachment have accessible labels (file name, type, size); upload
+- [x] Accessibility: the attach action and each attachment have accessible labels (file name, type, size); upload
       progress and errors are announced; image previews have alt text from the file name; keyboard users can
       attach, remove, cancel and download without a pointer.
-- [ ] i18n: all new UI and error strings exist in English and German, using German **du**.
+- [x] i18n: all new UI and error strings exist in English and German, using German **du**.
 
 ## Permissions
 
@@ -113,15 +117,17 @@ Pinning reuses the catalogue's existing `message.pin`. Until M4 roles exist:
 - **`Message.attachments[]`** (already anticipated in the domain model) is populated when a message is sent,
   claiming the referenced uploads. Invariant: at most 10 attachments per message, each already claimed by no
   other message, each uploaded by the message's author, each within the per-file size limit (P-19, P-23).
-- Deleting a message triggers Files to delete the claimed uploads' bytes and metadata immediately (P-21), via a
-  domain event, not a direct cross-module call.
+- **Content check (P-20):** `bytesMatchContentType` compares the bytes with the declared type before the scan: images
+  and PDF by their signature, office formats as ZIP containers, text by the absence of NUL bytes.
+- Deleting a message makes Files delete the claimed uploads' bytes and metadata immediately (P-21), through
+  Messaging's `FileAttachments` port (adapter on Files' `public-api.ts`). The dependency runs one way, Messaging to
+  Files, which keeps the modules free of a cycle.
 - Glossary addition to `docs/architecture/domain-model.md` §1: **Attachment** — "A file attached to a message,
   previewed inline for images and PDF, downloaded otherwise" (`Attachment`, `Message.attachments[]`); **Upload** —
   "A file in temporary storage before a message claims it" (`Upload`).
-- Context map addition: `Messaging -->|AttachmentsClaimed| files` and `messaging -->|MessageDeleted| files`
-  (domain events), `files -. FileStorage port .-> messaging` is not needed since Messaging only stores
-  references; the web client fetches file bytes directly from a Files REST endpoint that checks access via the
-  `AccessPolicy` port the same way Messaging does.
+- Context map addition: Messaging depends on Files through the `FileAttachments` port (claim, delete, read bytes).
+  Messaging only stores references; the web client reads a file's bytes from a Messaging endpoint that checks
+  access to the message first, then asks Files for them.
 - **`MalwareScanner`** port (Files, ADR-0035): `scan(bytes): clean | infected`. The default adapter calls a
   ClamAV (`clamd`) instance over the Docker Compose network; a disabled scanner always returns `clean` and logs a
   startup warning. `POST /api/files/uploads` calls it before persisting the upload; an `infected` result deletes
@@ -139,16 +145,19 @@ New contracts in `packages/contracts/src/files/`:
   `{ uploadId, fileName, contentType, byteSize, expiresAt }`. Rejects disallowed types (`unsupported-file-type`)
   and oversized files (`file-too-large`, 413).
 - `DELETE /api/files/uploads/{uploadId}`: the uploader cancels a `pending` upload before sending.
-- `GET /api/files/{fileId}`: streams the bytes (original) for an attachment the caller may read (via Messaging's
-  access check); `404` if the caller cannot read the message, or the message/attachment no longer exists.
-- `GET /api/files/{fileId}/preview`: the image or PDF first-page preview; `404` for types without a preview.
-- New error code: `infected-file` (422), from the malware scan (ADR-0035).
+- `GET /api/files/{fileId}` and `GET /api/files/{fileId}/preview`: for the uploader only; `404` for types without
+  a preview (images have one; the client draws a PDF's first page itself, P-28).
+- New error codes: `infected-file` (422) and `scan-failed` (503), from the malware scan (ADR-0035).
 
 Changes in `packages/contracts/src/messaging/`:
 
 - `POST /api/channels/{id}/messages` body gains `attachmentUploadIds?: string[]` (claims the given pending
-  uploads as this message's attachments; the use case checks count, ownership and size).
-- `MessageSchema` gains `attachments: [{ fileId, fileName, contentType, byteSize, previewKind, previewUrl? }]` and
+  uploads as this message's attachments; the use case checks count, ownership and size). With attachments, `body`
+  may be empty (P-27).
+- `GET /api/channels/{id}/messages/{messageId}/attachments/{fileId}`: the bytes for whoever can read the message;
+  `404` if the caller cannot read it, or the message or attachment no longer exists. Sent with
+  `X-Content-Type-Options: nosniff`; only images and PDF are served `inline`, everything else as `attachment`.
+- `MessageSchema` gains `attachments: [{ fileId, fileName, contentType, byteSize, previewKind }]` and
   `pinned: boolean`.
 - `PUT` / `DELETE /api/channels/{id}/messages/{messageId}/pin` (idempotent): pins or unpins; checks `message.pin`
   per the permission table above.
@@ -184,4 +193,4 @@ content metadata on the message, visible to the same people who can already read
 
 ## Open questions
 
-_None._ P-19 to P-26 and ADR-0035 were decided on 2026-11-02.
+_None._ P-19 to P-26 and ADR-0035 were decided on 2026-11-02, P-27 and P-28 on 2026-11-04.
