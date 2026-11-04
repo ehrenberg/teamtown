@@ -60,7 +60,8 @@ deferred. **M3 Write is complete.**
 
 **M4 notes:** slicing decided on 2026-11-04 (ADR-0036): M4a Access core → M4b administration → M4c audit log → M4d
 guest links. M4a Access core specified and done on 2026-11-04 (P-33–P-35, [feature spec](../features/access-core.md)). M4b slicing decided on 2026-11-04 (ADR-0038): M4b-1 administration → M4b-2 custom roles → M4b-3 policies.
-M4b-1 specified ([feature spec](../features/access-administration.md)).
+M4b-1 specified and done on 2026-11-04 ([feature spec](../features/access-administration.md)). M4b-2 custom roles is
+next.
 
 M2 and M3 can be developed in parallel by different contributors because they are separate bounded
 contexts ([domain model](../architecture/domain-model.md)).

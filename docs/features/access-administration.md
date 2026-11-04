@@ -1,6 +1,6 @@
 # Feature: Administration of roles and groups
 
-- **Status:** In progress
+- **Status:** Done (2026-11-04)
 - **Brainstorming ID:** A3 Custom roles (groundwork)
 - **Bounded context(s):** Access, web client
 - **Milestone:** M4b-1 (ADR-0011, ADR-0036, ADR-0038)
@@ -30,18 +30,18 @@ I can hand out responsibility without touching a database.
 
 ## Acceptance criteria
 
-- [ ] Given an Admin, when they open Administration, then they see people and groups, and given a Member, then
+- [x] Given an Admin, when they open Administration, then they see people and groups, and given a Member, then
       neither the entry nor the API is available (`403`).
-- [ ] Given an Admin, when they make someone Channel Moderator of a channel, then that person can pin there at once.
-- [ ] Given a group with the Room Host role and a person in it, then the person holds `room.admit` there, and when they
+- [x] Given an Admin, when they make someone Channel Moderator of a channel, then that person can pin there at once.
+- [x] Given a group with the Room Host role and a person in it, then the person holds `room.admit` there, and when they
       leave the group, they no longer do.
-- [ ] Given an Admin, when they try to assign or take back Owner through the API, then it is refused (`403`).
-- [ ] Given two Owners who take the role from each other at the same moment, then one Owner remains.
-- [ ] Given the only Owner, when they give up the role, then it is refused (`409`), in plain words.
-- [ ] Given a role assigned to a private channel, then the view shows no channel name.
-- [ ] Non-spatial path: the view has no world part; it opens from the top bar and the palette and works by keyboard.
-- [ ] Accessibility: labelled controls, focus trapped and returned, role state as text, not colour alone.
-- [ ] i18n: all strings in English and German, using German **du**.
+- [x] Given an Admin, when they try to assign or take back Owner through the API, then it is refused (`403`).
+- [x] Given two Owners who take the role from each other at the same moment, then one Owner remains.
+- [x] Given the only Owner, when they give up the role, then it is refused (`409`), in plain words.
+- [x] Given a role assigned to a private channel, then the view shows no channel name.
+- [x] Non-spatial path: the view has no world part; it opens from the top bar and the palette and works by keyboard.
+- [x] Accessibility: labelled controls, focus trapped and returned, role state as text, not colour alone.
+- [x] i18n: all strings in English and German, using German **du**.
 
 ## Permissions
 
