@@ -438,7 +438,7 @@ describe('TeamTown server (integration)', () => {
       const replies = MessagePageResponse.parse(
         await (await get(`${path}/messages/${root.messageId}/replies`, 'token-mia')).json(),
       );
-      expect(replies.messages.map((message) => message.body)).toEqual(['Ich!']);
+      expect(replies.messages.map((message) => message.body)).toEqual([`Ich! <@${lenaId}>`]);
 
       const lenaThreads = async () =>
         ThreadListResponse.parse(await (await get('/threads', 'token-lena')).json()).threads;
