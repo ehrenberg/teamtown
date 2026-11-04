@@ -58,5 +58,8 @@ entry follows with the palette. M3d files, including pinning and upload malware 
 [feature spec](../features/messaging-search.md)) and done on 2026-11-04, including the palette entries M3a–M3c
 deferred. **M3 Write is complete.**
 
+**M4 notes:** slicing decided on 2026-11-04 (ADR-0036): M4a Access core → M4b administration → M4c audit log → M4d
+guest links.
+
 M2 and M3 can be developed in parallel by different contributors because they are separate bounded
 contexts ([domain model](../architecture/domain-model.md)).
