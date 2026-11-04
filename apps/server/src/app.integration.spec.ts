@@ -35,6 +35,9 @@ const people: Record<string, { subject: string; displayName: string }> = {
   'token-lena': { subject: 'sub-lena', displayName: 'Lena Hoffmann' },
   'token-ben': { subject: 'sub-ben', displayName: 'Ben Krüger' },
   'token-mia': { subject: 'sub-mia', displayName: 'Mia Schulz' },
+  // They sign in first, at the same moment, to settle the first Owner (ADR-0036).
+  'token-olga': { subject: 'sub-olga', displayName: 'Olga Owner' },
+  'token-omar': { subject: 'sub-omar', displayName: 'Omar Owner' },
 };
 
 const fakeVerifier: TokenVerifier = {
@@ -127,6 +130,11 @@ describe('TeamTown server (integration)', () => {
     const { port } = app.getHttpServer().address() as AddressInfo;
     baseUrl = `http://127.0.0.1:${port}/api`;
     realtimeUrl = `ws://127.0.0.1:${port}${REALTIME_PATH}`;
+    await Promise.all(
+      ['token-olga', 'token-omar'].map((token) =>
+        fetch(`${baseUrl}/me`, { headers: { authorization: `Bearer ${token}` } }),
+      ),
+    );
   }, 180_000);
 
   afterAll(async () => {
@@ -404,6 +412,37 @@ describe('TeamTown server (integration)', () => {
       expect(unknown.status).toBe(400);
       expect(await unknown.json()).toMatchObject({ message: 'unknown-person' });
       expect((await send('POST', '/channels', 'token-lena', { kind: 'secret' })).status).toBe(400);
+    });
+
+    it('has exactly one first Owner, who moderates #general but cannot archive it (ADR-0036, P-35)', async () => {
+      const renames = await Promise.all(
+        ['token-olga', 'token-omar', 'token-lena'].map((token) =>
+          send('PATCH', '/channels/general', token, { name: 'general' }),
+        ),
+      );
+      expect(renames.map((response) => response.status).sort()).toEqual([200, 403, 403]);
+
+      const owner = renames[0]?.status === 200 ? 'token-olga' : 'token-omar';
+      const general = ChannelSummarySchema.parse(await (await get('/channels/general', owner)).json());
+      expect(general).toMatchObject({ canManage: true, canArchive: false, canPin: true, canDeleteAny: true });
+      const refused = await send('PATCH', '/channels/general', owner, { archived: true });
+      expect(refused.status).toBe(400);
+      expect(await refused.json()).toMatchObject({ message: 'cannot-archive-channel' });
+    });
+
+    it("lets a channel's creator moderate it, and keeps a private channel from the Owner (M4a)", async () => {
+      const crew = ChannelSummarySchema.parse(
+        await (await send('POST', '/channels', 'token-lena', { kind: 'private', name: 'nur-wir' })).json(),
+      );
+      expect(crew).toMatchObject({ canManage: true, canArchive: true, canPin: true, canDeleteAny: true });
+      expect((await send('PATCH', `/channels/${crew.channelId}`, 'token-lena', { name: 'nur-wir-2' })).status).toBe(
+        200,
+      );
+
+      const owners = await Promise.all(
+        ['token-olga', 'token-omar'].map((token) => get(`/channels/${crew.channelId}`, token)),
+      );
+      expect(owners.map((response) => response.status)).toEqual([404, 404]);
     });
 
     it('finds messages by inflected words and file names, but never what one may not read (M3e)', async () => {

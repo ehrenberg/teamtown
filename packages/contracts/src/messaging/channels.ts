@@ -38,6 +38,11 @@ export const ChannelSummarySchema = z.object({
   mentionCount: z.number().int().nonnegative(),
   lastMessageAt: z.iso.datetime().nullable(),
   readMarker: MessageId.nullable(),
+  /** What the person asking may do here (ADR-0036), so that clients don't repeat the rules. */
+  canManage: z.boolean(),
+  canArchive: z.boolean(),
+  canPin: z.boolean(),
+  canDeleteAny: z.boolean(),
 });
 export type ChannelSummary = z.infer<typeof ChannelSummarySchema>;
 
@@ -204,7 +209,11 @@ export const MessagingErrorCode = z.enum([
   'invalid-channel-name',
   'channel-name-taken',
   'channel-archived',
-  'not-channel-creator',
+  'not-channel-moderator',
+  /** `#general` and `#random` stay open (P-35). */
+  'cannot-archive-channel',
+  /** The person's roles don't hold the permission. */
+  'not-allowed',
   /** Join the public channel first. */
   'not-channel-member',
   'not-message-author',

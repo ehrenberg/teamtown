@@ -1,3 +1,4 @@
+import type { AccessPolicy } from '../../access/public-api.ts';
 import { FixedClock, unwrap } from '@teamtown/kernel';
 import { buildFloorGrid, RoomMap, tile, type FloorLayout } from '@teamtown/world-core';
 import { describe, expect, it } from 'vitest';
@@ -21,6 +22,9 @@ const layout: FloorLayout = {
   doors: [{ x: 3, y: 1, side: 'west' }],
   furniture: [],
 };
+
+/** Member holds everything these use cases check (ADR-0036). */
+const access: AccessPolicy = { can: () => Promise.resolve(true) };
 
 function setup() {
   const roomMap = RoomMap.build(layout, [
@@ -56,7 +60,7 @@ function setup() {
     join: new JoinFloor(registry, stream, clock),
     move: new MoveTo(registry, stream, clock),
     leave: new LeavePresence(registry, stream),
-    setDoorMode: new SetDoorMode(registry, stream, clock),
+    setDoorMode: new SetDoorMode(registry, stream, clock, access),
     admit: new AdmitToRoom(registry, stream, clock),
     updateRooms: new UpdateRooms(registry, stream, clock),
     queries: new PresenceQueries(registry, clock),
@@ -79,7 +83,7 @@ describe('room use cases', () => {
   it('lets occupants change the door mode and tells the floor', async () => {
     const s = await benInTheMeetingRoom();
 
-    expect(s.setDoorMode.execute({ personId: 'ben', roomId: 'meeting', doorMode: 'locked' }).ok).toBe(true);
+    expect((await s.setDoorMode.execute({ personId: 'ben', roomId: 'meeting', doorMode: 'locked' })).ok).toBe(true);
     expect(s.events.at(-1)).toEqual({
       type: 'DoorModeChanged',
       floorId: 'ground',
@@ -87,7 +91,7 @@ describe('room use cases', () => {
       doorMode: 'locked',
     });
     expect(s.queries.doorModesOn('ground')).toContainEqual({ roomId: 'meeting', doorMode: 'locked' });
-    expect(s.setDoorMode.execute({ personId: 'nobody', roomId: 'meeting', doorMode: 'open' })).toEqual({
+    expect(await s.setDoorMode.execute({ personId: 'nobody', roomId: 'meeting', doorMode: 'open' })).toEqual({
       ok: false,
       error: 'not-on-floor',
     });
@@ -110,7 +114,7 @@ describe('room use cases', () => {
 
   it('resets the door mode on the tick once the room is empty', async () => {
     const s = await benInTheMeetingRoom();
-    s.setDoorMode.execute({ personId: 'ben', roomId: 'meeting', doorMode: 'locked' });
+    await s.setDoorMode.execute({ personId: 'ben', roomId: 'meeting', doorMode: 'locked' });
     s.move.execute({ personId: 'ben', target: tile(1, 1) });
     s.clock.advanceBy(10_000);
 

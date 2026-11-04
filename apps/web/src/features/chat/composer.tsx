@@ -28,7 +28,7 @@ export function canAddPeople(channel: ChannelSummary, myPersonId: string | null)
     case 'public':
       return isMember;
     case 'private':
-      return channel.creatorId !== null && channel.creatorId === myPersonId;
+      return channel.canManage;
     case 'room':
       return false;
     case 'direct':

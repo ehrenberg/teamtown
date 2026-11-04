@@ -16,6 +16,10 @@ const aDirectMessage = (members: readonly string[], group: boolean): ChannelSumm
   mentionCount: 0,
   lastMessageAt: null,
   readMarker: null,
+  canManage: false,
+  canArchive: false,
+  canPin: false,
+  canDeleteAny: false,
 });
 
 describe('canAddPeople', () => {

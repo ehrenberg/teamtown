@@ -11,7 +11,10 @@ import { PersonEntity } from './infrastructure/persistence/person.entity.ts';
 import { MeController } from './interface/http/me.controller.ts';
 import { PeopleController } from './interface/http/people.controller.ts';
 
+import { AccessModule, ClaimFirstOwner } from '../access/public-api.ts';
+import { SIGN_IN_OBSERVER, type SignInObserver } from './application/ports/sign-in-observer.port.ts';
 @Module({
+  imports: [AccessModule],
   controllers: [MeController, PeopleController],
   providers: [
     {
@@ -20,9 +23,15 @@ import { PeopleController } from './interface/http/people.controller.ts';
       inject: [MikroORM],
     },
     {
+      provide: SIGN_IN_OBSERVER,
+      useFactory: (claim: ClaimFirstOwner): SignInObserver => ({ signedIn: (personId) => claim.execute(personId) }),
+      inject: [ClaimFirstOwner],
+    },
+    {
       provide: ResolvePerson,
-      useFactory: (people: PersonRepository, ids: IdGenerator) => new ResolvePerson(people, ids),
-      inject: [PERSON_REPOSITORY, ID_GENERATOR],
+      useFactory: (people: PersonRepository, ids: IdGenerator, signIns: SignInObserver) =>
+        new ResolvePerson(people, ids, signIns),
+      inject: [PERSON_REPOSITORY, ID_GENERATOR, SIGN_IN_OBSERVER],
     },
     {
       provide: PeopleQueries,

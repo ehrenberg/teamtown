@@ -123,6 +123,20 @@ export class MikroOrmChannelRepository implements ChannelRepository {
     return rows.map((row) => row.channel_id);
   }
 
+  async listCreatorsWithoutRole(): Promise<{ channelId: string; creatorId: string }[]> {
+    const rows = await this.orm.em.fork().execute<{ channel_id: string; creator_id: string }[]>(
+      `select "channel_id", "creator_id" from "messaging"."channel"
+        where "creator_id" is not null and not "creator_role_assigned"`,
+    );
+    return rows.map((row) => ({ channelId: row.channel_id, creatorId: row.creator_id }));
+  }
+
+  async markCreatorRoleAssigned(channelId: string): Promise<void> {
+    await this.orm.em
+      .fork()
+      .execute('update "messaging"."channel" set "creator_role_assigned" = true where "channel_id" = ?', [channelId]);
+  }
+
   listRoomWalls(): Promise<Channel[]> {
     return this.#load({ kind: 'room' });
   }

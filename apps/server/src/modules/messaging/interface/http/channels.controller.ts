@@ -45,6 +45,7 @@ import { AuthGuard, CurrentPrincipal, type Principal } from '../../../identity/p
 import { ResolvePerson } from '../../../people/public-api.ts';
 import { AddChannelMembers } from '../../application/add-channel-members.ts';
 import { BrowseChannels } from '../../application/browse-channels.ts';
+import { ChannelAbilities, type ChannelAbilityFlags } from '../../application/channel-abilities.ts';
 import { CreateChannel } from '../../application/create-channel.ts';
 import { DeleteMessage } from '../../application/delete-message.ts';
 import { EditMessage } from '../../application/edit-message.ts';
@@ -70,7 +71,8 @@ import type { Channel } from '../../domain/channel.ts';
 import type { Message } from '../../domain/message.ts';
 
 const FORBIDDEN = new Set([
-  'not-channel-creator',
+  'not-channel-moderator',
+  'not-allowed',
   'not-channel-member',
   'not-message-author',
   'cannot-invite',
@@ -107,7 +109,9 @@ const toSummaryKind = (channel: Channel): ChannelSummary['kind'] =>
 const toSummary = (
   personId: string,
   { channel, unreadCount, mentionCount, lastMessageAt }: ChannelOverview,
+  abilities: ChannelAbilityFlags,
 ): ChannelSummary => ({
+  ...abilities,
   channelId: channel.props.channelId,
   kind: toSummaryKind(channel),
   group: channel.props.kind === 'group',
@@ -171,6 +175,7 @@ export class ChannelsController {
     @Inject(ListPinnedMessages) private readonly listPinnedMessages: ListPinnedMessages,
     @Inject(GetAttachmentContent) private readonly getAttachmentContent: GetAttachmentContent,
     @Inject(SearchMessages) private readonly searchMessages: SearchMessages,
+    @Inject(ChannelAbilities) private readonly abilities: ChannelAbilities,
   ) {}
 
   @Get('search/messages')
@@ -197,7 +202,12 @@ export class ChannelsController {
   async list(@CurrentPrincipal() principal: Principal): Promise<ChannelListResponse> {
     const personId = await this.#personId(principal);
     const overviews = await this.listMine.execute(personId);
-    return { channels: overviews.map((overview) => toSummary(personId, overview)) };
+    const channels = await Promise.all(
+      overviews.map(async (overview) =>
+        toSummary(personId, overview, await this.abilities.of(personId, overview.channel)),
+      ),
+    );
+    return { channels };
   }
 
   @Get('channels/browse')
@@ -468,7 +478,7 @@ export class ChannelsController {
     const channelId = typeof channel === 'string' ? channel : channel.props.channelId;
     const overview = await this.getChannel.execute({ personId, channelId });
     if (!overview) throw new NotFoundException();
-    return toSummary(personId, overview);
+    return toSummary(personId, overview, await this.abilities.of(personId, overview.channel));
   }
 
   async #personId(principal: Principal): Promise<string> {

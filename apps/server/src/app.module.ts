@@ -1,4 +1,5 @@
 import { Module, type DynamicModule } from '@nestjs/common';
+import { AccessModule } from './modules/access/public-api.ts';
 import { FilesModule } from './modules/files/public-api.ts';
 import { IdentityModule, type IdentityModuleOptions } from './modules/identity/public-api.ts';
 import { MeetingsModule } from './modules/meetings/public-api.ts';
@@ -36,6 +37,7 @@ export class AppModule {
             ...FilesModule.entities,
           ],
           migrations: [
+            ...AccessModule.migrations,
             ...PeopleModule.migrations,
             ...WorldModule.migrations,
             ...MeetingsModule.migrations,
@@ -45,6 +47,7 @@ export class AppModule {
         }),
         HealthModule,
         IdentityModule.forRoot(overrides),
+        AccessModule,
         PeopleModule,
         WorldModule,
         PresenceModule,

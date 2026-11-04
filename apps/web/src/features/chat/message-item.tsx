@@ -7,7 +7,7 @@ import { apiDelete, apiSend } from '../../api/api-client.ts';
 import { useReplies, useThreads } from '../../api/queries.ts';
 import { usePresenceStore } from '../../stores/presence-store.ts';
 import { AttachmentList } from './attachment-list.tsx';
-import { canPin, errorText, type Person } from './chat-shared.ts';
+import { errorText, type Person } from './chat-shared.ts';
 import { channelPath, Composer, MentionTextarea } from './composer.tsx';
 import { MessageBody } from './message-body.tsx';
 import { flatten } from './message-cache.ts';
@@ -55,7 +55,8 @@ export function MessageItem({
   const canReact = isMember && open && !message.deleted;
   const isMine = message.authorId === myPersonId;
   const mentionsMe = myPersonId !== null && message.mentions.includes(myPersonId);
-  const mayPin = canPin(channel, myPersonId) && !message.deleted;
+  const mayPin = channel.canPin && !message.deleted;
+  const mayDelete = (isMine && open) || channel.canDeleteAny;
   const report = (failure: unknown) => {
     setError(errorText(failure, t));
   };
@@ -127,7 +128,7 @@ export function MessageItem({
           </p>
         )}
 
-        {!editing && (canReact || mayPin || (isMine && open && !message.deleted)) && (
+        {!editing && !message.deleted && (canReact || mayPin || mayDelete || (isMine && open)) && (
           <div
             role="toolbar"
             aria-label={t('chat.messageActions')}
@@ -149,7 +150,7 @@ export function MessageItem({
                 </button>
               ))}
             {canReact && <ReactionPicker onPick={react} />}
-            {onToggleThread && isMember && !message.deleted && (
+            {onToggleThread && isMember && (
               <button
                 type="button"
                 aria-label={t('chat.replyInThread')}
@@ -179,31 +180,31 @@ export function MessageItem({
                 )}
               </button>
             )}
-            {isMine && !message.deleted && (
-              <>
-                <button
-                  type="button"
-                  aria-label={t('chat.edit')}
-                  title={t('chat.edit')}
-                  onClick={() => {
-                    setEditing(true);
-                  }}
-                  className={toolButton}
-                >
-                  <Pencil aria-hidden="true" className="size-3.5" />
-                </button>
-                <button
-                  type="button"
-                  aria-label={t('chat.delete')}
-                  title={t('chat.delete')}
-                  onClick={() => {
-                    apiDelete(path).catch(report);
-                  }}
-                  className={toolButton}
-                >
-                  <Trash2 aria-hidden="true" className="size-3.5" />
-                </button>
-              </>
+            {isMine && (
+              <button
+                type="button"
+                aria-label={t('chat.edit')}
+                title={t('chat.edit')}
+                onClick={() => {
+                  setEditing(true);
+                }}
+                className={toolButton}
+              >
+                <Pencil aria-hidden="true" className="size-3.5" />
+              </button>
+            )}
+            {mayDelete && (
+              <button
+                type="button"
+                aria-label={t('chat.delete')}
+                title={t('chat.delete')}
+                onClick={() => {
+                  apiDelete(path).catch(report);
+                }}
+                className={toolButton}
+              >
+                <Trash2 aria-hidden="true" className="size-3.5" />
+              </button>
             )}
           </div>
         )}

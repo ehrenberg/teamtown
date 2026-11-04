@@ -24,12 +24,6 @@ export function channelTitle(
   return others.length > 0 ? others.join(', ') : t('chat.justYou');
 }
 
-/** Who may pin in a conversation (P-25, P-26): a channel's creator; any member of a DM or room wall. */
-export function canPin(channel: ChannelSummary, myPersonId: string | null): boolean {
-  if (channel.archived || myPersonId === null || !channel.members.includes(myPersonId)) return false;
-  return channel.kind === 'direct' || channel.kind === 'room' || channel.creatorId === myPersonId;
-}
-
 /** The first words of a message, without Markdown marks or mention tokens. */
 export function messageExcerpt(body: string, length = 60): string {
   const plain = body

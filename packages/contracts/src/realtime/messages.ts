@@ -218,6 +218,8 @@ export const NackCode = z.enum([
   'door-closed',
   'room-not-found',
   'not-in-room',
+  /** The person's roles don't hold the permission (ADR-0036). */
+  'not-allowed',
   /** Only enclosed rooms without a spawn point can change their door mode. */
   'door-mode-fixed',
   'knock-not-found',

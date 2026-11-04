@@ -11,7 +11,7 @@ import type { RoomInfo } from './rooms.ts';
 export const DOOR_MODES: readonly DoorMode[] = ['open', 'knock', 'locked'];
 export const DOOR_MODE_ICONS = { open: DoorOpen, knock: Hand, locked: Lock } as const;
 
-/** Occupants switch the door of the room they are in (until M4 anyone inside may, ADR-0031). */
+/** Occupants switch the door of the room they are in (Member holds `room.lock`, ADR-0036). */
 export function DoorModeControl({ room }: { readonly room: RoomInfo }) {
   const { t } = useTranslation();
   const realtime = useRealtime();

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Person } from '../domain/person.ts';
 import type { PersonRepository } from './ports/person-repository.port.ts';
+import type { SignInObserver } from './ports/sign-in-observer.port.ts';
 import { ResolvePerson } from './resolve-person.ts';
 
 class InMemoryPersonRepository implements PersonRepository {
@@ -26,6 +27,14 @@ class InMemoryPersonRepository implements PersonRepository {
   }
 }
 
+const signedIn: string[] = [];
+const signIns: SignInObserver = {
+  signedIn: (personId) => {
+    signedIn.push(personId);
+    return Promise.resolve();
+  },
+};
+
 const sequentialIds = () => {
   let counter = 0;
   return { next: () => `person-${++counter}` };
@@ -34,7 +43,7 @@ const sequentialIds = () => {
 describe('ResolvePerson', () => {
   it('registers a person on the first login', async () => {
     const repository = new InMemoryPersonRepository();
-    const result = await new ResolvePerson(repository, sequentialIds()).execute({
+    const result = await new ResolvePerson(repository, sequentialIds(), signIns).execute({
       subject: 'sub-1',
       displayName: 'Lena',
     });
@@ -45,7 +54,7 @@ describe('ResolvePerson', () => {
 
   it('returns the same person on later logins and only saves real changes', async () => {
     const repository = new InMemoryPersonRepository();
-    const resolve = new ResolvePerson(repository, sequentialIds());
+    const resolve = new ResolvePerson(repository, sequentialIds(), signIns);
     await resolve.execute({ subject: 'sub-1', displayName: 'Lena' });
 
     const again = await resolve.execute({ subject: 'sub-1', displayName: 'Lena' });

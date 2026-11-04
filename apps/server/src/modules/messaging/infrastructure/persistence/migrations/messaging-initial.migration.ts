@@ -1,6 +1,7 @@
 import { Migration } from '@mikro-orm/migrations';
 import { outboxTableSql } from '../../../../../platform/outbox/outbox.ts';
 import { MessagingFilesMigration } from './messaging-files.migration.ts';
+import { MessagingModeratorsMigration } from './messaging-moderators.migration.ts';
 import { MessagingSearchMigration } from './messaging-search.migration.ts';
 import { MessagingRoomWallsMigration } from './messaging-room-walls.migration.ts';
 import { MessagingThreadsMigration } from './messaging-threads.migration.ts';
@@ -63,4 +64,5 @@ export const MESSAGING_MIGRATIONS = [
   { name: '20261102210000_messaging_room_walls', class: MessagingRoomWallsMigration },
   { name: '20261102230000_messaging_files', class: MessagingFilesMigration },
   { name: '20261104120000_messaging_search', class: MessagingSearchMigration },
+  { name: '20261104180100_messaging_moderators', class: MessagingModeratorsMigration },
 ];

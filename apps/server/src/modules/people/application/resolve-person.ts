@@ -1,6 +1,7 @@
 import { err, idFactory, ok, type IdGenerator, type Result } from '@teamtown/kernel';
 import { Person, type DisplayNameError, type PersonId } from '../domain/person.ts';
 import type { PersonRepository } from './ports/person-repository.port.ts';
+import type { SignInObserver } from './ports/sign-in-observer.port.ts';
 
 /** What other contexts may know about a person. */
 export interface PersonView {
@@ -24,6 +25,7 @@ export class ResolvePerson {
   constructor(
     private readonly people: PersonRepository,
     idGenerator: IdGenerator,
+    private readonly signIns: SignInObserver,
   ) {
     this.#ids = idFactory<'Person'>(idGenerator);
   }
@@ -34,6 +36,7 @@ export class ResolvePerson {
       if (existing.syncDisplayName(identity.displayName)) {
         await this.people.save(existing);
       }
+      await this.signIns.signedIn(existing.id);
       return ok(toView(existing));
     }
 
@@ -44,6 +47,7 @@ export class ResolvePerson {
     });
     if (!registered.ok) return err(registered.error);
     await this.people.save(registered.value);
+    await this.signIns.signedIn(registered.value.id);
     return ok(toView(registered.value));
   }
 }

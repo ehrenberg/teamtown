@@ -1,15 +1,20 @@
 import { err, ok, type Clock, type Result } from '@teamtown/kernel';
+import type { ChannelAbilities } from './channel-abilities.ts';
 import { findReadableChannel } from './channel-access.ts';
 import type { ChannelRepository } from './ports/channel-repository.port.ts';
 import type { FileAttachments } from './ports/file-attachments.port.ts';
 import type { MessageRepository } from './ports/message-repository.port.ts';
 
-/** Use case: the author deletes their message; its body, attachments and pin state are removed (P-21, P-24). */
+/**
+ * Use case: the author, or whoever holds `message.delete.any` there (P-34), deletes a message; its body, attachments
+ * and pin state are removed (P-21, P-24).
+ */
 export class DeleteMessage {
   constructor(
     private readonly channels: ChannelRepository,
     private readonly messages: MessageRepository,
     private readonly fileAttachments: FileAttachments,
+    private readonly abilities: ChannelAbilities,
     private readonly clock: Clock,
   ) {}
 
@@ -23,7 +28,8 @@ export class DeleteMessage {
     if (!channel || message?.props.channelId !== input.channelId) return err('not-found');
     const open = channel.checkOpen();
     if (!open.ok) return open;
-    const deleted = message.delete(input.personId, this.clock.now(), channel.memberIds);
+    const mayDeleteAny = await this.abilities.mayDeleteAny(input.personId, channel);
+    const deleted = message.delete(input.personId, this.clock.now(), channel.memberIds, mayDeleteAny);
     if (!deleted.ok) return deleted;
     await this.messages.save(message);
     await this.fileAttachments.deleteForMessage(input.messageId);

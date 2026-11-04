@@ -35,15 +35,15 @@ describe('Channel', () => {
 
   it('lets only the creator invite into a private channel', () => {
     const channel = aChannel('private');
-    expect(channel.invite('ben', ['carl'], LATER)).toEqual({ ok: false, error: 'not-channel-creator' });
-    expect(channel.invite('anna', ['ben', 'carl', 'ben'], LATER).ok).toBe(true);
+    expect(channel.invite('ben', ['carl'], LATER, false)).toEqual({ ok: false, error: 'not-channel-moderator' });
+    expect(channel.invite('anna', ['ben', 'carl', 'ben'], LATER, true).ok).toBe(true);
     expect(channel.memberIds).toEqual(['anna', 'ben', 'carl']);
   });
 
   it('lets members add people to a public channel (ADR-0034)', () => {
     const channel = aChannel('public');
-    expect(channel.invite('ben', ['carl'], LATER)).toEqual({ ok: false, error: 'not-channel-member' });
-    expect(channel.invite('anna', ['carl'], LATER).ok).toBe(true);
+    expect(channel.invite('ben', ['carl'], LATER, false)).toEqual({ ok: false, error: 'not-channel-member' });
+    expect(channel.invite('anna', ['carl'], LATER, true).ok).toBe(true);
     expect(channel.memberIds).toEqual(['anna', 'carl']);
   });
 
@@ -94,28 +94,28 @@ describe('Channel', () => {
 
   it('lets only the creator rename and archive it', () => {
     const channel = aChannel();
-    expect(channel.rename('ben', 'other')).toEqual({ ok: false, error: 'not-channel-creator' });
-    expect(channel.rename('anna', 'bad name!')).toEqual({ ok: false, error: 'invalid-channel-name' });
-    expect(channel.rename('anna', 'Team Sud').ok).toBe(true);
+    expect(channel.rename(false, 'other')).toEqual({ ok: false, error: 'not-channel-moderator' });
+    expect(channel.rename(true, 'bad name!')).toEqual({ ok: false, error: 'invalid-channel-name' });
+    expect(channel.rename(true, 'Team Sud').ok).toBe(true);
     expect(channel.props.name).toBe('team-sud');
 
-    expect(channel.setArchived('ben', true, LATER)).toEqual({ ok: false, error: 'not-channel-creator' });
-    expect(channel.setArchived('anna', true, LATER).ok).toBe(true);
+    expect(channel.setArchived(false, true, LATER)).toEqual({ ok: false, error: 'not-channel-moderator' });
+    expect(channel.setArchived(true, true, LATER).ok).toBe(true);
     expect(channel.isArchived).toBe(true);
   });
 
   it('takes no new messages, members or names once archived, and can be unarchived', () => {
     const channel = aChannel();
-    channel.setArchived('anna', true, LATER);
+    channel.setArchived(true, true, LATER);
 
     expect(channel.post({ messageId: 'm1', authorId: 'anna', body: 'Hi', now: LATER })).toEqual({
       ok: false,
       error: 'channel-archived',
     });
     expect(channel.join('ben', LATER)).toEqual({ ok: false, error: 'channel-archived' });
-    expect(channel.rename('anna', 'new')).toEqual({ ok: false, error: 'channel-archived' });
+    expect(channel.rename(true, 'new')).toEqual({ ok: false, error: 'channel-archived' });
 
-    channel.setArchived('anna', false, LATER);
+    channel.setArchived(true, false, LATER);
     expect(channel.post({ messageId: 'm1', authorId: 'anna', body: 'Hi', now: LATER }).ok).toBe(true);
   });
 
@@ -155,8 +155,8 @@ describe('Channel', () => {
       wall.joinRoomWall('anna', LATER);
       expect(wall.memberIds).toEqual(['anna']);
       expect(wall.leave('anna')).toEqual({ ok: false, error: 'cannot-leave-channel' });
-      expect(wall.invite('anna', ['ben'], LATER)).toEqual({ ok: false, error: 'cannot-invite' });
-      expect(wall.rename('anna', 'Other')).toEqual({ ok: false, error: 'not-channel-creator' });
+      expect(wall.invite('anna', ['ben'], LATER, true)).toEqual({ ok: false, error: 'cannot-invite' });
+      expect(wall.rename(true, 'Other')).toEqual({ ok: false, error: 'not-channel-moderator' });
     });
 
     it('updates and archives a room wall only through its room lifecycle', () => {
@@ -245,21 +245,21 @@ describe('Channel', () => {
       const pair = aDirect(['ben', 'anna']);
       expect(pair.pairKey).toBe('anna:ben');
       expect(pair.leave('anna')).toEqual({ ok: false, error: 'cannot-leave-channel' });
-      expect(pair.invite('dora', ['carl'], LATER)).toEqual({ ok: false, error: 'not-channel-member' });
-      expect(pair.invite('anna', ['carl'], LATER).ok).toBe(true);
+      expect(pair.invite('dora', ['carl'], LATER, false)).toEqual({ ok: false, error: 'not-channel-member' });
+      expect(pair.invite('anna', ['carl'], LATER, true).ok).toBe(true);
       expect(pair.props.kind).toBe('group');
       expect(pair.memberIds).toEqual(['ben', 'anna', 'carl']);
       expect(pair.pairKey).toBeNull();
       expect(pair.leave('anna').ok).toBe(true);
-      expect(pair.rename('anna', 'x')).toEqual({ ok: false, error: 'not-channel-creator' });
+      expect(pair.rename(true, 'x')).toEqual({ ok: false, error: 'not-channel-moderator' });
     });
 
     it('lets members of a group add people up to eight and leave', () => {
       const group = aDirect(['anna', 'ben', 'carl']);
-      expect(group.invite('dora', ['emil'], LATER)).toEqual({ ok: false, error: 'not-channel-member' });
-      expect(group.invite('ben', ['dora', 'emil', 'finn', 'gina', 'hans'], LATER).ok).toBe(true);
+      expect(group.invite('dora', ['emil'], LATER, false)).toEqual({ ok: false, error: 'not-channel-member' });
+      expect(group.invite('ben', ['dora', 'emil', 'finn', 'gina', 'hans'], LATER, false).ok).toBe(true);
       expect(group.memberIds).toHaveLength(8);
-      expect(group.invite('anna', ['ida'], LATER)).toEqual({ ok: false, error: 'direct-message-too-large' });
+      expect(group.invite('anna', ['ida'], LATER, true)).toEqual({ ok: false, error: 'direct-message-too-large' });
 
       expect(group.leave('carl').ok).toBe(true);
       expect(group.canRead('carl')).toBe(false);
@@ -269,33 +269,33 @@ describe('Channel', () => {
   describe('pin', () => {
     it('lets only the creator pin in a public or private channel (P-25)', () => {
       const channel = aChannel('private');
-      channel.invite('anna', ['ben'], LATER);
+      channel.invite('anna', ['ben'], LATER, true);
       const message = unwrap(channel.post({ messageId: 'm1', authorId: 'anna', body: 'Hi', now: LATER }));
 
-      expect(channel.pin('ben', message, true)).toEqual({ ok: false, error: 'not-channel-creator' });
-      expect(channel.pin('anna', message, true)).toEqual({ ok: true, value: undefined });
+      expect(channel.pin(false, message, true)).toEqual({ ok: false, error: 'not-channel-moderator' });
+      expect(channel.pin(true, message, true)).toEqual({ ok: true, value: undefined });
       expect(message.props.pinned).toBe(true);
-      expect(channel.pin('anna', message, false).ok).toBe(true);
+      expect(channel.pin(true, message, false).ok).toBe(true);
       expect(message.props.pinned).toBe(false);
     });
 
     it('lets any member pin in a DM or room wall (P-26)', () => {
       const dm = aDirect(['anna', 'ben']);
       const message = unwrap(dm.post({ messageId: 'm1', authorId: 'anna', body: 'Hi', now: LATER }));
-      expect(dm.pin('ben', message, true)).toEqual({ ok: true, value: undefined });
+      expect(dm.pin(true, message, true)).toEqual({ ok: true, value: undefined });
 
       const wall = Channel.createRoomWall({ channelId: 'w1', floorId: 'f1', roomId: 'r1', name: 'Room', now: NOW });
       wall.joinRoomWall('carl', NOW);
       const wallMessage = unwrap(wall.post({ messageId: 'm2', authorId: 'carl', body: 'Hi', now: LATER }));
-      expect(wall.pin('carl', wallMessage, true)).toEqual({ ok: true, value: undefined });
+      expect(wall.pin(true, wallMessage, true)).toEqual({ ok: true, value: undefined });
     });
 
-    it('refuses pinning for a non-member or in an archived channel', () => {
+    it('refuses pinning without the right, or in an archived channel', () => {
       const channel = aChannel('public');
       const message = unwrap(channel.post({ messageId: 'm1', authorId: 'anna', body: 'Hi', now: LATER }));
-      expect(channel.pin('ben', message, true)).toEqual({ ok: false, error: 'not-channel-member' });
-      channel.setArchived('anna', true, LATER);
-      expect(channel.pin('anna', message, true)).toEqual({ ok: false, error: 'channel-archived' });
+      expect(channel.pin(false, message, true)).toEqual({ ok: false, error: 'not-channel-moderator' });
+      channel.setArchived(true, true, LATER);
+      expect(channel.pin(true, message, true)).toEqual({ ok: false, error: 'channel-archived' });
     });
   });
 });

@@ -20,7 +20,7 @@ const graceKey = (personId: string, roomId: string): string => `${personId}|${ro
 
 /**
  * Live door modes, entry passes and return grace periods of one floor's rooms. In memory only:
- * who was in which room is never persisted (ADR-0012). Until M4, any occupant may change the door mode.
+ * who was in which room is never persisted (ADR-0012). Who may change a door is decided by `SetDoorMode`.
  */
 export class RoomDoors {
   readonly #settings: ReadonlyMap<string, RoomSettings>;

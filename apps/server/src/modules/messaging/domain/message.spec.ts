@@ -64,6 +64,13 @@ describe('Message', () => {
     expect(message.edit('anna', 'Wieder da', LATER, MEMBERS)).toEqual({ ok: false, error: 'invalid-message' });
   });
 
+  it('lets someone holding message.delete.any delete it, too (P-34)', () => {
+    const message = unwrap(post('Off topic'));
+
+    expect(message.delete('ben', LATER, MEMBERS, true).ok).toBe(true);
+    expect(message.isDeleted).toBe(true);
+  });
+
   it('knows the people mentioned by ID, also after an edit', () => {
     const message = unwrap(post(`Hi <@${BEN}> and <@${BEN.toUpperCase()}>, see <@not-an-id>`));
     expect(message.props.mentions).toEqual([BEN]);

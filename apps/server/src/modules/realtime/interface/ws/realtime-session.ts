@@ -212,7 +212,7 @@ export class RealtimeSession {
       }
       case 'SetDoorMode': {
         if (!this.occupant) return 'not-authenticated';
-        const result = this.deps.setDoorMode.execute({ personId: this.occupant.personId, ...command.p });
+        const result = await this.deps.setDoorMode.execute({ personId: this.occupant.personId, ...command.p });
         return result.ok ? undefined : result.error;
       }
       case 'KnockOnRoom': {
@@ -227,7 +227,7 @@ export class RealtimeSession {
       }
       case 'AnswerKnock': {
         if (!this.occupant) return 'not-authenticated';
-        const result = this.deps.answerKnock.execute({ personId: this.occupant.personId, ...command.p });
+        const result = await this.deps.answerKnock.execute({ personId: this.occupant.personId, ...command.p });
         return result.ok ? undefined : result.error;
       }
       case 'RequestRoomCallToken': {

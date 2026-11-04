@@ -1,3 +1,4 @@
+import type { AccessPolicy } from '../../access/public-api.ts';
 import type { Clock } from '@teamtown/kernel';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { KNOCK_TIMEOUT_MS, Knocks } from '../domain/knocks.ts';
@@ -9,6 +10,9 @@ import { MeetingsEventStream, type MeetingsEvent } from './meetings-event-stream
 import type { DoorMode, LivePresence } from './ports/live-presence.port.ts';
 
 const NOW = new Date('2026-10-30T12:00:00Z').getTime();
+
+/** Member holds everything these use cases check (ADR-0036). */
+const access: AccessPolicy = { can: () => Promise.resolve(true) };
 
 function setup() {
   let now = NOW;
@@ -56,6 +60,7 @@ function setup() {
       },
       knocks,
       events,
+      access,
     ),
     cancel: new CancelKnock(presence, knocks, events),
     expire: new ExpireKnocks(presence, knocks, events, clock),
@@ -96,11 +101,11 @@ describe('knock use cases', () => {
     expect(s.knock.execute({ personId: 'lena', roomId: 'nowhere' })).toEqual({ ok: false, error: 'room-not-found' });
   });
 
-  it('lets an occupant admit, counts only the first answer and walks the requester in', () => {
+  it('lets an occupant admit, counts only the first answer and walks the requester in', async () => {
     s.knock.execute({ personId: 'lena', roomId: 'elbe' });
 
-    expect(s.answer.execute({ personId: 'ben', knockId: 'k-1', admit: true }).ok).toBe(true);
-    expect(s.answer.execute({ personId: 'mia', knockId: 'k-1', admit: false })).toEqual({
+    expect((await s.answer.execute({ personId: 'ben', knockId: 'k-1', admit: true })).ok).toBe(true);
+    expect(await s.answer.execute({ personId: 'mia', knockId: 'k-1', admit: false })).toEqual({
       ok: false,
       error: 'knock-not-found',
     });
@@ -108,19 +113,19 @@ describe('knock use cases', () => {
     expect(s.admitted).toEqual(['lena@ground/elbe']);
   });
 
-  it('only lets occupants answer', () => {
+  it('only lets occupants answer', async () => {
     s.people.set('carl', null);
     s.knock.execute({ personId: 'lena', roomId: 'elbe' });
 
-    expect(s.answer.execute({ personId: 'carl', knockId: 'k-1', admit: true })).toEqual({
+    expect(await s.answer.execute({ personId: 'carl', knockId: 'k-1', admit: true })).toEqual({
       ok: false,
       error: 'not-in-room',
     });
   });
 
-  it('tells everyone when a knock is declined', () => {
+  it('tells everyone when a knock is declined', async () => {
     s.knock.execute({ personId: 'lena', roomId: 'elbe' });
-    s.answer.execute({ personId: 'mia', knockId: 'k-1', admit: false });
+    await s.answer.execute({ personId: 'mia', knockId: 'k-1', admit: false });
 
     expect(s.published.at(-1)).toMatchObject({
       type: 'KnockAnswered',

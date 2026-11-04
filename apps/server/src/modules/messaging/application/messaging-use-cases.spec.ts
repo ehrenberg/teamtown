@@ -27,6 +27,10 @@ import type {
   MessageSearchQuery,
 } from './ports/message-search.port.ts';
 import { SearchMessages } from './search-messages.ts';
+import type { AccessPolicy, Permission, ScopeRef } from '../../access/public-api.ts';
+import { AssignCreatorModerators } from './assign-creator-moderators.ts';
+import { ChannelAbilities } from './channel-abilities.ts';
+import type { ModeratorAssignment } from './ports/moderator-assignment.port.ts';
 import type { MessagePage, MessageRepository, ThreadSummary } from './ports/message-repository.port.ts';
 import type { PeopleDirectory } from './ports/people-directory.port.ts';
 import type { FollowedThread, ThreadRepository } from './ports/thread-repository.port.ts';
@@ -93,6 +97,7 @@ class InMemoryMessages implements MessageRepository {
 class InMemoryChannels implements ChannelRepository {
   readonly channels = new Map<string, Channel>();
   readonly seeded = new Set<string>();
+  readonly creatorRoles = new Set<string>();
 
   constructor(
     private readonly messages: InMemoryMessages,
@@ -170,6 +175,19 @@ class InMemoryChannels implements ChannelRepository {
     return Promise.resolve(
       [...this.channels.values()].filter((c) => c.canRead(personId)).map((channel) => channel.props.channelId),
     );
+  }
+  listCreatorsWithoutRole(): Promise<{ channelId: string; creatorId: string }[]> {
+    return Promise.resolve(
+      [...this.channels.values()].flatMap((channel) =>
+        channel.props.creatorId && !this.creatorRoles.has(channel.props.channelId)
+          ? [{ channelId: channel.props.channelId, creatorId: channel.props.creatorId }]
+          : [],
+      ),
+    );
+  }
+  markCreatorRoleAssigned(channelId: string): Promise<void> {
+    this.creatorRoles.add(channelId);
+    return Promise.resolve();
   }
   listPublic(): Promise<Channel[]> {
     return Promise.resolve([...this.channels.values()].filter((c) => c.props.kind === 'public'));
@@ -281,6 +299,8 @@ function setup() {
   const channels = new InMemoryChannels(messages, threads);
   const fileAttachments = new FakeFileAttachments();
   const messageSearch = new FakeMessageSearch();
+  const access = new FakeAccess();
+  const abilities = new ChannelAbilities(access);
   const roomState = {
     rooms: [
       { floorId: 'ground-floor', roomId: 'focus-room', name: 'Focus Room' },
@@ -318,28 +338,50 @@ function setup() {
       clock,
       ids,
     ),
-    create: new CreateChannel(channels, clock, ids),
-    update: new UpdateChannel(channels, clock),
-    add: new AddChannelMembers(channels, people, clock),
+    create: new CreateChannel(channels, access, access, clock, ids),
+    update: new UpdateChannel(channels, abilities, clock),
+    add: new AddChannelMembers(channels, people, abilities, clock),
     leave: new LeaveChannel(channels),
     openDm: new OpenDirectMessage(channels, people, clock, ids),
     history: new ListMessages(channels, messages),
     post: new PostMessage(channels, messages, threads, fileAttachments, clock, ids),
     edit: new EditMessage(channels, messages, threads, clock),
-    remove: new DeleteMessage(channels, messages, fileAttachments, clock),
+    remove: new DeleteMessage(channels, messages, fileAttachments, abilities, clock),
     read: new MoveReadMarker(channels, messages),
     replies: new ListReplies(channels, messages),
     react: new ReactToMessage(channels, messages),
     threads: new ListThreads(channels, messages, threads),
     follow: new SetThreadFollowing(channels, messages, threads),
     readThread: new MoveThreadReadMarker(channels, messages, threads),
-    pin: new PinMessage(channels, messages),
+    pin: new PinMessage(channels, messages, abilities),
     pinned: new ListPinnedMessages(channels, messages),
     attachmentContent: new GetAttachmentContent(channels, messages, fileAttachments),
+    access,
+    abilities,
+    assignCreators: new AssignCreatorModerators(channels, access),
     messageSearch,
     search: new SearchMessages(channels, messageSearch),
     fileAttachments,
   };
+}
+
+/** Moderates the channels it was told to; `admins` hold every permission, as Admin does at town scope. */
+class FakeAccess implements AccessPolicy, ModeratorAssignment {
+  readonly moderators = new Set<string>();
+  readonly admins = new Set<string>();
+  assigned = 0;
+
+  can(personId: string, permission: Permission, resource: ScopeRef): Promise<boolean> {
+    if (this.admins.has(personId)) return Promise.resolve(true);
+    if (!['channel.manage', 'message.pin', 'message.delete.any'].includes(permission)) return Promise.resolve(true);
+    const channelId = resource.kind === 'channel' ? resource.channelId : '';
+    return Promise.resolve(this.moderators.has(`${personId}/${channelId}`));
+  }
+  execute({ personId, channelId }: { personId: string; channelId: string }): Promise<void> {
+    this.assigned += 1;
+    this.moderators.add(`${personId}/${channelId}`);
+    return Promise.resolve();
+  }
 }
 
 /** Answers with whatever it was told to, and notes where it was allowed to look. */
@@ -549,7 +591,7 @@ describe('Messaging use cases', () => {
     const channelId = team.props.channelId;
     expect(await app.update.execute({ personId: 'ben', channelId, archived: true })).toEqual({
       ok: false,
-      error: 'not-channel-creator',
+      error: 'not-channel-moderator',
     });
     unwrap(await app.update.execute({ personId: 'anna', channelId, archived: true }));
     expect(await app.post.execute({ personId: 'anna', channelId, body: 'hi' })).toEqual({
@@ -707,6 +749,107 @@ describe('Messaging use cases', () => {
     });
   });
 
+  describe('moderation through AccessPolicy (M4a)', () => {
+    const OTHER = '0b0b0b0b-0000-4000-8000-000000000003';
+
+    async function aTeam() {
+      const team = unwrap(await app.create.execute({ personId: 'anna', kind: 'public', name: 'team' }));
+      return team.props.channelId;
+    }
+
+    it('makes the creator a Channel Moderator, once (ADR-0036)', async () => {
+      const channelId = await aTeam();
+      expect(app.access.moderators.has(`anna/${channelId}`)).toBe(true);
+
+      await app.assignCreators.execute();
+
+      expect(app.access.assigned).toBe(1);
+    });
+
+    it('carries over creators of older channels once, so a later restart brings back nothing', async () => {
+      const channelId = await aTeam();
+      app.channels.creatorRoles.delete(channelId);
+      app.access.moderators.clear();
+
+      await app.assignCreators.execute();
+      expect(app.access.moderators.has(`anna/${channelId}`)).toBe(true);
+
+      app.access.moderators.clear();
+      await app.assignCreators.execute();
+      expect(app.access.moderators.size).toBe(0);
+    });
+
+    it('lets a town Admin moderate a public channel without being in it', async () => {
+      const channelId = await aTeam();
+      const message = unwrap(await app.post.execute({ personId: 'anna', channelId, body: 'Hello' }));
+      app.access.admins.add('carl');
+
+      expect((await app.update.execute({ personId: 'carl', channelId, name: 'renamed' })).ok).toBe(true);
+      const { messageId } = message.props;
+      expect((await app.pin.execute({ personId: 'carl', channelId, messageId, pinned: true })).ok).toBe(true);
+      expect((await app.remove.execute({ personId: 'carl', channelId, messageId })).ok).toBe(true);
+    });
+
+    it('never archives a seed channel, but lets an Admin rename it (P-35)', async () => {
+      app.access.admins.add('anna');
+      unwrap(await app.update.execute({ personId: 'anna', channelId: 'general', name: 'hauptkanal' }));
+
+      expect(await app.update.execute({ personId: 'anna', channelId: 'general', archived: true })).toEqual({
+        ok: false,
+        error: 'cannot-archive-channel',
+      });
+    });
+
+    it("lets a moderator delete others' messages, but a member only their own (P-34)", async () => {
+      const channelId = await aTeam();
+      const byAnna = unwrap(await app.post.execute({ personId: 'anna', channelId, body: 'Mine' }));
+      unwrap(await app.add.execute({ personId: OTHER, channelId, personIds: [OTHER] }));
+      const byOther = unwrap(await app.post.execute({ personId: OTHER, channelId, body: 'Theirs' }));
+
+      expect(await app.remove.execute({ personId: OTHER, channelId, messageId: byAnna.props.messageId })).toEqual({
+        ok: false,
+        error: 'not-message-author',
+      });
+      expect((await app.remove.execute({ personId: 'anna', channelId, messageId: byOther.props.messageId })).ok).toBe(
+        true,
+      );
+    });
+
+    it("never lets anyone delete another person's message in a DM, whatever their role (P-34)", async () => {
+      const dm = unwrap(await app.openDm.execute({ personId: 'anna', personIds: [OTHER] }));
+      const channelId = dm.props.channelId;
+      const byOther = unwrap(await app.post.execute({ personId: OTHER, channelId, body: 'Private' }));
+      app.access.admins.add('anna');
+
+      expect(await app.remove.execute({ personId: 'anna', channelId, messageId: byOther.props.messageId })).toEqual({
+        ok: false,
+        error: 'not-message-author',
+      });
+    });
+
+    it('tells the client what the person may do', async () => {
+      const channelId = await aTeam();
+      const channel = await app.channels.findById(channelId);
+      const seed = await app.channels.findById('general');
+      if (!channel || !seed) throw new Error('missing channel');
+      app.access.admins.add('carl');
+
+      expect(await app.abilities.of('anna', channel)).toEqual({
+        canManage: true,
+        canArchive: true,
+        canPin: true,
+        canDeleteAny: true,
+      });
+      expect(await app.abilities.of(OTHER, channel)).toEqual({
+        canManage: false,
+        canArchive: false,
+        canPin: false,
+        canDeleteAny: false,
+      });
+      expect(await app.abilities.of('carl', seed)).toMatchObject({ canManage: true, canArchive: false });
+    });
+  });
+
   describe('search (M3e)', () => {
     const search = { limit: 20, offset: 0 };
 
@@ -817,7 +960,7 @@ describe('Messaging use cases', () => {
         await app.pin.execute({ personId: BEN, channelId, messageId: first.props.messageId, pinned: true }),
       ).toEqual({
         ok: false,
-        error: 'not-channel-creator',
+        error: 'not-channel-moderator',
       });
       unwrap(await app.pin.execute({ personId: 'anna', channelId, messageId: first.props.messageId, pinned: true }));
       unwrap(await app.pin.execute({ personId: 'anna', channelId, messageId: second.props.messageId, pinned: true }));

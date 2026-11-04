@@ -1,4 +1,5 @@
 import { err, ok, type Clock, type IdGenerator, type Result } from '@teamtown/kernel';
+import type { AccessPolicy } from '../../access/public-api.ts';
 import { MeetingLog } from '../domain/meeting-log.ts';
 import type { ActiveMeetingLogs } from './active-meeting-logs.ts';
 import type { CallMembership } from './call-membership.ts';
@@ -7,11 +8,11 @@ import type { MeetingsEventStream } from './meetings-event-stream.ts';
 import type { MeetingLogRepository } from './ports/meeting-log-repository.port.ts';
 import type { RoomAdmission } from './ports/room-admission.port.ts';
 
-export type StartMeetingLogError = 'no-room-call' | 'meeting-log-active' | 'invalid-title';
+export type StartMeetingLogError = 'no-room-call' | 'meeting-log-active' | 'invalid-title' | 'not-allowed';
 
 /**
- * Use case: start a logged meeting in the room call one is in (ADR-0026). Until M4 any occupant may; they become
- * its host, and starting counts as their consent. Everyone else is asked on the next tick.
+ * Use case: start a logged meeting in the room call one is in (ADR-0026). It takes `meeting.log.start`, which Member holds
+ * (ADR-0036); they become its host, and starting counts as their consent. Everyone else is asked on the next tick.
  */
 export class StartMeetingLog {
   constructor(
@@ -23,12 +24,15 @@ export class StartMeetingLog {
     private readonly clock: Clock,
     private readonly ids: IdGenerator,
     private readonly retentionDays: number,
+    private readonly access: AccessPolicy,
   ) {}
 
   async execute(input: { personId: string; title: string }): Promise<Result<void, StartMeetingLogError>> {
     const callKey = this.membership.callKeyOf(input.personId);
     if (!callKey?.startsWith('room:')) return err('no-room-call');
     const [, floorId = '', roomId = ''] = callKey.split(':');
+    const room = { kind: 'room', floorId, roomId } as const;
+    if (!(await this.access.can(input.personId, 'meeting.log.start', room))) return err('not-allowed');
     if (this.active.get(floorId, roomId)) return err('meeting-log-active');
 
     const log = MeetingLog.start({

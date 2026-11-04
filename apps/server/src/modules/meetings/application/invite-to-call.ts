@@ -5,7 +5,7 @@ import type { MeetingsEventStream } from './meetings-event-stream.ts';
 import type { LivePresence } from './ports/live-presence.port.ts';
 import type { StartCallError } from './start-call.ts';
 
-/** Use case: any participant rings one more person into the call (until M4, at most 8 people). */
+/** Use case: any participant rings one more person into the call (at most 8 people). */
 export class InviteToCall {
   constructor(
     private readonly presence: LivePresence,

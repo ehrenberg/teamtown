@@ -138,7 +138,6 @@ function ChannelHeader({ channel, title }: { readonly channel: ChannelSummary; r
   const [dialog, setDialog] = useState<'rename' | 'invite' | null>(null);
   const [error, setError] = useState<string | null>(null);
   const path = channelPath(channel.channelId);
-  const isCreator = channel.creatorId !== null && channel.creatorId === myPersonId;
   const isGroup = channel.kind === 'direct' && channel.group;
   const isPair = channel.kind === 'direct' && !channel.group;
   const canLeave = channel.channelId !== GENERAL_CHANNEL_ID && !isPair && channel.members.includes(myPersonId ?? '');
@@ -189,12 +188,12 @@ function ChannelHeader({ channel, title }: { readonly channel: ChannelSummary; r
             </span>
           )}
         </button>
-        {isCreator &&
+        {channel.canManage &&
           !channel.archived &&
           action(t('chat.rename'), <Pencil aria-hidden="true" className="size-4" />, () => {
             setDialog('rename');
           })}
-        {((isCreator && channel.kind === 'private') || isGroup || isPair) &&
+        {((channel.canManage && channel.kind === 'private') || isGroup || isPair) &&
           !channel.archived &&
           action(
             t(channel.kind === 'private' ? 'chat.invite' : 'chat.addPeople'),
@@ -203,7 +202,7 @@ function ChannelHeader({ channel, title }: { readonly channel: ChannelSummary; r
               setDialog('invite');
             },
           )}
-        {isCreator &&
+        {channel.canArchive &&
           action(
             t(channel.archived ? 'chat.unarchive' : 'chat.archive'),
             channel.archived ? (

@@ -1,5 +1,6 @@
 import { err, ok, type Clock, type Result } from '@teamtown/kernel';
 import type { Channel, ChannelError } from '../domain/channel.ts';
+import type { ChannelAbilities } from './channel-abilities.ts';
 import { findReadableChannel } from './channel-access.ts';
 import type { ChannelRepository } from './ports/channel-repository.port.ts';
 import type { PeopleDirectory } from './ports/people-directory.port.ts';
@@ -8,12 +9,13 @@ export type AddChannelMembersError = ChannelError | 'not-found' | 'unknown-perso
 
 /**
  * Use case: someone joins a public channel themselves, a member adds people to a public channel (ADR-0034) or a
- * DM (converting a pair to a group, P-12), or the creator invites into a private channel (ADR-0033).
+ * DM (converting a pair to a group, P-12), or a moderator invites into a private channel (ADR-0033).
  */
 export class AddChannelMembers {
   constructor(
     private readonly channels: ChannelRepository,
     private readonly people: PeopleDirectory,
+    private readonly abilities: ChannelAbilities,
     private readonly clock: Clock,
   ) {}
 
@@ -32,7 +34,8 @@ export class AddChannelMembers {
     } else {
       const known = await this.people.existing(input.personIds);
       if (input.personIds.some((personId) => !known.has(personId))) return err('unknown-person');
-      const invited = channel.invite(input.personId, input.personIds, now);
+      const mayManage = await this.abilities.mayManage(input.personId, channel);
+      const invited = channel.invite(input.personId, input.personIds, now, mayManage);
       if (!invited.ok) return invited;
     }
     await this.channels.save(channel);

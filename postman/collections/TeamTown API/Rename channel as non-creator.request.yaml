@@ -19,7 +19,7 @@ scripts:
     language: text/javascript
     code: |-
       // Until roles arrive (M4), only the creator moderates a channel (ADR-0033).
-      pm.test('responds 403 not-channel-creator', () => {
+      pm.test('responds 403 not-channel-moderator', () => {
         pm.response.to.have.status(403);
-        pm.expect(pm.response.json().message).to.equal('not-channel-creator');
+        pm.expect(pm.response.json().message).to.equal('not-channel-moderator');
       });

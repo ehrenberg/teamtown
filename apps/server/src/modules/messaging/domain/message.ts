@@ -185,8 +185,13 @@ export class Message {
    * keeps its place. Unpins it, too (P-21, P-24): a deleted message cannot stay pinned. The caller still asks
    * Files to delete the attachment bytes (`DeleteAttachmentsOfMessage`), since Messaging never touches them.
    */
-  delete(personId: string, now: Date, recipients: readonly string[]): Result<void, 'not-message-author'> {
-    if (personId !== this.state.authorId) return err('not-message-author');
+  delete(
+    personId: string,
+    now: Date,
+    recipients: readonly string[],
+    mayDeleteAny = false,
+  ): Result<void, 'not-message-author'> {
+    if (personId !== this.state.authorId && !mayDeleteAny) return err('not-message-author');
     if (this.isDeleted) return ok(undefined);
     for (const reaction of this.state.reactions) {
       for (const reactor of reaction.personIds) {

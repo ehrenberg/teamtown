@@ -1,3 +1,4 @@
+import type { AccessPolicy } from '../../access/public-api.ts';
 import { FixedClock, unwrap } from '@teamtown/kernel';
 import { FloorGrid } from '@teamtown/world-core';
 import { beforeEach, describe, expect, it } from 'vitest';
@@ -40,6 +41,9 @@ class InMemoryMeetingLogs implements MeetingLogRepository {
     return Promise.resolve(expired.length);
   }
 }
+
+/** Member holds everything these use cases check (ADR-0036). */
+const access: AccessPolicy = { can: () => Promise.resolve(true) };
 
 async function setup() {
   /** personId → room on the ground floor (`null`: in no room). */
@@ -93,7 +97,17 @@ async function setup() {
     active,
     published,
     admission,
-    start: new StartMeetingLog(membership, active, repository, roomAdmission, events, clock, { next: () => 'm1' }, 90),
+    start: new StartMeetingLog(
+      membership,
+      active,
+      repository,
+      roomAdmission,
+      events,
+      clock,
+      { next: () => 'm1' },
+      90,
+      access,
+    ),
     answer: new AnswerMeetingLog(presence, active, repository, roomAdmission, events, clock),
     end: new EndMeetingLog(presence, active, repository, roomAdmission, events, clock),
     update: new UpdateMeetingLogs(presence, active, repository, roomAdmission, events, clock),

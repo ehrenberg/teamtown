@@ -25,6 +25,9 @@ export interface ChannelRepository {
   listPublic(): Promise<Channel[]>;
   /** Every channel `Channel.canRead` allows the person, without loading them all (for search). */
   listReadableIds(personId: string): Promise<string[]>;
+  /** Channels whose creator hasn't got the Channel Moderator role yet (ADR-0036). */
+  listCreatorsWithoutRole(): Promise<{ channelId: string; creatorId: string }[]>;
+  markCreatorRoleAssigned(channelId: string): Promise<void>;
   listRoomWalls(): Promise<Channel[]>;
   /**
    * Writes what changed, plus the recorded events into the outbox, in one transaction (ADR-0018).

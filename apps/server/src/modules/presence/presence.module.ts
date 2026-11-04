@@ -1,3 +1,4 @@
+import { ACCESS_POLICY, AccessModule, type AccessPolicy } from '../access/public-api.ts';
 import { Module } from '@nestjs/common';
 import type { Clock } from '@teamtown/kernel';
 import { CLOCK } from '../../platform/config/config.module.ts';
@@ -18,7 +19,7 @@ import { WorldFloorSource } from './infrastructure/world-floor-source.ts';
 
 /** Live presence. Deliberately has no persistence adapter (ADR-0012, enforced by `pnpm arch`). */
 @Module({
-  imports: [WorldModule],
+  imports: [AccessModule, WorldModule],
   providers: [
     {
       provide: FLOOR_SOURCE,
@@ -46,9 +47,9 @@ import { WorldFloorSource } from './infrastructure/world-floor-source.ts';
     },
     {
       provide: SetDoorMode,
-      useFactory: (registry: FloorRegistry, events: PresenceEventStream, clock: Clock) =>
-        new SetDoorMode(registry, events, clock),
-      inject: [FloorRegistry, PresenceEventStream, CLOCK],
+      useFactory: (registry: FloorRegistry, events: PresenceEventStream, clock: Clock, access: AccessPolicy) =>
+        new SetDoorMode(registry, events, clock, access),
+      inject: [FloorRegistry, PresenceEventStream, CLOCK, ACCESS_POLICY],
     },
     {
       provide: AdmitToRoom,

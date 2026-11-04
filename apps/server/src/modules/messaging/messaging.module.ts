@@ -8,6 +8,7 @@ import {
   FilesModule,
   GetClaimedAttachmentContent,
 } from '../files/public-api.ts';
+import { ACCESS_POLICY, AccessModule, AssignChannelModerator, type AccessPolicy } from '../access/public-api.ts';
 import { PeopleModule, PeopleQueries } from '../people/public-api.ts';
 import { FloorQueries, WorldEventStream, WorldModule } from '../world/public-api.ts';
 import { AddChannelMembers } from './application/add-channel-members.ts';
@@ -20,6 +21,9 @@ import { GetChannel } from './application/get-channel.ts';
 import { LeaveChannel } from './application/leave-channel.ts';
 import { ListMessages } from './application/list-messages.ts';
 import { ListMyChannels } from './application/list-my-channels.ts';
+import { AssignCreatorModerators } from './application/assign-creator-moderators.ts';
+import { ChannelAbilities } from './application/channel-abilities.ts';
+import { CreatorModeratorBootstrap } from './infrastructure/creator-moderator-bootstrap.ts';
 import { ListPinnedMessages } from './application/list-pinned-messages.ts';
 import { SearchMessages } from './application/search-messages.ts';
 import { MESSAGE_SEARCH, type MessageSearch } from './application/ports/message-search.port.ts';
@@ -56,7 +60,7 @@ import { ChannelsController } from './interface/http/channels.controller.ts';
 
 /** Channels, DMs, room walls, messages, threads and reactions (M3a–M3c). Persisted in `messaging`, events via the outbox. */
 @Module({
-  imports: [PeopleModule, WorldModule, FilesModule],
+  imports: [AccessModule, PeopleModule, WorldModule, FilesModule],
   controllers: [ChannelsController],
   providers: [
     { provide: MessagingEventStream, useValue: new MessagingEventStream() },
@@ -147,20 +151,26 @@ import { ChannelsController } from './interface/http/channels.controller.ts';
     },
     {
       provide: CreateChannel,
-      useFactory: (channels: ChannelRepository, clock: Clock, ids: IdGenerator) =>
-        new CreateChannel(channels, clock, ids),
-      inject: [CHANNEL_REPOSITORY, CLOCK, ID_GENERATOR],
+      useFactory: (
+        channels: ChannelRepository,
+        access: AccessPolicy,
+        moderators: AssignChannelModerator,
+        clock: Clock,
+        ids: IdGenerator,
+      ) => new CreateChannel(channels, access, moderators, clock, ids),
+      inject: [CHANNEL_REPOSITORY, ACCESS_POLICY, AssignChannelModerator, CLOCK, ID_GENERATOR],
     },
     {
       provide: UpdateChannel,
-      useFactory: (channels: ChannelRepository, clock: Clock) => new UpdateChannel(channels, clock),
-      inject: [CHANNEL_REPOSITORY, CLOCK],
+      useFactory: (channels: ChannelRepository, abilities: ChannelAbilities, clock: Clock) =>
+        new UpdateChannel(channels, abilities, clock),
+      inject: [CHANNEL_REPOSITORY, ChannelAbilities, CLOCK],
     },
     {
       provide: AddChannelMembers,
-      useFactory: (channels: ChannelRepository, people: PeopleDirectory, clock: Clock) =>
-        new AddChannelMembers(channels, people, clock),
-      inject: [CHANNEL_REPOSITORY, PEOPLE_DIRECTORY, CLOCK],
+      useFactory: (channels: ChannelRepository, people: PeopleDirectory, abilities: ChannelAbilities, clock: Clock) =>
+        new AddChannelMembers(channels, people, abilities, clock),
+      inject: [CHANNEL_REPOSITORY, PEOPLE_DIRECTORY, ChannelAbilities, CLOCK],
     },
     {
       provide: LeaveChannel,
@@ -202,14 +212,32 @@ import { ChannelsController } from './interface/http/channels.controller.ts';
         channels: ChannelRepository,
         messages: MessageRepository,
         fileAttachments: FileAttachments,
+        abilities: ChannelAbilities,
         clock: Clock,
-      ) => new DeleteMessage(channels, messages, fileAttachments, clock),
-      inject: [CHANNEL_REPOSITORY, MESSAGE_REPOSITORY, FILE_ATTACHMENTS, CLOCK],
+      ) => new DeleteMessage(channels, messages, fileAttachments, abilities, clock),
+      inject: [CHANNEL_REPOSITORY, MESSAGE_REPOSITORY, FILE_ATTACHMENTS, ChannelAbilities, CLOCK],
     },
     {
       provide: PinMessage,
-      useFactory: (channels: ChannelRepository, messages: MessageRepository) => new PinMessage(channels, messages),
-      inject: [CHANNEL_REPOSITORY, MESSAGE_REPOSITORY],
+      useFactory: (channels: ChannelRepository, messages: MessageRepository, abilities: ChannelAbilities) =>
+        new PinMessage(channels, messages, abilities),
+      inject: [CHANNEL_REPOSITORY, MESSAGE_REPOSITORY, ChannelAbilities],
+    },
+    {
+      provide: ChannelAbilities,
+      useFactory: (access: AccessPolicy) => new ChannelAbilities(access),
+      inject: [ACCESS_POLICY],
+    },
+    {
+      provide: AssignCreatorModerators,
+      useFactory: (channels: ChannelRepository, moderators: AssignChannelModerator) =>
+        new AssignCreatorModerators(channels, moderators),
+      inject: [CHANNEL_REPOSITORY, AssignChannelModerator],
+    },
+    {
+      provide: CreatorModeratorBootstrap,
+      useFactory: (assign: AssignCreatorModerators) => new CreatorModeratorBootstrap(assign),
+      inject: [AssignCreatorModerators],
     },
     {
       provide: MESSAGE_SEARCH,

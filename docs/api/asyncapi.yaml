@@ -2459,6 +2459,7 @@ channels:
                     - door-closed
                     - room-not-found
                     - not-in-room
+                    - not-allowed
                     - door-mode-fixed
                     - knock-not-found
                     - knock-pending

@@ -5,8 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { apiDelete } from '../../api/api-client.ts';
 import { usePinned } from '../../api/queries.ts';
 import { useChatStore } from '../../stores/chat-store.ts';
-import { usePresenceStore } from '../../stores/presence-store.ts';
-import { canPin, errorText, messageExcerpt, type Person } from './chat-shared.ts';
+import { errorText, messageExcerpt, type Person } from './chat-shared.ts';
 import { channelPath } from './composer.tsx';
 
 /** A conversation's pinned messages, newest first; selecting one shows it in the conversation (P-24). */
@@ -18,12 +17,10 @@ export function PinnedView({
   readonly people: ReadonlyMap<string, Person>;
 }) {
   const { t, i18n } = useTranslation();
-  const myPersonId = usePresenceStore((state) => state.myPersonId);
   const pinned = usePinned(channel.channelId);
   const [error, setError] = useState<string | null>(null);
   const time = new Intl.DateTimeFormat(i18n.language, { dateStyle: 'short', timeStyle: 'short' });
   const list = pinned.data?.messages ?? [];
-  const mayUnpin = canPin(channel, myPersonId);
 
   return (
     <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
@@ -59,7 +56,7 @@ export function PinnedView({
                 </span>
                 <span className="block text-sm break-words">{label}</span>
               </button>
-              {mayUnpin && (
+              {channel.canPin && (
                 <Button
                   variant="ghost"
                   className="mt-1"

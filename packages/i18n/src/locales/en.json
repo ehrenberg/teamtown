@@ -257,7 +257,6 @@
       "invalid-channel-name": "Channel names have 1 to 40 characters: lowercase letters, digits, - and _.",
       "channel-name-taken": "There's already a channel with this name.",
       "channel-archived": "This channel is archived. Nobody can write in it.",
-      "not-channel-creator": "Only the person who created the channel can do this.",
       "not-channel-member": "Join the channel first.",
       "not-message-author": "You can only change your own messages.",
       "invalid-message": "Messages can't be empty and have at most 4,000 characters.",
@@ -275,7 +274,10 @@
       "file-too-large": "Files can be up to 100 MB.",
       "unsupported-file-type": "This file type can't be shared here.",
       "infected-file": "This file was flagged as malware, so it wasn't uploaded.",
-      "scan-failed": "The file couldn't be checked for malware, so it wasn't uploaded. Please try again."
+      "scan-failed": "The file couldn't be checked for malware, so it wasn't uploaded. Please try again.",
+      "not-channel-moderator": "Only the channel's moderators can do this.",
+      "cannot-archive-channel": "This channel stays open for everyone, so it can't be archived.",
+      "not-allowed": "You don't have the rights for this."
     },
     "threads": "Threads",
     "noThreads": "No threads yet. Reply to a message, and its thread shows up here.",

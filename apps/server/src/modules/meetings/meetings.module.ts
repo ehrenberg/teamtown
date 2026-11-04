@@ -1,3 +1,4 @@
+import { ACCESS_POLICY, AccessModule, type AccessPolicy } from '../access/public-api.ts';
 import { Module } from '@nestjs/common';
 import type { Clock, IdGenerator } from '@teamtown/kernel';
 import { APP_CONFIG, type AppConfig } from '../../platform/config/app-config.ts';
@@ -79,7 +80,7 @@ const mediaGateway = (config: AppConfig): MediaGateway | null => {
 
 /** In memory only: who talks with whom is never persisted (ADR-0012). */
 @Module({
-  imports: [WorldModule, PresenceModule, PeopleModule],
+  imports: [AccessModule, WorldModule, PresenceModule, PeopleModule],
   controllers: [MeetingLogsController],
   providers: [
     { provide: MeetingsEventStream, useValue: new MeetingsEventStream() },
@@ -119,6 +120,7 @@ const mediaGateway = (config: AppConfig): MediaGateway | null => {
         clock: Clock,
         ids: IdGenerator,
         config: AppConfig,
+        access: AccessPolicy,
       ) =>
         new StartMeetingLog(
           membership,
@@ -129,6 +131,7 @@ const mediaGateway = (config: AppConfig): MediaGateway | null => {
           clock,
           ids,
           config.MEETING_LOG_RETENTION_DAYS,
+          access,
         ),
       inject: [
         CallMembership,
@@ -139,6 +142,7 @@ const mediaGateway = (config: AppConfig): MediaGateway | null => {
         CLOCK,
         ID_GENERATOR,
         APP_CONFIG,
+        ACCESS_POLICY,
       ],
     },
     {
@@ -307,9 +311,14 @@ const mediaGateway = (config: AppConfig): MediaGateway | null => {
     },
     {
       provide: AnswerKnock,
-      useFactory: (presence: LivePresence, admission: RoomAdmission, knocks: Knocks, events: MeetingsEventStream) =>
-        new AnswerKnock(presence, admission, knocks, events),
-      inject: [LIVE_PRESENCE, ROOM_ADMISSION, Knocks, MeetingsEventStream],
+      useFactory: (
+        presence: LivePresence,
+        admission: RoomAdmission,
+        knocks: Knocks,
+        events: MeetingsEventStream,
+        access: AccessPolicy,
+      ) => new AnswerKnock(presence, admission, knocks, events, access),
+      inject: [LIVE_PRESENCE, ROOM_ADMISSION, Knocks, MeetingsEventStream, ACCESS_POLICY],
     },
     {
       provide: CancelKnock,

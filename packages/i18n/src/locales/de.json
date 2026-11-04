@@ -257,7 +257,6 @@
       "invalid-channel-name": "Channel-Namen haben 1 bis 40 Zeichen: Kleinbuchstaben, Ziffern, - und _.",
       "channel-name-taken": "Einen Channel mit diesem Namen gibt es schon.",
       "channel-archived": "Dieser Channel ist archiviert. Niemand kann darin schreiben.",
-      "not-channel-creator": "Das kann nur die Person, die den Channel angelegt hat.",
       "not-channel-member": "Tritt dem Channel zuerst bei.",
       "not-message-author": "Du kannst nur deine eigenen Nachrichten ändern.",
       "invalid-message": "Nachrichten dürfen nicht leer sein und höchstens 4.000 Zeichen haben.",
@@ -275,7 +274,10 @@
       "file-too-large": "Dateien dürfen bis zu 100 MB groß sein.",
       "unsupported-file-type": "Dieser Dateityp kann hier nicht geteilt werden.",
       "infected-file": "Diese Datei wurde als Schadsoftware erkannt und deshalb nicht hochgeladen.",
-      "scan-failed": "Die Datei konnte nicht auf Schadsoftware geprüft werden und wurde deshalb nicht hochgeladen. Bitte versuch es noch mal."
+      "scan-failed": "Die Datei konnte nicht auf Schadsoftware geprüft werden und wurde deshalb nicht hochgeladen. Bitte versuch es noch mal.",
+      "not-channel-moderator": "Das kann nur, wer den Channel moderiert.",
+      "cannot-archive-channel": "Dieser Channel bleibt für alle offen und kann nicht archiviert werden.",
+      "not-allowed": "Dafür hast du keine Berechtigung."
     },
     "threads": "Threads",
     "noThreads": "Noch keine Threads. Antworte auf eine Nachricht, dann taucht ihr Thread hier auf.",

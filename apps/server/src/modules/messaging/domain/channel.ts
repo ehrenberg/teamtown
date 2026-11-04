@@ -36,7 +36,7 @@ export interface ChannelProps {
   readonly kind: ChannelKind;
   /** Without the `#` for channels, the room title for room walls, `null` for DMs. */
   readonly name: string | null;
-  /** Moderates the channel until M4 (ADR-0033); `null` for seed channels and DMs. */
+  /** Who created it, for the record (ADR-0036); `null` for seed channels and DMs. */
   readonly creatorId: string | null;
   /** Present only for room walls. Optional so stored pre-M3c channels restore as non-room channels. */
   readonly room?: RoomLink | null;
@@ -55,7 +55,8 @@ export interface ChannelChanges {
 export type ChannelError =
   | 'invalid-channel-name'
   | 'channel-archived'
-  | 'not-channel-creator'
+  | 'not-channel-moderator'
+  | 'cannot-archive-channel'
   | 'not-channel-member'
   | 'direct-message-too-large'
   | 'cannot-leave-channel'
@@ -66,8 +67,8 @@ const isLater = (a: ReadMarker, b: ReadMarker | null): boolean =>
   !b || a.postedAt > b.postedAt || (a.postedAt.getTime() === b.postedAt.getTime() && a.messageId > b.messageId);
 
 /**
- * A channel or DM with its memberships (docs/architecture/domain-model.md "Messaging"). Until M4 the creator
- * moderates and every member posts (ADR-0033). Messages are their own aggregate, created through `post`.
+ * A channel or DM with its memberships (docs/architecture/domain-model.md "Messaging"). The creator is recorded;
+ * `AccessPolicy` decides who moderates (ADR-0036), and every member posts (ADR-0033). Messages are their own aggregate, created through `post`.
  */
 export class Channel {
   #events: MessagingEvent[] = [];
@@ -190,6 +191,15 @@ export class Channel {
   }
 
   /** Public channels and room walls are readable by everyone; private channels and DMs only by members. */
+  /** Public and private channels have moderators; DMs and room walls have their own rules (P-26). */
+  get isModerated(): boolean {
+    return this.state.kind === 'public' || this.state.kind === 'private';
+  }
+
+  get isSeed(): boolean {
+    return (SEED_CHANNEL_IDS as readonly string[]).includes(this.state.channelId);
+  }
+
   canRead(personId: string): boolean {
     return this.state.kind === 'public' || this.state.kind === 'room' || this.isMember(personId);
   }
@@ -208,8 +218,9 @@ export class Channel {
     this.#changed();
   }
 
-  rename(actorId: string, raw: string): Result<void, ChannelError> {
-    const allowed = this.#moderate(actorId);
+  /** Moderation is decided by the use case through `AccessPolicy`; only public and private channels have it. */
+  rename(mayManage: boolean, raw: string): Result<void, ChannelError> {
+    const allowed = this.#moderate(mayManage);
     if (!allowed.ok) return allowed;
     if (this.isArchived) return err('channel-archived');
     const name = channelName(raw);
@@ -220,10 +231,11 @@ export class Channel {
     return ok(undefined);
   }
 
-  /** Archived channels stay readable but take no new messages; the creator can unarchive them. */
-  setArchived(actorId: string, archived: boolean, now: Date): Result<void, ChannelError> {
-    const allowed = this.#moderate(actorId);
+  /** Archived channels stay readable but take no new messages; moderators can unarchive them. Seeds stay open (P-35). */
+  setArchived(mayManage: boolean, archived: boolean, now: Date): Result<void, ChannelError> {
+    const allowed = this.#moderate(mayManage);
     if (!allowed.ok) return allowed;
+    if (archived && this.isSeed) return err('cannot-archive-channel');
     if (archived === this.isArchived) return ok(undefined);
     this.state = { ...this.state, archivedAt: archived ? now : null };
     this.#changed();
@@ -246,16 +258,16 @@ export class Channel {
 
   /**
    * Members add people to a public channel (ADR-0034) or a DM (up to eight in total); adding to a pair converts
-   * it into a group (P-12). The creator invites into a private channel.
+   * it into a group (P-12). Moderators invite into a private channel.
    */
-  invite(actorId: string, personIds: readonly string[], now: Date): Result<void, ChannelError> {
+  invite(actorId: string, personIds: readonly string[], now: Date, mayManage: boolean): Result<void, ChannelError> {
     const newcomers = [...new Set(personIds)].filter((personId) => !this.isMember(personId));
     switch (this.state.kind) {
       case 'public':
         if (!this.isMember(actorId)) return err('not-channel-member');
         break;
       case 'private':
-        if (actorId !== this.state.creatorId) return err('not-channel-creator');
+        if (!mayManage) return err('not-channel-moderator');
         break;
       case 'room':
         return err('cannot-invite');
@@ -327,16 +339,12 @@ export class Channel {
   }
 
   /**
-   * Pins or unpins a message (P-24). Until M4: in a public or private channel only the creator may, like its
-   * other moderation; a DM or room wall has no creator, so any member may (P-25, P-26).
+   * Pins or unpins a message (P-24). `mayPin` comes from the use case: `message.pin` in a public or private channel,
+   * being a member in a DM or room wall (P-25, P-26).
    */
-  pin(actorId: string, message: Message, pinned: boolean): Result<void, ChannelError> {
-    if (!this.isMember(actorId)) return err('not-channel-member');
+  pin(mayPin: boolean, message: Message, pinned: boolean): Result<void, ChannelError> {
     if (this.isArchived) return err('channel-archived');
-    if (this.state.kind === 'public' || this.state.kind === 'private') {
-      const allowed = this.#moderate(actorId);
-      if (!allowed.ok) return allowed;
-    }
+    if (!mayPin) return err(this.isModerated ? 'not-channel-moderator' : 'not-channel-member');
     const set = message.setPinned(pinned, this.memberIds);
     return set.ok ? ok(undefined) : err('invalid-request');
   }
@@ -398,10 +406,8 @@ export class Channel {
     return events;
   }
 
-  #moderate(actorId: string): Result<void, 'not-channel-creator'> {
-    return this.state.creatorId !== null && actorId === this.state.creatorId
-      ? ok(undefined)
-      : err('not-channel-creator');
+  #moderate(mayManage: boolean): Result<void, 'not-channel-moderator'> {
+    return this.isModerated && mayManage ? ok(undefined) : err('not-channel-moderator');
   }
 
   #addMembers(personIds: readonly string[], now: Date): void {

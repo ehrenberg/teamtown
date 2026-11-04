@@ -16,6 +16,10 @@ const channel = (overrides: Partial<ChannelSummary>): ChannelSummary => ({
   mentionCount: 0,
   lastMessageAt: null,
   readMarker: null,
+  canManage: false,
+  canArchive: false,
+  canPin: false,
+  canDeleteAny: false,
   ...overrides,
 });
 const titleOf = (c: ChannelSummary) => (c.kind === 'room' ? (c.name ?? '') : `#${c.name ?? ''}`);
