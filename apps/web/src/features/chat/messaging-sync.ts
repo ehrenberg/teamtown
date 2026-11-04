@@ -1,11 +1,19 @@
 import { useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import type { MessageContract } from '@teamtown/contracts';
-import { messagesKey, repliesKey } from '../../api/queries.ts';
+import { messagesKey, pinnedKey, repliesKey } from '../../api/queries.ts';
 import { useRealtime } from '../../realtime/realtime-context.tsx';
 import { useChatStore } from '../../stores/chat-store.ts';
 import { usePresenceStore } from '../../stores/presence-store.ts';
-import { withDeleted, withPosted, withReaction, withReplaced, withReply, type MessagePages } from './message-cache.ts';
+import {
+  withDeleted,
+  withPinned,
+  withPosted,
+  withReaction,
+  withReplaced,
+  withReply,
+  type MessagePages,
+} from './message-cache.ts';
 
 /** A message goes to the channel; a reply to its thread, onto its root's count, and to the channel if also sent there. */
 function onPosted(queryClient: QueryClient, message: MessageContract): void {
@@ -37,6 +45,8 @@ export function MessagingSync(): null {
           queryClient.setQueryData<MessagePages>(messagesKey(channelId), change);
           queryClient.setQueriesData<MessagePages>({ queryKey: ['replies'] }, change);
         };
+        const refreshPinned = (channelId: string) =>
+          void queryClient.invalidateQueries({ queryKey: pinnedKey(channelId) });
         switch (event.t) {
           case 'MessagePosted':
             onPosted(queryClient, event.p.message);
@@ -44,10 +54,16 @@ export function MessagingSync(): null {
             return;
           case 'MessageEdited':
             update(event.p.message.channelId, (data) => withReplaced(data, event.p.message));
+            refreshPinned(event.p.message.channelId);
             return;
           case 'MessageDeleted':
             update(event.p.channelId, (data) => withDeleted(data, event.p.messageId));
             refreshChannels();
+            refreshPinned(event.p.channelId);
+            return;
+          case 'MessagePinChanged':
+            update(event.p.channelId, (data) => withPinned(data, event.p));
+            refreshPinned(event.p.channelId);
             return;
           case 'ReactionChanged':
             update(event.p.channelId, (data) => withReaction(data, event.p));
@@ -75,7 +91,7 @@ export function MessagingSync(): null {
 
   useEffect(() => {
     if (connection !== 'online') return;
-    for (const queryKey of [['channels'], ['messages'], ['replies'], ['threads']]) {
+    for (const queryKey of [['channels'], ['messages'], ['replies'], ['threads'], ['pinned']]) {
       void queryClient.invalidateQueries({ queryKey });
     }
   }, [connection, queryClient]);

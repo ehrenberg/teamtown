@@ -7,8 +7,10 @@ import { apiSend } from '../../api/api-client.ts';
 import { messagesKey, repliesKey, usePeople } from '../../api/queries.ts';
 import { usePresenceStore } from '../../stores/presence-store.ts';
 import { errorText, type Person } from './chat-shared.ts';
+import { AttachButton, DraftFiles } from './draft-files.tsx';
 import { withPosted, type MessagePages } from './message-cache.ts';
 import { insertMention, mentionedIds, mentionQueryAt, toDisplay, toTokens, type MentionPick } from './mentions.ts';
+import { useUploads, type Uploads } from './use-uploads.ts';
 
 const MAX_DIRECT_MEMBERS = 8;
 const MAX_SUGGESTIONS = 6;
@@ -45,6 +47,7 @@ export function MentionTextarea({
   initial = '',
   rows = 2,
   focusOnMount = false,
+  allowEmpty = false,
   onSubmit,
   onEscape,
 }: {
@@ -55,6 +58,8 @@ export function MentionTextarea({
   readonly rows?: number;
   /** For the edit and reply boxes, which the person just chose to open. */
   readonly focusOnMount?: boolean;
+  /** A message with attachments needs no text (P-27). */
+  readonly allowEmpty?: boolean;
   /** Gets the body with tokens; resolves `true` when it was sent, so the text is cleared. */
   readonly onSubmit: (body: string) => Promise<boolean>;
   readonly onEscape?: () => void;
@@ -111,7 +116,7 @@ export function MentionTextarea({
   };
 
   const submit = () => {
-    if (!text.trim()) return;
+    if (!text.trim() && !allowEmpty) return;
     const sent = text;
     void onSubmit(toTokens(text, picks)).then((done) => {
       if (done && textarea.current?.value === sent) {
@@ -224,24 +229,29 @@ export function MentionTextarea({
 
 /**
  * Writes into a channel, or into a thread when `threadRootId` is set (with "Also send to the channel").
- * After sending it hints at mentioned people who aren't in the channel (ADR-0034).
+ * After sending it hints at mentioned people who aren't in the channel (ADR-0034). Files attached here upload right
+ * away and go out with the message (P-22); the channel's composer gets `uploads` from the panel, which takes drops.
  */
 export function Composer({
   channel,
   title,
   threadRootId,
   focusOnMount = false,
+  uploads: panelUploads,
 }: {
   readonly channel: ChannelSummary;
   readonly title: string;
   readonly threadRootId?: string;
   readonly focusOnMount?: boolean;
+  readonly uploads?: Uploads;
 }) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const people = usePeople();
   const myPersonId = usePresenceStore((state) => state.myPersonId);
   const checkboxId = useId();
+  const ownUploads = useUploads();
+  const uploads = panelUploads ?? ownUploads;
   const [alsoInChannel, setAlsoInChannel] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [outsiders, setOutsiders] = useState<string[]>([]);
@@ -250,14 +260,20 @@ export function Composer({
     people.data?.people.find((person) => person.personId === personId)?.displayName ?? t('chat.someone');
 
   const send = async (body: string): Promise<boolean> => {
+    if (uploads.uploading) {
+      setError(t('chat.waitForUploads'));
+      return false;
+    }
+    const attachmentUploadIds = uploads.uploadIds.length > 0 ? { attachmentUploadIds: uploads.uploadIds } : {};
     try {
       const message: MessageContract = await apiSend(
         'POST',
         `${path}/messages`,
-        threadRootId ? { body, threadRootId, alsoInChannel } : { body },
+        { body, ...(threadRootId ? { threadRootId, alsoInChannel } : {}), ...attachmentUploadIds },
         MessageSchema,
       );
       setError(null);
+      uploads.clear();
       setOutsiders(mentionedIds(body).filter((personId) => !channel.members.includes(personId)));
       if (threadRootId) {
         queryClient.setQueryData<MessagePages>(repliesKey(threadRootId), (data) => withPosted(data, message));
@@ -287,11 +303,12 @@ export function Composer({
   const target = channel.kind === 'direct' ? t('chat.theConversation') : title;
   return (
     <div className={threadRootId ? 'mt-1' : 'border-t border-border-subtle p-3'}>
-      {error && (
+      {(error ?? uploads.error) && (
         <p role="alert" className="mb-1.5 text-xs">
-          {error}
+          {error ?? uploads.error}
         </p>
       )}
+      <DraftFiles uploads={uploads} />
       {outsiders.length > 0 && (
         <div role="status" className="mb-1.5 flex items-center gap-2 rounded-md bg-ochre-100 px-2 py-1.5 text-xs">
           <span className="flex-1">
@@ -313,14 +330,20 @@ export function Composer({
           </button>
         </div>
       )}
-      <MentionTextarea
-        label={threadRootId ? t('chat.replyLabel') : t('chat.composerLabel', { title })}
-        placeholder={threadRootId ? t('chat.replyPlaceholder') : t('chat.composerPlaceholder', { title })}
-        memberIds={channel.members}
-        rows={threadRootId ? 1 : 2}
-        focusOnMount={focusOnMount}
-        onSubmit={send}
-      />
+      <div className="flex items-end gap-1">
+        <div className="min-w-0 flex-1">
+          <MentionTextarea
+            label={threadRootId ? t('chat.replyLabel') : t('chat.composerLabel', { title })}
+            placeholder={threadRootId ? t('chat.replyPlaceholder') : t('chat.composerPlaceholder', { title })}
+            memberIds={channel.members}
+            rows={threadRootId ? 1 : 2}
+            focusOnMount={focusOnMount}
+            allowEmpty={uploads.files.length > 0}
+            onSubmit={send}
+          />
+        </div>
+        <AttachButton uploads={uploads} />
+      </div>
       {threadRootId ? (
         <div className="mt-1 flex items-center gap-1.5 text-xs text-text-secondary">
           <input

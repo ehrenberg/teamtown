@@ -267,7 +267,15 @@
       "unknown-person": "Someone you picked is no longer here.",
       "invalid-thread-root": "That message can't be replied to here anymore.",
       "invalid-emoji": "That isn't a single emoji.",
-      "too-many-reactions": "This message already has 20 different reactions. Join one of them instead."
+      "too-many-reactions": "This message already has 20 different reactions. Join one of them instead.",
+      "too-many-attachments": "A message can carry up to 10 files.",
+      "upload-not-found": "That file is no longer available. Please attach it again.",
+      "not-uploader": "You can only send files you uploaded yourself.",
+      "already-claimed": "That file has already been sent.",
+      "file-too-large": "Files can be up to 100 MB.",
+      "unsupported-file-type": "This file type can't be shared here.",
+      "infected-file": "This file was flagged as malware, so it wasn't uploaded.",
+      "scan-failed": "The file couldn't be checked for malware, so it wasn't uploaded. Please try again."
     },
     "threads": "Threads",
     "noThreads": "No threads yet. Reply to a message, and its thread shows up here.",
@@ -309,6 +317,25 @@
     "notInChannel_other": "{{names}} aren't in here, so they won't see the mention.",
     "addToChannel": "Add them",
     "dismiss": "Dismiss",
-    "editHint": "Enter saves, Escape cancels."
+    "editHint": "Enter saves, Escape cancels.",
+    "attachFile": "Attach file",
+    "attachedFiles": "Attached files",
+    "removeFile": "Remove {{name}}",
+    "uploading": "Uploading {{name}}",
+    "uploadStarted": "Uploading {{name}}.",
+    "uploadFinished": "{{name}} is ready to send.",
+    "waitForUploads": "Just a moment, your files are still uploading.",
+    "fileRefused": "{{name}}: {{reason}}",
+    "dropFiles": "Drop files here to attach them",
+    "openFile": "Open {{name}}",
+    "downloadFile": "Download {{name}} ({{type}}, {{size}})",
+    "downloadFailed": "That file couldn't be downloaded. Please try again.",
+    "pin": "Pin message",
+    "unpin": "Unpin",
+    "pinned": "Pinned",
+    "pinnedMark": "Pinned",
+    "pinnedCount_one": "Pinned, {{count}} message",
+    "pinnedCount_other": "Pinned, {{count}} messages",
+    "noPinned": "Nothing pinned yet. Pinned messages stay easy to find here."
   }
 }

@@ -1,20 +1,22 @@
 import { useQueryClient } from '@tanstack/react-query';
-import type { ChannelSummary } from '@teamtown/contracts';
+import type { ChannelSummary, MessageContract } from '@teamtown/contracts';
 import { Button } from '@teamtown/ui';
-import { Archive, ArchiveRestore, LogOut, Pencil, UserPlus, X } from 'lucide-react';
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { Archive, ArchiveRestore, LogOut, Pencil, Pin, UserPlus, X } from 'lucide-react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type DragEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { apiDelete, apiSend } from '../../api/api-client.ts';
-import { useChannels, useMessages, usePeople } from '../../api/queries.ts';
+import { useChannels, useMessages, usePeople, usePinned } from '../../api/queries.ts';
 import { useChatStore } from '../../stores/chat-store.ts';
 import { usePresenceStore } from '../../stores/presence-store.ts';
 import { PeoplePickerDialog, PrivateMark, RenameChannelDialog } from './chat-dialogs.tsx';
-import { channelTitle, errorText, type Person } from './chat-shared.ts';
+import { channelTitle, errorText, messageExcerpt, type Person } from './chat-shared.ts';
 import { channelPath, Composer } from './composer.tsx';
 import { MentionContext } from './message-body.tsx';
 import { flatten } from './message-cache.ts';
 import { MessageItem } from './message-item.tsx';
+import { PinnedView } from './pinned-view.tsx';
 import { ThreadsView } from './threads-view.tsx';
+import { useUploads, type Uploads } from './use-uploads.ts';
 
 const GENERAL_CHANNEL_ID = 'general';
 const MAX_DIRECT_MEMBERS = 8;
@@ -74,18 +76,105 @@ function OpenChannel({ channel }: { readonly channel: ChannelSummary }) {
     () => ({ nameOf: (personId: string) => peopleById.get(personId)?.displayName, myPersonId }),
     [peopleById, myPersonId],
   );
+  const uploads = useUploads();
+  const [dragging, setDragging] = useState(false);
+  const [pinnedOpen, setPinnedOpen] = useState(false);
+  const [showing, setShowing] = useState<MessageContract | null>(null);
+  /** Roots whose threads are expanded inline (ADR-0034). */
+  const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
+  const canAttach = !channel.archived && myPersonId !== null && channel.members.includes(myPersonId);
 
+  const onDragOver = (event: DragEvent) => {
+    if (!canAttach || !event.dataTransfer.types.includes('Files')) return;
+    event.preventDefault();
+    setDragging(true);
+  };
+  const onDragLeave = (event: DragEvent) => {
+    if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDragging(false);
+  };
+  const onDrop = (event: DragEvent) => {
+    if (!canAttach) return;
+    event.preventDefault();
+    setDragging(false);
+    uploads.add([...event.dataTransfer.files]);
+  };
+
+  // The conversation and the draft stay mounted behind the pinned view, so neither loses its place or text.
   return (
     <MentionContext value={mentions}>
-      <ChannelHeader channel={channel} title={title} />
-      <MessageList channel={channel} title={title} people={peopleById} />
-      <ChannelComposer channel={channel} title={title} />
+      {/* The drop zone only adds to the "Attach file" button, which is the keyboard path. */}
+      {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
+      <div
+        onDragOver={onDragOver}
+        onDragLeave={onDragLeave}
+        onDrop={onDrop}
+        className={`relative flex min-h-0 flex-1 flex-col ${dragging ? 'ring-2 ring-terracotta-500 ring-inset' : ''}`}
+      >
+        <ChannelHeader
+          channel={channel}
+          title={title}
+          pinnedOpen={pinnedOpen}
+          onTogglePinned={() => {
+            setPinnedOpen((open) => !open);
+          }}
+        />
+        {pinnedOpen && (
+          <PinnedView
+            channel={channel}
+            people={peopleById}
+            onShow={(message) => {
+              setPinnedOpen(false);
+              setShowing(message);
+              const { threadRootId } = message;
+              if (threadRootId) setExpanded((current) => new Set(current).add(threadRootId));
+            }}
+          />
+        )}
+        <MessageList
+          channel={channel}
+          title={title}
+          people={peopleById}
+          hidden={pinnedOpen}
+          expanded={expanded}
+          onToggleThread={(messageId) => {
+            setExpanded((current) => {
+              const next = new Set(current);
+              if (!next.delete(messageId)) next.add(messageId);
+              return next;
+            });
+          }}
+          showing={showing}
+          onShown={() => {
+            setShowing(null);
+          }}
+        />
+        <div hidden={pinnedOpen}>
+          <ChannelComposer channel={channel} title={title} uploads={uploads} />
+        </div>
+        {dragging && (
+          <p className="pointer-events-none absolute inset-x-4 top-1/2 rounded-md bg-surface-raised p-3 text-center text-sm font-medium shadow-raised">
+            {t('chat.dropFiles')}
+          </p>
+        )}
+      </div>
     </MentionContext>
   );
 }
 
-function ChannelHeader({ channel, title }: { readonly channel: ChannelSummary; readonly title: string }) {
+function ChannelHeader({
+  channel,
+  title,
+  pinnedOpen,
+  onTogglePinned,
+}: {
+  readonly channel: ChannelSummary;
+  readonly title: string;
+  readonly pinnedOpen: boolean;
+  readonly onTogglePinned: () => void;
+}) {
   const { t } = useTranslation();
+  const pinned = usePinned(channel.channelId);
+  const pinnedCount = pinned.data?.messages.length ?? 0;
   const queryClient = useQueryClient();
   const myPersonId = usePresenceStore((state) => state.myPersonId);
   const [dialog, setDialog] = useState<'rename' | 'invite' | null>(null);
@@ -122,6 +211,24 @@ function ChannelHeader({ channel, title }: { readonly channel: ChannelSummary; r
           <span className="truncate">{title}</span>
           {channel.kind === 'private' && <PrivateMark />}
         </h2>
+        <button
+          type="button"
+          aria-pressed={pinnedOpen}
+          aria-label={t('chat.pinnedCount', { count: pinnedCount })}
+          title={t('chat.pinned')}
+          onClick={onTogglePinned}
+          className="relative grid size-8 place-items-center rounded-sm text-text-secondary hover:bg-neutral-100 hover:text-text-primary aria-pressed:bg-neutral-100 aria-pressed:text-text-primary"
+        >
+          <Pin aria-hidden="true" className="size-4" />
+          {pinnedCount > 0 && (
+            <span
+              aria-hidden="true"
+              className="absolute -top-0.5 -right-0.5 min-w-4 rounded-full bg-terracotta-500 px-1 text-center text-xs leading-4 font-semibold text-white"
+            >
+              {pinnedCount}
+            </span>
+          )}
+        </button>
         {isCreator &&
           !channel.archived &&
           action(t('chat.rename'), <Pencil aria-hidden="true" className="size-4" />, () => {
@@ -190,10 +297,21 @@ function MessageList({
   channel,
   title,
   people,
+  hidden,
+  expanded,
+  onToggleThread,
+  showing,
+  onShown,
 }: {
   readonly channel: ChannelSummary;
   readonly title: string;
   readonly people: ReadonlyMap<string, Person>;
+  readonly hidden: boolean;
+  readonly expanded: ReadonlySet<string>;
+  readonly onToggleThread: (messageId: string) => void;
+  /** A message to bring into view, loading older pages if needed; a reply shows through its opened thread. */
+  readonly showing: MessageContract | null;
+  readonly onShown: () => void;
 }) {
   const { t, i18n } = useTranslation();
   const myPersonId = usePresenceStore((state) => state.myPersonId);
@@ -203,20 +321,11 @@ function MessageList({
   const atBottom = useRef(true);
   /** The newest message the read marker was moved to (or is already at). */
   const readTo = useRef<string | null>(channel.readMarker);
-  /** Roots whose threads are expanded inline (ADR-0034). */
-  const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
   const newest = messages.at(-1);
   const isMember = myPersonId !== null && channel.members.includes(myPersonId);
   const day = new Intl.DateTimeFormat(i18n.language, { dateStyle: 'full' });
   const time = new Intl.DateTimeFormat(i18n.language, { timeStyle: 'short' });
   const byId = new Map(messages.map((message) => [message.messageId, message]));
-  const toggle = (messageId: string) => {
-    setExpanded((current) => {
-      const next = new Set(current);
-      if (!next.delete(messageId)) next.add(messageId);
-      return next;
-    });
-  };
 
   // Stay at the newest message while reading at the bottom.
   useLayoutEffect(() => {
@@ -232,6 +341,21 @@ function MessageList({
   };
   useEffect(markRead);
 
+  useEffect(() => {
+    if (!showing) return;
+    const targetId = showing.threadRootId ?? showing.messageId;
+    if (!byId.has(targetId)) {
+      if (history.isFetching) return;
+      if (history.hasNextPage) void history.fetchNextPage();
+      else onShown();
+      return;
+    }
+    const element = scroller.current?.querySelector<HTMLElement>(`[data-message-id="${CSS.escape(targetId)}"]`);
+    element?.scrollIntoView({ block: 'center' });
+    element?.focus({ preventScroll: true });
+    onShown();
+  });
+
   const onScroll = () => {
     const element = scroller.current;
     if (!element) return;
@@ -240,7 +364,7 @@ function MessageList({
   };
 
   return (
-    <div ref={scroller} onScroll={onScroll} className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
+    <div ref={scroller} onScroll={onScroll} hidden={hidden} className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
       {history.hasNextPage && (
         <Button
           variant="ghost"
@@ -283,11 +407,11 @@ function MessageList({
                 showAuthor={!sameAuthor}
                 time={time.format(posted)}
                 {...(message.threadRootId
-                  ? { repliedTo: root && !root.deleted ? excerpt(root.body) : null }
+                  ? { repliedTo: root && !root.deleted ? messageExcerpt(root.body) : null }
                   : {
                       expanded: expanded.has(message.messageId),
                       onToggleThread: () => {
-                        toggle(message.messageId);
+                        onToggleThread(message.messageId);
                       },
                     })}
               />
@@ -299,18 +423,16 @@ function MessageList({
   );
 }
 
-/** The first words of a root, without Markdown marks or mention tokens. */
-const excerpt = (body: string) => {
-  const plain = body
-    .replace(/<@[^>]+>/g, '@…')
-    .replace(/[*_`#>[\]()]/g, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-  return plain.length > 60 ? `${plain.slice(0, 60)}…` : plain;
-};
-
 /** Members write; others of a public channel join first; archived channels take nothing new. */
-function ChannelComposer({ channel, title }: { readonly channel: ChannelSummary; readonly title: string }) {
+function ChannelComposer({
+  channel,
+  title,
+  uploads,
+}: {
+  readonly channel: ChannelSummary;
+  readonly title: string;
+  readonly uploads: Uploads;
+}) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const myPersonId = usePresenceStore((state) => state.myPersonId);
@@ -320,7 +442,7 @@ function ChannelComposer({ channel, title }: { readonly channel: ChannelSummary;
   if (channel.archived) {
     return <p className="border-t border-border-subtle p-4 text-sm text-text-secondary">{t('chat.archivedHint')}</p>;
   }
-  if (isMember) return <Composer channel={channel} title={title} />;
+  if (isMember) return <Composer channel={channel} title={title} uploads={uploads} />;
   return (
     <div className="border-t border-border-subtle p-4">
       {error && (

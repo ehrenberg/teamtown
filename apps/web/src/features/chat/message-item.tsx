@@ -1,12 +1,13 @@
 import { MessageSchema, type ChannelSummary, type MessageContract } from '@teamtown/contracts';
 import { Button } from '@teamtown/ui';
-import { MessageSquareReply, Pencil, Trash2 } from 'lucide-react';
+import { MessageSquareReply, Pencil, Pin, PinOff, Trash2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { apiDelete, apiSend } from '../../api/api-client.ts';
 import { useReplies, useThreads } from '../../api/queries.ts';
 import { usePresenceStore } from '../../stores/presence-store.ts';
-import { errorText, type Person } from './chat-shared.ts';
+import { AttachmentList } from './attachment-list.tsx';
+import { canPin, errorText, type Person } from './chat-shared.ts';
 import { channelPath, Composer, MentionTextarea } from './composer.tsx';
 import { MessageBody } from './message-body.tsx';
 import { flatten } from './message-cache.ts';
@@ -16,7 +17,8 @@ const toolButton = 'grid size-7 place-items-center rounded-sm hover:bg-neutral-1
 
 /**
  * One message: author, body, reactions and, for roots, the thread summary that expands the replies inline
- * (ADR-0034). On hover or focus a toolbar offers quick reactions, the picker, "Reply in thread", edit and delete.
+ * (ADR-0034), and its files (P-20). On hover or focus a toolbar offers quick reactions, the picker, "Reply in thread",
+ * pinning (P-24), edit and delete.
  */
 export function MessageItem({
   message,
@@ -53,6 +55,7 @@ export function MessageItem({
   const canReact = isMember && open && !message.deleted;
   const isMine = message.authorId === myPersonId;
   const mentionsMe = myPersonId !== null && message.mentions.includes(myPersonId);
+  const mayPin = canPin(channel, myPersonId) && !message.deleted;
   const report = (failure: unknown) => {
     setError(errorText(failure, t));
   };
@@ -64,6 +67,9 @@ export function MessageItem({
   return (
     <>
       <article
+        data-message-id={message.messageId}
+        // The pinned view moves the focus here when it shows a message.
+        tabIndex={-1}
         aria-label={t('chat.messageBy', { name, time })}
         className={`group relative rounded-sm px-1 hover:bg-neutral-50 ${showAuthor ? 'mt-2' : ''} ${
           mentionsMe ? 'border-l-2 border-terracotta-500 bg-terracotta-100/40 pl-2' : ''
@@ -78,6 +84,12 @@ export function MessageItem({
         {repliedTo !== undefined && (
           <p className="truncate text-xs text-text-secondary">
             {repliedTo ? t('chat.repliedToThread', { excerpt: repliedTo }) : t('chat.repliedToAThread')}
+          </p>
+        )}
+        {message.pinned && (
+          <p className="flex items-center gap-1 text-xs text-text-secondary">
+            <Pin aria-hidden="true" className="size-3" />
+            {t('chat.pinnedMark')}
           </p>
         )}
         {message.deleted ? (
@@ -107,6 +119,7 @@ export function MessageItem({
             {message.editedAt && <span className="text-xs text-text-secondary"> ({t('chat.edited')})</span>}
           </div>
         )}
+        {!editing && <AttachmentList message={message} />}
         <ReactionChips message={message} myPersonId={myPersonId} nameOf={nameOf} canReact={canReact} onError={report} />
         {error && (
           <p role="alert" className="text-xs">
@@ -114,7 +127,7 @@ export function MessageItem({
           </p>
         )}
 
-        {!editing && (canReact || (isMine && open && !message.deleted)) && (
+        {!editing && (canReact || mayPin || (isMine && open && !message.deleted)) && (
           <div
             role="toolbar"
             aria-label={t('chat.messageActions')}
@@ -147,6 +160,23 @@ export function MessageItem({
                 className={toolButton}
               >
                 <MessageSquareReply aria-hidden="true" className="size-3.5" />
+              </button>
+            )}
+            {mayPin && (
+              <button
+                type="button"
+                aria-label={t(message.pinned ? 'chat.unpin' : 'chat.pin')}
+                title={t(message.pinned ? 'chat.unpin' : 'chat.pin')}
+                onClick={() => {
+                  (message.pinned ? apiDelete(`${path}/pin`) : apiSend('PUT', `${path}/pin`, {})).catch(report);
+                }}
+                className={toolButton}
+              >
+                {message.pinned ? (
+                  <PinOff aria-hidden="true" className="size-3.5" />
+                ) : (
+                  <Pin aria-hidden="true" className="size-3.5" />
+                )}
               </button>
             )}
             {isMine && !message.deleted && (
@@ -334,6 +364,7 @@ function MessageEditor({
         initial={message.body}
         rows={3}
         focusOnMount
+        allowEmpty={message.attachments.length > 0}
         onSubmit={onSave}
         onEscape={onCancel}
       />

@@ -9,6 +9,7 @@ import {
   MeetingLogListResponse,
   MessagePageResponse,
   PeopleListResponse,
+  PinnedMessagesResponse,
   ThreadListResponse,
 } from '@teamtown/contracts';
 import { apiGet } from './api-client.ts';
@@ -73,6 +74,15 @@ export const useMessages = (channelId: string | null) =>
     initialPageParam: '',
     getNextPageParam: (page) => (page.hasMore ? page.messages[0]?.messageId : undefined),
     enabled: channelId !== null,
+  });
+
+export const pinnedKey = (channelId: string) => ['pinned', channelId] as const;
+
+/** A conversation's pinned messages, newest first (P-24); kept fresh by realtime pushes. */
+export const usePinned = (channelId: string) =>
+  useQuery({
+    queryKey: pinnedKey(channelId),
+    queryFn: () => apiGet(`/channels/${encodeURIComponent(channelId)}/pinned-messages`, PinnedMessagesResponse),
   });
 
 export const repliesKey = (rootMessageId: string) => ['replies', rootMessageId] as const;

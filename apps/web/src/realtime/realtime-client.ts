@@ -49,6 +49,7 @@ export type MessagingServerEvent = Extract<
       | 'ChannelLeft'
       | 'ReadMarkerMoved'
       | 'ReactionChanged'
+      | 'MessagePinChanged'
       | 'ThreadActivity';
   }
 >;
@@ -320,6 +321,7 @@ export class RealtimeClient {
       case 'ChannelLeft':
       case 'ReadMarkerMoved':
       case 'ReactionChanged':
+      case 'MessagePinChanged':
       case 'ThreadActivity':
         for (const listener of this.#messagingListeners) listener(event);
         return;

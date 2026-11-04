@@ -1,0 +1,27 @@
+$kind: http-request
+method: PUT
+url: '{{baseUrl}}/channels/:channelId/messages/:messageId/pin'
+order: 10282
+pathVariables:
+  - key: channelId
+    value: '{{channelId}}'
+  - key: messageId
+    value: '{{messageId}}'
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{secondAccessToken}}'
+body:
+  type: json
+  content: |-
+    {}
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      // Until roles arrive (M4), only the creator pins in a channel (P-25).
+      pm.test('responds 403 not-channel-creator', () => {
+        pm.response.to.have.status(403);
+        pm.expect(pm.response.json().message).to.equal('not-channel-creator');
+      });

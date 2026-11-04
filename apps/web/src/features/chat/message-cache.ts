@@ -27,7 +27,25 @@ export function withReplaced(data: MessagePages | undefined, message: MessageCon
 
 export function withDeleted(data: MessagePages | undefined, messageId: string): MessagePages | undefined {
   const existing = data?.pages.flatMap((page) => page.messages).find((m) => m.messageId === messageId);
-  return existing ? withReplaced(data, { ...existing, body: '', mentions: [], reactions: [], deleted: true }) : data;
+  if (!existing) return data;
+  return withReplaced(data, {
+    ...existing,
+    body: '',
+    mentions: [],
+    reactions: [],
+    attachments: [],
+    pinned: false,
+    deleted: true,
+  });
+}
+
+/** Applies a pushed pin change to the message wherever it is loaded (P-24). */
+export function withPinned(
+  data: MessagePages | undefined,
+  change: { readonly messageId: string; readonly pinned: boolean },
+): MessagePages | undefined {
+  const existing = data?.pages.flatMap((page) => page.messages).find((m) => m.messageId === change.messageId);
+  return existing ? withReplaced(data, { ...existing, pinned: change.pinned }) : data;
 }
 
 /** Applies a pushed reaction change to the message wherever it is loaded (ADR-0034). */

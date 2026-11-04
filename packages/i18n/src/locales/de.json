@@ -267,7 +267,15 @@
       "unknown-person": "Jemand, den du ausgewählt hast, ist nicht mehr da.",
       "invalid-thread-root": "Auf diese Nachricht kannst du hier nicht mehr antworten.",
       "invalid-emoji": "Das ist kein einzelnes Emoji.",
-      "too-many-reactions": "Diese Nachricht hat schon 20 verschiedene Reaktionen. Schließ dich einer davon an."
+      "too-many-reactions": "Diese Nachricht hat schon 20 verschiedene Reaktionen. Schließ dich einer davon an.",
+      "too-many-attachments": "Eine Nachricht kann bis zu 10 Dateien enthalten.",
+      "upload-not-found": "Die Datei ist nicht mehr verfügbar. Bitte häng sie noch mal an.",
+      "not-uploader": "Du kannst nur Dateien senden, die du selbst hochgeladen hast.",
+      "already-claimed": "Diese Datei wurde schon gesendet.",
+      "file-too-large": "Dateien dürfen bis zu 100 MB groß sein.",
+      "unsupported-file-type": "Dieser Dateityp kann hier nicht geteilt werden.",
+      "infected-file": "Diese Datei wurde als Schadsoftware erkannt und deshalb nicht hochgeladen.",
+      "scan-failed": "Die Datei konnte nicht auf Schadsoftware geprüft werden und wurde deshalb nicht hochgeladen. Bitte versuch es noch mal."
     },
     "threads": "Threads",
     "noThreads": "Noch keine Threads. Antworte auf eine Nachricht, dann taucht ihr Thread hier auf.",
@@ -309,6 +317,25 @@
     "notInChannel_other": "{{names}} sind nicht hier und sehen die Erwähnung deshalb nicht.",
     "addToChannel": "Hinzufügen",
     "dismiss": "Ausblenden",
-    "editHint": "Enter speichert, Escape bricht ab."
+    "editHint": "Enter speichert, Escape bricht ab.",
+    "attachFile": "Datei anhängen",
+    "attachedFiles": "Angehängte Dateien",
+    "removeFile": "{{name}} entfernen",
+    "uploading": "{{name}} wird hochgeladen",
+    "uploadStarted": "{{name}} wird hochgeladen.",
+    "uploadFinished": "{{name}} ist bereit zum Senden.",
+    "waitForUploads": "Einen Moment noch, deine Dateien werden gerade hochgeladen.",
+    "fileRefused": "{{name}}: {{reason}}",
+    "dropFiles": "Dateien hier ablegen, um sie anzuhängen",
+    "openFile": "{{name}} öffnen",
+    "downloadFile": "{{name}} herunterladen ({{type}}, {{size}})",
+    "downloadFailed": "Die Datei konnte nicht heruntergeladen werden. Bitte versuch es noch mal.",
+    "pin": "Nachricht anpinnen",
+    "unpin": "Lösen",
+    "pinned": "Angepinnt",
+    "pinnedMark": "Angepinnt",
+    "pinnedCount_one": "Angepinnt, {{count}} Nachricht",
+    "pinnedCount_other": "Angepinnt, {{count}} Nachrichten",
+    "noPinned": "Noch nichts angepinnt. Angepinnte Nachrichten findest du hier schnell wieder."
   }
 }

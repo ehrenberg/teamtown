@@ -1,3 +1,4 @@
+import { UploadSchema, type UploadContract } from '@teamtown/contracts';
 import type { z } from 'zod';
 import { currentAccessToken } from '../stores/session-store.ts';
 
@@ -19,13 +20,14 @@ const headers = (json: boolean): Record<string, string> => {
   };
 };
 
+const codeOf = (body: unknown): string | null =>
+  typeof body === 'object' && body !== null && 'message' in body && typeof body.message === 'string'
+    ? body.message
+    : null;
+
 async function errorOf(response: Response): Promise<ApiError> {
   const body: unknown = await response.json().catch(() => null);
-  const code =
-    typeof body === 'object' && body !== null && 'message' in body && typeof body.message === 'string'
-      ? body.message
-      : null;
-  return new ApiError(response.status, code);
+  return new ApiError(response.status, codeOf(body));
 }
 
 /** GET a JSON resource from the TeamTown API and validate it against its contract. */
@@ -81,4 +83,67 @@ export async function apiSend(
     throw await errorOf(response);
   }
   return schema ? schema.parse(await response.json()) : undefined;
+}
+
+/** Fetches a file with the session's token; `<img src>` and links can't send one. */
+export async function apiBlob(path: string, signal?: AbortSignal, fetchImpl: typeof fetch = fetch): Promise<Blob> {
+  const response = await fetchImpl(`/api${path}`, { headers: headers(false), ...(signal ? { signal } : {}) });
+  if (!response.ok) {
+    throw await errorOf(response);
+  }
+  return response.blob();
+}
+
+export interface UploadTask {
+  readonly result: Promise<UploadContract>;
+  /** Stops a running upload; `result` then rejects. */
+  readonly abort: () => void;
+}
+
+/**
+ * Uploads one file to temporary storage (P-22). Uses `XMLHttpRequest`, since `fetch` reports no upload progress.
+ * `onProgress` gets a share from 0 to 1.
+ */
+export function apiUpload(
+  file: File,
+  contentType: string,
+  onProgress: (share: number) => void,
+  createRequest: () => XMLHttpRequest = () => new XMLHttpRequest(),
+): UploadTask {
+  const request = createRequest();
+  const result = new Promise<UploadContract>((resolve, reject) => {
+    const form = new FormData();
+    form.append('file', new File([file], file.name, { type: contentType }));
+    request.open('POST', '/api/files/uploads');
+    for (const [name, value] of Object.entries(headers(false))) request.setRequestHeader(name, value);
+    request.upload.onprogress = (event) => {
+      if (event.lengthComputable) onProgress(event.loaded / event.total);
+    };
+    request.onload = () => {
+      const body = parseJson(request.responseText);
+      if (request.status >= 200 && request.status < 300) resolve(UploadSchema.parse(body));
+      else reject(new ApiError(request.status, codeOf(body)));
+    };
+    request.onerror = () => {
+      reject(new ApiError(0));
+    };
+    request.onabort = () => {
+      reject(new ApiError(0));
+    };
+    request.send(form);
+  });
+  return {
+    result,
+    abort: () => {
+      request.abort();
+    },
+  };
+}
+
+function parseJson(text: string): unknown {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
 }

@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   flatten,
   withDeleted,
+  withPinned,
   withPosted,
   withReaction,
   withReplaced,
@@ -19,6 +20,8 @@ const message = (messageId: string, body = messageId): MessageContract => ({
   alsoInChannel: false,
   mentions: [],
   reactions: [],
+  attachments: [],
+  pinned: false,
   thread: null,
   postedAt: '2026-11-01T10:00:00.000Z',
   editedAt: null,
@@ -75,5 +78,37 @@ describe('message cache', () => {
     expect(flatten(data)[0]?.thread).toEqual({ replyCount: 1, lastReplyAt: reply.postedAt, replierIds: [ben] });
     data = withReplaced(data, { ...message('a', 'edited'), thread: null });
     expect(flatten(data)[0]).toMatchObject({ body: 'edited', thread: { replyCount: 1 } });
+  });
+});
+
+describe('withPinned', () => {
+  const pagesOf = (...messages: MessageContract[]): MessagePages => ({
+    pages: [{ messages, hasMore: false }],
+    pageParams: [''],
+  });
+
+  it('sets the pin on the loaded message only', () => {
+    const data = withPinned(pagesOf(message('a'), message('b')), { messageId: 'b', pinned: true });
+
+    expect(flatten(data).map((m) => m.pinned)).toEqual([false, true]);
+  });
+
+  it('leaves a history alone that does not hold the message', () => {
+    const data = pagesOf(message('a'));
+
+    expect(withPinned(data, { messageId: 'x', pinned: true })).toBe(data);
+  });
+
+  it('clears the files and the pin of a deleted message, so no chip remains', () => {
+    const file = { fileId: 'f', fileName: 'a.pdf', contentType: 'application/pdf', byteSize: 1, previewKind: 'pdf' };
+    const pinnedWithFile: MessageContract = {
+      ...message('a'),
+      pinned: true,
+      attachments: [{ ...file, previewKind: 'pdf' }],
+    };
+
+    const [deleted] = flatten(withDeleted(pagesOf(pinnedWithFile), 'a'));
+
+    expect(deleted).toMatchObject({ attachments: [], pinned: false, deleted: true });
   });
 });
