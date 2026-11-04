@@ -6,6 +6,8 @@ Decided: code on **GitHub** under the owner's personal account ([`ehrenberg/team
 ## Branching & commits
 
 - Trunk-based: short-lived branches off `main` (`feat/knock-on-room`, `fix/path-desync`), merged via PR.
+  The owner's own work merges into `main` after every finished task, by fast-forward and without a PR; contributions
+  from others go through a PR.
 - **Conventional Commits:** `feat(meetings): add knock requests`, `fix(world): …`, `docs(adr): …`.
   The scope is the bounded context or package name.
 - Squash merge, so the PR title becomes the commit message.

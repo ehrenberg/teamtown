@@ -92,8 +92,8 @@ apps/server/src/modules/<context>/{domain,application,infrastructure,interface}/
 ## Conventions
 
 - Conventional Commits with the context as scope: `feat(meetings): add knock requests`.
-- Commit every finished implementation without being asked (`git commit -s`, focused commits, on a short-lived branch per
-  `docs/engineering/workflow.md`). Pushing and PRs still need a request.
+- After every finished task, without being asked: commit (`git commit -s`, focused commits, on a short-lived branch),
+  fast-forward into `main` and push, once all checks are green. CI on `main` must stay green.
 - Tests: domain and world-core are test-driven; every bug fix gets a regression test (`docs/engineering/testing-strategy.md`).
 - UI: use design tokens only (no raw hex), keyboard-accessible, EN + DE strings, status = colour **and** shape.
 - Voice: warm and clear, lightly playful; errors are always plain (`docs/design/brand-guide.md` §6).
