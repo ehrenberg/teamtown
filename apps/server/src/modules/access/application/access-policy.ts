@@ -30,6 +30,11 @@ export class CachedAccessPolicy implements AccessPolicy {
     this.#assignments.delete(personId);
   }
 
+  /** A group or role change can touch anyone. */
+  forgetAll(): void {
+    this.#assignments.clear();
+  }
+
   #assignmentsOf(personId: string): Promise<RoleAssignment[]> {
     const cached = this.#assignments.get(personId);
     if (cached) return cached;

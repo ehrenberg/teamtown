@@ -5,7 +5,7 @@ export type BuiltInRole = 'owner' | 'admin' | 'member' | 'guest' | 'room-host' |
 /** The built-in roles (docs/architecture/permissions.md §3). Custom roles arrive with M4b. */
 export const BUILT_IN_ROLES: Readonly<Record<BuiltInRole, readonly Permission[]>> = {
   owner: PERMISSIONS,
-  admin: PERMISSIONS,
+  admin: PERMISSIONS.filter((permission) => permission !== 'town.owners.manage'),
   // Also the rights ADR-0031 gave anyone inside a room, and ADR-0033 anyone who creates a channel (ADR-0036, P-33).
   member: [
     'world.view',

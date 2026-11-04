@@ -34,7 +34,7 @@ import { PostgresAssignmentRepository } from './infrastructure/persistence/postg
       inject: [ASSIGNMENT_REPOSITORY, CachedAccessPolicy],
     },
   ],
-  exports: [ACCESS_POLICY, ClaimFirstOwner, AssignChannelModerator],
+  exports: [ACCESS_POLICY, CachedAccessPolicy, ASSIGNMENT_REPOSITORY, ClaimFirstOwner, AssignChannelModerator],
 })
 export class AccessModule {
   static readonly migrations = ACCESS_MIGRATIONS;

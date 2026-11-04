@@ -1,4 +1,5 @@
 import { Module, type DynamicModule } from '@nestjs/common';
+import { AccessAdministrationModule } from './modules/access/access-administration.module.ts';
 import { AccessModule } from './modules/access/public-api.ts';
 import { FilesModule } from './modules/files/public-api.ts';
 import { IdentityModule, type IdentityModuleOptions } from './modules/identity/public-api.ts';
@@ -49,6 +50,7 @@ export class AppModule {
         IdentityModule.forRoot(overrides),
         AccessModule,
         PeopleModule,
+        AccessAdministrationModule,
         WorldModule,
         PresenceModule,
         MeetingsModule,

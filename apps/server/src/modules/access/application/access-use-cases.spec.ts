@@ -19,6 +19,10 @@ class InMemoryAssignments implements AssignmentRepository {
     this.byPerson.set(personId, [...(this.byPerson.get(personId) ?? []), assignment]);
     return Promise.resolve();
   }
+  listAll = () => Promise.resolve([]);
+  assign = () => Promise.resolve();
+  revoke = () => Promise.resolve();
+  revokeOwner = () => Promise.resolve(false);
   async claimOwner(personId: string): Promise<boolean> {
     this.claims += 1;
     if (this.owner) return false;

@@ -4,6 +4,8 @@ export const PERMISSIONS = [
   'town.members.invite',
   'town.members.manage',
   'town.roles.manage',
+  /** Owners only: appointing Owners and taking the role back (ADR-0038). */
+  'town.owners.manage',
   'town.audit.read',
   'world.view',
   'world.edit',

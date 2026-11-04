@@ -13,6 +13,8 @@ import {
   MessagePageResponse,
   MessageSchema,
   SearchMessagesResponse,
+  AccessOverviewResponse,
+  MyAccessResponse,
   PeopleListResponse,
   ThreadListResponse,
   REALTIME_PATH,
@@ -428,6 +430,55 @@ describe('TeamTown server (integration)', () => {
       const refused = await send('PATCH', '/channels/general', owner, { archived: true });
       expect(refused.status).toBe(400);
       expect(await refused.json()).toMatchObject({ message: 'cannot-archive-channel' });
+    });
+
+    it('lets the Owner administer roles and groups, and keeps at least one Owner (M4b-1)', async () => {
+      const revoke = (path: string, token: string, body: unknown) =>
+        fetch(`${baseUrl}${path}`, {
+          method: 'DELETE',
+          headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+      const mine = async (token: string) => MyAccessResponse.parse(await (await get('/access/me', token)).json());
+      const owner = (await mine('token-olga')).canManageOwners ? 'token-olga' : 'token-omar';
+      const other = owner === 'token-olga' ? 'token-omar' : 'token-olga';
+      const ownerId = await idOf(owner);
+      const otherId = await idOf(other);
+      const ownerRole = (id: string) => ({ principal: { kind: 'person', id }, roleId: 'owner', scope: 'town' });
+
+      expect((await get('/access/overview', 'token-mia')).status).toBe(403);
+      expect((await send('PUT', '/access/assignments', 'token-mia', ownerRole(await idOf('token-mia')))).status).toBe(
+        403,
+      );
+
+      // The only Owner can't leave; a second one lets them; two at once leave exactly one.
+      const alone = await revoke('/access/assignments', owner, ownerRole(ownerId));
+      expect(alone.status).toBe(409);
+      expect(await alone.json()).toMatchObject({ message: 'last-owner' });
+      expect((await send('PUT', '/access/assignments', owner, ownerRole(otherId))).status).toBe(204);
+      const both = await Promise.all([
+        revoke('/access/assignments', owner, ownerRole(otherId)),
+        revoke('/access/assignments', other, ownerRole(ownerId)),
+      ]);
+      expect(both.map((response) => response.status).sort()).toEqual([204, 409]);
+
+      // A group's role reaches its member at once, here on a public channel.
+      const remaining = both[0].status === 204 ? owner : other;
+      const overview = AccessOverviewResponse.parse(await (await get('/access/overview', remaining)).json());
+      expect(overview.assignments.filter((assignment) => assignment.roleId === 'owner')).toHaveLength(1);
+      const miaId = await idOf('token-mia');
+      const created = await send('POST', '/access/groups', remaining, { name: 'Moderation' });
+      const { groupId } = (await created.json()) as { groupId: string };
+      expect((await send('POST', '/access/groups', remaining, { name: 'Moderation' })).status).toBe(409);
+      const canPinGeneral = async () =>
+        ChannelSummarySchema.parse(await (await get('/channels/general', 'token-mia')).json()).canPin;
+      expect(await canPinGeneral()).toBe(false);
+      const role = { principal: { kind: 'group', id: groupId }, roleId: 'channel-moderator', scope: 'channel:general' };
+      expect((await send('PUT', '/access/assignments', remaining, role)).status).toBe(204);
+      expect((await send('PUT', `/access/groups/${groupId}/members/${miaId}`, remaining, {})).status).toBe(204);
+      expect(await canPinGeneral()).toBe(true);
+      expect((await remove(`/access/groups/${groupId}`, remaining)).status).toBe(204);
+      expect(await canPinGeneral()).toBe(false);
     });
 
     it("lets a channel's creator moderate it, and keeps a private channel from the Owner (M4a)", async () => {
