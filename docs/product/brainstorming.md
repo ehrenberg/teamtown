@@ -50,7 +50,7 @@ Rating legend: **Impact** (value for users) and **Effort** each from ● (low) t
 | M5  | **Sticky note on a door or desk**                                                              | Leave an async note at someone's desk ("Call me when you're back"). It shows as a post-it in the world and as a notification. | ●●     | ●      |      |
 | M6  | **Pigeonhole inbox**                                                                           | A central "mail slot": mentions, knocks you missed, notes left for you. The world metaphor for notifications.                 | ●●     | ●●     |      |
 | M7  | **Files & previews** → [spec](../features/messaging-files.md)                                  | Upload files, image and PDF previews, pin to a channel or room.                                                               | ●●●    | ●●     | ✔    |
-| M8  | **Full-text search**                                                                           | Search messages, channels and people from the command palette.                                                                | ●●●    | ●●     | ✔    |
+| M8  | **Full-text search** [→ spec](../features/messaging-search.md)                                 | Search messages, channels and people from the command palette.                                                                | ●●●    | ●●     | ✔    |
 | M9  | **Message → meeting**                                                                          | A button in a thread: "Let's talk". Everyone in the thread gets a knock invitation to a pop-up room.                          | ●●     | ●      |      |
 
 ## 4. Presence, focus & wellbeing
@@ -100,14 +100,14 @@ Rating legend: **Impact** (value for users) and **Effort** each from ● (low) t
 
 ## 8. Accessibility & reach
 
-| #   | Idea                                  | Description                                                                                                                    | Impact | Effort | MVP?          |
-| --- | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ------ | ------ | ------------- |
-| X1  | **List mode**                         | A complete 2D/list alternative: rooms as cards with occupants, "join" buttons. Screen-reader friendly, works on weak hardware. | ●●●    | ●●     | ✔ (principle) |
-| X2  | **Command palette**                   | `Ctrl/⌘+K` for everything: go to, call, DM, set status, search.                                                                | ●●●    | ●      | ✔             |
-| X3  | **Reduced motion & performance mode** | No animations, lower render resolution, 30 fps cap.                                                                            | ●●     | ●      | ✔             |
-| X4  | **Colour-blind safe status**          | Status is shown by colour **and** shape or icon.                                                                               | ●●●    | ●      | ✔             |
-| X5  | **Live captions**                     | Speech-to-text subtitles in meetings.                                                                                          | ●●     | ●●●    |               |
-| X6  | **Mobile companion**                  | Chat, calls and status without the 3D world.                                                                                   | ●●●    | ●●●    |               |
+| #   | Idea                                                          | Description                                                                                                                    | Impact | Effort | MVP?          |
+| --- | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ------ | ------ | ------------- |
+| X1  | **List mode**                                                 | A complete 2D/list alternative: rooms as cards with occupants, "join" buttons. Screen-reader friendly, works on weak hardware. | ●●●    | ●●     | ✔ (principle) |
+| X2  | **Command palette** [→ spec](../features/messaging-search.md) | `Ctrl/⌘+K` for everything: go to, call, DM, set status, search.                                                                | ●●●    | ●      | ✔             |
+| X3  | **Reduced motion & performance mode**                         | No animations, lower render resolution, 30 fps cap.                                                                            | ●●     | ●      | ✔             |
+| X4  | **Colour-blind safe status**                                  | Status is shown by colour **and** shape or icon.                                                                               | ●●●    | ●      | ✔             |
+| X5  | **Live captions**                                             | Speech-to-text subtitles in meetings.                                                                                          | ●●     | ●●●    |               |
+| X6  | **Mobile companion**                                          | Chat, calls and status without the 3D world.                                                                                   | ●●●    | ●●●    |               |
 
 ## 9. "Spinner" ideas (bold, for later or never)
 

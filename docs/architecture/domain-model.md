@@ -42,6 +42,7 @@ Use these terms consistently in code, UI, docs and conversations. Code identifie
 | **Attachment**      | A file attached to a message, previewed inline for images and PDF, downloaded otherwise                  | `Attachment`, `Message.attachments[]`      |
 | **Upload**          | A file in temporary storage before a message claims it as an attachment                                  | `Upload`                                   |
 | **Pin**             | A message marked to stay easy to find in its channel, DM or room wall                                    | `Message.pinned`                           |
+| **Command palette** | One search field for going to, and finding, anything                                                     | (no domain type)                           |
 | **Person**          | A member's profile (name, avatar look, locale, desk)                                                     | `Person`                                   |
 | **Guest**           | An external person with access limited to explicitly shared resources                                    | `role: guest`                              |
 | **Role**            | A named set of permissions                                                                               | `Role`                                     |
