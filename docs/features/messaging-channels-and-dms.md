@@ -119,7 +119,7 @@ REST (writes and reads, overview §6.3, `world-and-realtime.md` §5), schemas in
 - `PUT /api/channels/{id}/read-marker` `{ messageId }`.
 - `GET /api/people`: everyone (ID, display name, avatar colour) for the DM picker.
 - Error codes (stable, translated in the client): `channel-name-taken`, `invalid-channel-name`, `channel-archived`,
-  `direct-message-too-large`, `cannot-leave-channel`, `not-channel-creator`, `not-message-author`,
+  `direct-message-too-large`, `cannot-leave-channel`, `not-channel-moderator`, `not-message-author`,
   `invalid-message`.
 
 Realtime events (push only, to the members' open connections):

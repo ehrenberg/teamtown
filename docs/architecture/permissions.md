@@ -59,8 +59,10 @@ modules/access/
 ```
 
 - Other modules depend **only** on the `AccessPolicy` port:
-  `can(actor: ActorRef, permission: Permission, resource: ScopeRef): Promise<boolean>`
-  and `filterVisible(actor, permission, resources[])` for lists.
+  `can(personId, permission: Permission, resource: ScopeRef): Promise<boolean>`. A `filterVisible` for lists
+  follows when a list needs it (M4d).
+- Built-in roles live in code; custom roles and their tables arrive with M4b.
+- Reading still goes through memberships and `Channel.canRead`; M4d moves it to `AccessPolicy`, when guests need it.
 - Checks happen in **application services** (use cases), never in controllers or the domain.
   Domain objects stay pure.
 - **Caching:** effective permissions per person and scope are cached in memory and invalidated on

@@ -1,6 +1,6 @@
 # Feature: Access core
 
-- **Status:** In progress
+- **Status:** Done (2026-11-04)
 - **Brainstorming ID:** A3 Custom roles (groundwork), M1 Channels with roles
 - **Bounded context(s):** Access (new), People, Messaging, Presence, Meetings, web client
 - **Milestone:** M4a (ADR-0011, ADR-0036)
@@ -39,19 +39,19 @@ M4a has no administration UI. Assigning roles, managing groups, custom roles and
 
 ## Acceptance criteria
 
-- [ ] Given a town nobody has signed in to, when two people sign in at the same moment, then exactly one is Owner.
-- [ ] Given a member who created a channel, then they can rename, archive and pin as before, and delete others' messages.
-- [ ] Given a channel created before this slice, when the server starts, then its creator is its Channel Moderator, and
+- [x] Given a town nobody has signed in to, when two people sign in at the same moment, then exactly one is Owner.
+- [x] Given a member who created a channel, then they can rename, archive and pin as before, and delete others' messages.
+- [x] Given a channel created before this slice, when the server starts, then its creator is its Channel Moderator, and
       a later restart doesn't assign it again.
-- [ ] Given the Owner, then they can rename `#general` and pin in it, and archiving it is refused.
-- [ ] Given a member who isn't a moderator, when they try to rename, pin or delete someone else's message in a channel
+- [x] Given the Owner, then they can rename `#general` and pin in it, and archiving it is refused.
+- [x] Given a member who isn't a moderator, when they try to rename, pin or delete someone else's message in a channel
       through the API, then the request is rejected (`403`).
-- [ ] Given the Owner who isn't a member of a private channel, then it answers `404`, as for anyone else.
-- [ ] Given a DM, then nobody can delete the other person's message.
-- [ ] Given someone inside a room, then they switch its door, answer knocks and start a logged meeting as before.
-- [ ] Non-spatial path: unchanged; the chat's actions follow `canManage`, `canArchive`, `canPin` and `canDeleteAny`.
-- [ ] Accessibility: no new UI patterns; actions a person may not use stay hidden as today.
-- [ ] i18n: changed and new error strings exist in English and German, using German **du**.
+- [x] Given the Owner who isn't a member of a private channel, then it answers `404`, as for anyone else.
+- [x] Given a DM, then nobody can delete the other person's message.
+- [x] Given someone inside a room, then they switch its door, answer knocks and start a logged meeting as before.
+- [x] Non-spatial path: unchanged; the chat's actions follow `canManage`, `canArchive`, `canPin` and `canDeleteAny`.
+- [x] Accessibility: no new UI patterns; actions a person may not use stay hidden as today.
+- [x] i18n: changed and new error strings exist in English and German, using German **du**.
 
 ## Permissions
 
