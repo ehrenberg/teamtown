@@ -55,9 +55,17 @@ function othersTiles(tileOf: (personId: string) => TileCoord | null): TileCoord[
 
 /**
  * The office: header, sidebar, world and media controls. Other features plug in through slots (composed in
- * `app/`): `sidebar` below the rooms (e.g. channels), `sidePanel` as a third column (e.g. the chat, ADR-0033).
+ * `app/`): `sidebar` below the rooms (e.g. channels), `sidePanel` as a third column (e.g. the chat, ADR-0033), `headerActions` in the top bar (e.g. search).
  */
-export function OfficePage({ sidebar, sidePanel }: { readonly sidebar?: ReactNode; readonly sidePanel?: ReactNode }) {
+export function OfficePage({
+  sidebar,
+  sidePanel,
+  headerActions,
+}: {
+  readonly sidebar?: ReactNode;
+  readonly sidePanel?: ReactNode;
+  readonly headerActions?: ReactNode;
+}) {
   const { t } = useTranslation();
   const auth = useAuthClient();
   const realtime = useRealtime();
@@ -158,6 +166,7 @@ export function OfficePage({ sidebar, sidePanel }: { readonly sidebar?: ReactNod
         {floors.data && (
           <FloorSwitcher floors={floors.data.floors} currentFloorId={floorId} onSelect={setSelectedFloorId} />
         )}
+        {headerActions}
         <div className="ml-auto flex items-center gap-3">
           {myRoom?.doorModeAdjustable && <DoorModeControl room={myRoom} />}
           {myRoomWall && myRoom && (

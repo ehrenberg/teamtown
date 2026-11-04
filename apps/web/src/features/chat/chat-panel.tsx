@@ -1,11 +1,11 @@
 import { useQueryClient } from '@tanstack/react-query';
-import type { ChannelSummary, MessageContract } from '@teamtown/contracts';
+import type { ChannelSummary } from '@teamtown/contracts';
 import { Button } from '@teamtown/ui';
 import { Archive, ArchiveRestore, LogOut, Pencil, Pin, UserPlus, X } from 'lucide-react';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type DragEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { apiDelete, apiSend } from '../../api/api-client.ts';
-import { useChannels, useMessages, usePeople, usePinned } from '../../api/queries.ts';
+import { useChannel, useChannels, useMessages, usePeople, usePinned } from '../../api/queries.ts';
 import { useChatStore } from '../../stores/chat-store.ts';
 import { usePresenceStore } from '../../stores/presence-store.ts';
 import { PeoplePickerDialog, PrivateMark, RenameChannelDialog } from './chat-dialogs.tsx';
@@ -29,7 +29,10 @@ export function ChatPanel() {
   const openChannelId = useChatStore((state) => state.openChannelId);
   const threadsOpen = useChatStore((state) => state.threadsOpen);
   const channels = useChannels();
-  const channel = channels.data?.channels.find((c) => c.channelId === openChannelId) ?? null;
+  const listed = channels.data?.channels.find((c) => c.channelId === openChannelId);
+  // A channel that isn't mine yet, opened from a search result: read it first, with "Join" in place of the composer.
+  const unlisted = useChannel(openChannelId, channels.isSuccess && !listed);
+  const channel = listed ?? unlisted.data ?? null;
 
   const panel = useRef<HTMLElement>(null);
 
@@ -57,7 +60,9 @@ export function ChatPanel() {
       ) : channel ? (
         <OpenChannel key={channel.channelId} channel={channel} />
       ) : (
-        <p className="p-4 text-sm text-text-secondary">{t(channels.isError ? 'chat.loadError' : 'chat.loading')}</p>
+        <p className="p-4 text-sm text-text-secondary">
+          {t(channels.isError || unlisted.isError ? 'chat.loadError' : 'chat.loading')}
+        </p>
       )}
     </aside>
   );
@@ -78,10 +83,7 @@ function OpenChannel({ channel }: { readonly channel: ChannelSummary }) {
   );
   const uploads = useUploads();
   const [dragging, setDragging] = useState(false);
-  const [pinnedOpen, setPinnedOpen] = useState(false);
-  const [showing, setShowing] = useState<MessageContract | null>(null);
-  /** Roots whose threads are expanded inline (ADR-0034). */
-  const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
+  const pinnedOpen = useChatStore((state) => state.pinnedOpen);
   const canAttach = !channel.archived && myPersonId !== null && channel.members.includes(myPersonId);
 
   const onDragOver = (event: DragEvent) => {
@@ -110,44 +112,9 @@ function OpenChannel({ channel }: { readonly channel: ChannelSummary }) {
         onDrop={onDrop}
         className={`relative flex min-h-0 flex-1 flex-col ${dragging ? 'ring-2 ring-terracotta-500 ring-inset' : ''}`}
       >
-        <ChannelHeader
-          channel={channel}
-          title={title}
-          pinnedOpen={pinnedOpen}
-          onTogglePinned={() => {
-            setPinnedOpen((open) => !open);
-          }}
-        />
-        {pinnedOpen && (
-          <PinnedView
-            channel={channel}
-            people={peopleById}
-            onShow={(message) => {
-              setPinnedOpen(false);
-              setShowing(message);
-              const { threadRootId } = message;
-              if (threadRootId) setExpanded((current) => new Set(current).add(threadRootId));
-            }}
-          />
-        )}
-        <MessageList
-          channel={channel}
-          title={title}
-          people={peopleById}
-          hidden={pinnedOpen}
-          expanded={expanded}
-          onToggleThread={(messageId) => {
-            setExpanded((current) => {
-              const next = new Set(current);
-              if (!next.delete(messageId)) next.add(messageId);
-              return next;
-            });
-          }}
-          showing={showing}
-          onShown={() => {
-            setShowing(null);
-          }}
-        />
+        <ChannelHeader channel={channel} title={title} />
+        {pinnedOpen && <PinnedView channel={channel} people={peopleById} />}
+        <MessageList channel={channel} title={title} people={peopleById} hidden={pinnedOpen} />
         <div hidden={pinnedOpen}>
           <ChannelComposer channel={channel} title={title} uploads={uploads} />
         </div>
@@ -161,18 +128,9 @@ function OpenChannel({ channel }: { readonly channel: ChannelSummary }) {
   );
 }
 
-function ChannelHeader({
-  channel,
-  title,
-  pinnedOpen,
-  onTogglePinned,
-}: {
-  readonly channel: ChannelSummary;
-  readonly title: string;
-  readonly pinnedOpen: boolean;
-  readonly onTogglePinned: () => void;
-}) {
+function ChannelHeader({ channel, title }: { readonly channel: ChannelSummary; readonly title: string }) {
   const { t } = useTranslation();
+  const pinnedOpen = useChatStore((state) => state.pinnedOpen);
   const pinned = usePinned(channel.channelId);
   const pinnedCount = pinned.data?.messages.length ?? 0;
   const queryClient = useQueryClient();
@@ -216,7 +174,9 @@ function ChannelHeader({
           aria-pressed={pinnedOpen}
           aria-label={t('chat.pinnedCount', { count: pinnedCount })}
           title={t('chat.pinned')}
-          onClick={onTogglePinned}
+          onClick={() => {
+            useChatStore.getState().togglePinned();
+          }}
           className="relative grid size-8 place-items-center rounded-sm text-text-secondary hover:bg-neutral-100 hover:text-text-primary aria-pressed:bg-neutral-100 aria-pressed:text-text-primary"
         >
           <Pin aria-hidden="true" className="size-4" />
@@ -298,24 +258,17 @@ function MessageList({
   title,
   people,
   hidden,
-  expanded,
-  onToggleThread,
-  showing,
-  onShown,
 }: {
   readonly channel: ChannelSummary;
   readonly title: string;
   readonly people: ReadonlyMap<string, Person>;
   readonly hidden: boolean;
-  readonly expanded: ReadonlySet<string>;
-  readonly onToggleThread: (messageId: string) => void;
-  /** A message to bring into view, loading older pages if needed; a reply shows through its opened thread. */
-  readonly showing: MessageContract | null;
-  readonly onShown: () => void;
 }) {
   const { t, i18n } = useTranslation();
   const myPersonId = usePresenceStore((state) => state.myPersonId);
   const history = useMessages(channel.channelId);
+  const expanded = useChatStore((state) => state.expandedThreads);
+  const showing = useChatStore((state) => state.showing);
   const messages = flatten(history.data);
   const scroller = useRef<HTMLDivElement>(null);
   const atBottom = useRef(true);
@@ -341,19 +294,21 @@ function MessageList({
   };
   useEffect(markRead);
 
+  // Brings a message into view, loading older pages if needed; a reply shows through its opened thread.
   useEffect(() => {
-    if (!showing) return;
+    if (showing?.channelId !== channel.channelId) return;
+    const { shown } = useChatStore.getState();
     const targetId = showing.threadRootId ?? showing.messageId;
     if (!byId.has(targetId)) {
       if (history.isFetching) return;
       if (history.hasNextPage) void history.fetchNextPage();
-      else onShown();
+      else shown();
       return;
     }
     const element = scroller.current?.querySelector<HTMLElement>(`[data-message-id="${CSS.escape(targetId)}"]`);
     element?.scrollIntoView({ block: 'center' });
     element?.focus({ preventScroll: true });
-    onShown();
+    shown();
   });
 
   const onScroll = () => {
@@ -411,7 +366,7 @@ function MessageList({
                   : {
                       expanded: expanded.has(message.messageId),
                       onToggleThread: () => {
-                        onToggleThread(message.messageId);
+                        useChatStore.getState().toggleThread(message.messageId);
                       },
                     })}
               />

@@ -2,6 +2,7 @@ import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import {
   BrowseChannelsResponse,
   ChannelListResponse,
+  ChannelSummarySchema,
   FloorListResponse,
   FloorPlan,
   HealthResponse,
@@ -48,6 +49,14 @@ export const useMyMeetingLogs = (enabled: boolean) =>
 /** My channels and DMs with unread counts; kept fresh by realtime pushes (features/chat/messaging-sync.ts). */
 export const useChannels = () =>
   useQuery({ queryKey: ['channels'], queryFn: () => apiGet('/channels', ChannelListResponse) });
+
+/** One channel, for one the person can read but isn't in, such as a public channel found by search. */
+export const useChannel = (channelId: string | null, enabled: boolean) =>
+  useQuery({
+    queryKey: ['channel', channelId],
+    queryFn: () => apiGet(`/channels/${encodeURIComponent(channelId ?? '')}`, ChannelSummarySchema),
+    enabled: enabled && channelId !== null,
+  });
 
 export const useBrowseChannels = (enabled: boolean) =>
   useQuery({

@@ -11,7 +11,7 @@ export const INPUT = 'min-h-6 rounded-md border border-border-subtle bg-surface-
 
 /** `#name` for channels, the room name for room walls, the other people's names for DMs. */
 export function channelTitle(
-  channel: ChannelSummary,
+  channel: Pick<ChannelSummary, 'kind' | 'name' | 'members'>,
   myPersonId: string | null,
   people: ReadonlyMap<string, Person>,
   t: TFunction,
@@ -31,13 +31,13 @@ export function canPin(channel: ChannelSummary, myPersonId: string | null): bool
 }
 
 /** The first words of a message, without Markdown marks or mention tokens. */
-export function messageExcerpt(body: string): string {
+export function messageExcerpt(body: string, length = 60): string {
   const plain = body
     .replace(/<@[^>]+>/g, '@…')
     .replace(/[*_`#>[\]()]/g, '')
     .replace(/\s+/g, ' ')
     .trim();
-  return plain.length > 60 ? `${plain.slice(0, 60)}…` : plain;
+  return plain.length > length ? `${plain.slice(0, length)}…` : plain;
 }
 
 /** A refusal in plain words (brand guide §6); unknown codes get a generic sentence. */

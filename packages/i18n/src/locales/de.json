@@ -337,5 +337,24 @@
     "pinnedCount_one": "Angepinnt, {{count}} Nachricht",
     "pinnedCount_other": "Angepinnt, {{count}} Nachrichten",
     "noPinned": "Noch nichts angepinnt. Angepinnte Nachrichten findest du hier schnell wieder."
+  },
+  "palette": {
+    "open": "Suchen",
+    "title": "Suchen und hingehen",
+    "label": "Nachrichten, Channels und Personen suchen",
+    "results": "Ergebnisse",
+    "goTo": "Gehe zu",
+    "goToThreads": "Zu den Threads",
+    "channels": "Channels",
+    "people": "Personen",
+    "messages": "Nachrichten",
+    "notJoined": "Nicht beigetreten",
+    "onlyIn": "Nur in {{title}}",
+    "showMore": "Mehr anzeigen",
+    "searching": "Wird gesucht …",
+    "noMessages": "Keine Nachrichten mit „{{query}}“.",
+    "searchError": "Die Suche hat nicht geklappt. Bitte versuch es noch mal.",
+    "resultCount_one": "{{count}} Nachricht gefunden",
+    "resultCount_other": "{{count}} Nachrichten gefunden"
   }
 }

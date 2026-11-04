@@ -1,9 +1,10 @@
-import type { ChannelSummary, MessageContract } from '@teamtown/contracts';
+import type { ChannelSummary } from '@teamtown/contracts';
 import { Button } from '@teamtown/ui';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { apiDelete } from '../../api/api-client.ts';
 import { usePinned } from '../../api/queries.ts';
+import { useChatStore } from '../../stores/chat-store.ts';
 import { usePresenceStore } from '../../stores/presence-store.ts';
 import { canPin, errorText, messageExcerpt, type Person } from './chat-shared.ts';
 import { channelPath } from './composer.tsx';
@@ -12,11 +13,9 @@ import { channelPath } from './composer.tsx';
 export function PinnedView({
   channel,
   people,
-  onShow,
 }: {
   readonly channel: ChannelSummary;
   readonly people: ReadonlyMap<string, Person>;
-  readonly onShow: (message: MessageContract) => void;
 }) {
   const { t, i18n } = useTranslation();
   const myPersonId = usePresenceStore((state) => state.myPersonId);
@@ -49,7 +48,8 @@ export function PinnedView({
               <button
                 type="button"
                 onClick={() => {
-                  onShow(message);
+                  const { channelId, messageId, threadRootId } = message;
+                  useChatStore.getState().show({ channelId, messageId, threadRootId });
                 }}
                 className="block w-full rounded-sm text-left hover:bg-neutral-50"
               >

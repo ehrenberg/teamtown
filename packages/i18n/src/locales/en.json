@@ -337,5 +337,24 @@
     "pinnedCount_one": "Pinned, {{count}} message",
     "pinnedCount_other": "Pinned, {{count}} messages",
     "noPinned": "Nothing pinned yet. Pinned messages stay easy to find here."
+  },
+  "palette": {
+    "open": "Search",
+    "title": "Search and go to",
+    "label": "Search messages, channels and people",
+    "results": "Results",
+    "goTo": "Go to",
+    "goToThreads": "Go to threads",
+    "channels": "Channels",
+    "people": "People",
+    "messages": "Messages",
+    "notJoined": "Not joined",
+    "onlyIn": "Only in {{title}}",
+    "showMore": "Show more",
+    "searching": "Searching…",
+    "noMessages": "No messages with “{{query}}”.",
+    "searchError": "The search didn't work. Please try again.",
+    "resultCount_one": "{{count}} message found",
+    "resultCount_other": "{{count}} messages found"
   }
 }
