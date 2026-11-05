@@ -49,7 +49,7 @@ services:
   # ClamAV (ADR-0035, optional): malware scanning for file uploads (M3d). Leave FILES_CLAMAV_HOST unset in the
   # server's .env to run without it; comment this service out if you don't want it running locally at all.
   clamav:
-    image: clamav/clamav:1.4
+    image: clamav/clamav:1.5
     ports: ['3310:3310']
     volumes:
       - clamav-data:/var/lib/clamav
