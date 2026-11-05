@@ -37,7 +37,7 @@
     "@teamtown/contracts": "workspace:*",
     "@teamtown/kernel": "workspace:*",
     "@teamtown/world-core": "workspace:*",
-    "fastify": "^5.12.7",
+    "fastify": "^5.12.8",
     "import-in-the-middle": "3.5.3",
     "jose": "^6.2.13",
     "livekit-server-sdk": "^2.19.2",
