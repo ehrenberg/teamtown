@@ -61,7 +61,7 @@ services:
 
   # ---- Observability (ADR-0019): always part of the stack ----
   otel-collector:
-    image: otel/opentelemetry-collector-contrib:0.164.0
+    image: otel/opentelemetry-collector-contrib:0.165.0
     command: ['--config=/etc/otelcol/config.yaml']
     volumes:
       - ./observability/otel-collector.yaml:/etc/otelcol/config.yaml:ro
