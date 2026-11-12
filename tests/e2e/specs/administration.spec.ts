@@ -55,3 +55,41 @@ test('an Owner assigns roles and manages groups; members see none of it', async 
   await ben.context().close();
   await anna.context().close();
 });
+
+test('an Owner copies a built-in role, gives it and deletes it with a warning (M4b-2)', async ({ browser }) => {
+  const anna = (await signIn(browser, 'demo', 'demo')).page;
+  const ben = (await signIn(browser, 'demo2', 'demo2')).page;
+  const [owner, member] = await ownerAndMember([anna, ben]);
+  const memberName = member === ben ? 'Second Demo' : 'Demo User';
+  const role = `Team Lead ${String(Date.now())}`;
+
+  await entry(owner).click();
+  await view(owner).getByRole('button', { name: 'Roles' }).click();
+  await view(owner).getByRole('button', { name: 'Copy Room Host as a new role' }).click();
+  await view(owner).getByRole('textbox', { name: 'Name' }).fill(role);
+  await view(owner).getByRole('checkbox', { name: 'Pin messages' }).check();
+  await view(owner).getByRole('button', { name: 'Create role' }).click();
+  const card = view(owner).getByRole('listitem').filter({ hasText: role }).first();
+  // Room and channel permissions together apply to the whole town only (P-37).
+  await expect(card).toContainText('Can be given for: whole town');
+  await owner.screenshot({ path: 'test-results/administration-roles.png' });
+
+  await view(owner).getByRole('button', { name: 'People' }).click();
+  await view(owner).getByRole('searchbox').fill(memberName);
+  const person = view(owner).getByRole('listitem').filter({ hasText: memberName }).first();
+  await person.getByRole('combobox', { name: `Role for ${memberName}` }).selectOption({ label: role });
+  await expect(person.getByRole('combobox', { name: `Where it applies for ${memberName}` })).toHaveValue('town');
+  await person.getByRole('button', { name: 'Assign' }).click();
+  await expect(person).toContainText(role);
+
+  await view(owner).getByRole('button', { name: 'Roles' }).click();
+  await card.getByRole('button', { name: `Delete ${role}` }).click();
+  await expect(card.getByRole('alert')).toContainText('The 1 person or group holding it loses it at once.');
+  await card.getByRole('button', { name: 'Delete role' }).click();
+  await expect(view(owner).getByRole('list', { name: 'Roles' })).not.toContainText(role);
+  await view(owner).getByRole('button', { name: 'People' }).click();
+  await expect(person).not.toContainText(role);
+
+  await ben.context().close();
+  await anna.context().close();
+});

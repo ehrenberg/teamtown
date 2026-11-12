@@ -1,4 +1,4 @@
-import type { AssignableRole, BrowseChannelsResponse, FloorPlan, FloorSummary } from '@teamtown/contracts';
+import type { BrowseChannelsResponse, FloorPlan, FloorSummary, Place } from '@teamtown/contracts';
 import type { TFunction } from 'i18next';
 
 export interface ScopeOption {
@@ -13,27 +13,25 @@ export interface Places {
   readonly channels: BrowseChannelsResponse['channels'];
 }
 
-/** Where a role can apply (docs/features/access-administration.md); the server checks the same. */
-export function scopesFor(role: AssignableRole, { floors, plans, channels }: Places, t: TFunction): ScopeOption[] {
-  const town = { scope: 'town', label: t('admin.scopeTown') };
-  const floorOptions = floors.map((floor) => ({ scope: `floor:${floor.floorId}`, label: floor.name }));
-  const roomOptions = plans.flatMap((plan) =>
-    plan.rooms.map((room) => ({ scope: `room:${plan.floorId}/${room.id}`, label: `${plan.name} · ${room.name}` })),
-  );
-  switch (role) {
-    case 'owner':
-    case 'admin':
-      return [town];
-    case 'editor':
-      return [town, ...floorOptions];
-    case 'room-host':
-      return [town, ...floorOptions, ...roomOptions];
-    case 'channel-moderator':
-      return [
-        town,
-        ...channels.map((channel) => ({ scope: `channel:${channel.channelId}`, label: `#${channel.name}` })),
-      ];
-  }
+/** The scopes a role can be given at, from the places the server says it applies to (P-37). */
+export function scopesFor(places: readonly Place[], { floors, plans, channels }: Places, t: TFunction): ScopeOption[] {
+  return [
+    ...(places.includes('town') ? [{ scope: 'town', label: t('admin.scopeTown') }] : []),
+    ...(places.includes('floor')
+      ? floors.map((floor) => ({ scope: `floor:${floor.floorId}`, label: floor.name }))
+      : []),
+    ...(places.includes('room')
+      ? plans.flatMap((plan) =>
+          plan.rooms.map((room) => ({
+            scope: `room:${plan.floorId}/${room.id}`,
+            label: `${plan.name} · ${room.name}`,
+          })),
+        )
+      : []),
+    ...(places.includes('channel')
+      ? channels.map((channel) => ({ scope: `channel:${channel.channelId}`, label: `#${channel.name}` }))
+      : []),
+  ];
 }
 
 /**

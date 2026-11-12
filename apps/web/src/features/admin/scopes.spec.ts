@@ -11,14 +11,13 @@ const places: Places = {
 };
 
 describe('scopesFor', () => {
-  const scopes = (role: Parameters<typeof scopesFor>[0]) => scopesFor(role, places, t).map((option) => option.scope);
+  const scopes = (kinds: Parameters<typeof scopesFor>[0]) => scopesFor(kinds, places, t).map((option) => option.scope);
 
-  it('offers each role only where it applies', () => {
-    expect(scopes('owner')).toEqual(['town']);
-    expect(scopes('admin')).toEqual(['town']);
-    expect(scopes('editor')).toEqual(['town', 'floor:f1']);
-    expect(scopes('room-host')).toEqual(['town', 'floor:f1', 'room:f1/r1']);
-    expect(scopes('channel-moderator')).toEqual(['town', 'channel:c1']);
+  it('offers a role only where it applies (P-37)', () => {
+    expect(scopes(['town'])).toEqual(['town']);
+    expect(scopes(['town', 'floor'])).toEqual(['town', 'floor:f1']);
+    expect(scopes(['town', 'floor', 'room'])).toEqual(['town', 'floor:f1', 'room:f1/r1']);
+    expect(scopes(['town', 'channel'])).toEqual(['town', 'channel:c1']);
   });
 });
 
