@@ -76,17 +76,17 @@ Rating legend: **Impact** (value for users) and **Effort** each from ● (low) t
 
 ## 6. Admin, enterprise & self-hosting
 
-| #   | Idea                          | Description                                                                                                                                                   | Impact | Effort | MVP?     |
-| --- | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | -------- |
-| A1  | **Office editor (tile grid)** | Draw walls, rooms and doors on the iso grid, place furniture from a catalogue, with the real floor plan image as a tracing layer. _(Decided: in-app editor.)_ | ●●●    | ●●●    | ✔        |
-| A2  | **Room policies**             | Per room: access mode, who may enter or lock, audio isolation, capacity, room wall on/off.                                                                    | ●●●    | ●●     | ✔        |
-| A3  | **Custom roles**              | Admins compose roles from permission sets (e.g. "Team Lead" = can lock rooms + moderate channels).                                                            | ●●●    | ●●     | ✔        |
-| A4  | **Guest access**              | A link to exactly one room or meeting. The guest lands in the lobby or at reception and sees only what is shared.                                             | ●●●    | ●●     | ✔        |
-| A5  | **Audit log**                 | Admin actions are logged (role changes, deletions, policy changes), _not_ user movements.                                                                     | ●●●    | ●      | ✔        |
-| A6  | **SSO & user provisioning**   | OIDC via Keycloak federating Entra ID or Google. SCIM sync of users and groups.                                                                               | ●●●    | ●●     | (partly) |
-| A7  | **Setup wizard**              | First start: create admin → pick office size → draw or skip floor plan → invite people.                                                                       | ●●●    | ●●     | ✔        |
-| A8  | **Data export**               | Export all data (GDPR Art. 20) and anonymize leavers.                                                                                                         | ●●     | ●●     |          |
-| A9  | **Retention policies**        | Delete messages after X days per channel.                                                                                                                     | ●●     | ●      |          |
+| #   | Idea                                                          | Description                                                                                                                                                   | Impact | Effort | MVP?     |
+| --- | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | -------- |
+| A1  | **Office editor (tile grid)**                                 | Draw walls, rooms and doors on the iso grid, place furniture from a catalogue, with the real floor plan image as a tracing layer. _(Decided: in-app editor.)_ | ●●●    | ●●●    | ✔        |
+| A2  | **Room policies**                                             | Per room: access mode, who may enter or lock, audio isolation, capacity, room wall on/off.                                                                    | ●●●    | ●●     | ✔        |
+| A3  | **Custom roles** [→ spec](../features/access-custom-roles.md) | Admins compose roles from permission sets (e.g. "Team Lead" = can lock rooms + moderate channels).                                                            | ●●●    | ●●     | ✔        |
+| A4  | **Guest access**                                              | A link to exactly one room or meeting. The guest lands in the lobby or at reception and sees only what is shared.                                             | ●●●    | ●●     | ✔        |
+| A5  | **Audit log**                                                 | Admin actions are logged (role changes, deletions, policy changes), _not_ user movements.                                                                     | ●●●    | ●      | ✔        |
+| A6  | **SSO & user provisioning**                                   | OIDC via Keycloak federating Entra ID or Google. SCIM sync of users and groups.                                                                               | ●●●    | ●●     | (partly) |
+| A7  | **Setup wizard**                                              | First start: create admin → pick office size → draw or skip floor plan → invite people.                                                                       | ●●●    | ●●     | ✔        |
+| A8  | **Data export**                                               | Export all data (GDPR Art. 20) and anonymize leavers.                                                                                                         | ●●     | ●●     |          |
+| A9  | **Retention policies**                                        | Delete messages after X days per channel.                                                                                                                     | ●●     | ●      |          |
 
 ## 7. Integrations & extensibility
 
