@@ -61,7 +61,8 @@ modules/access/
 - Other modules depend **only** on the `AccessPolicy` port:
   `can(personId, permission: Permission, resource: ScopeRef): Promise<boolean>`. A `filterVisible` for lists
   follows when a list needs it (M4d).
-- Built-in roles live in code; custom roles and their tables arrive with M4b.
+- Built-in roles live in code, custom roles in `access.custom_role` (M4b-2). Where any role can be assigned follows from
+  its permissions (`placesFor`, P-37).
 - Reading still goes through memberships and `Channel.canRead`; M4d moves it to `AccessPolicy`, when guests need it.
 - Checks happen in **application services** (use cases), never in controllers or the domain.
   Domain objects stay pure.

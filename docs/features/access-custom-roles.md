@@ -1,6 +1,6 @@
 # Feature: Custom roles
 
-- **Status:** In progress
+- **Status:** Done (2026-11-12)
 - **Brainstorming ID:** A3 Custom roles
 - **Bounded context(s):** Access, web client
 - **Milestone:** M4b-2 (ADR-0011, ADR-0038)
@@ -30,18 +30,18 @@ so that I can match responsibilities in my organisation without giving anyone mo
 
 ## Acceptance criteria
 
-- [ ] Given an Admin, when they create "Team Lead" with `room.lock` and `message.pin`, then it can be assigned for the
+- [x] Given an Admin, when they create "Team Lead" with `room.lock` and `message.pin`, then it can be assigned for the
       whole town only, and the person holding it gets both permissions at once.
-- [ ] Given a role with room permissions only, then it can be assigned to a floor or a room, and not to a channel.
-- [ ] Given a role that includes `town.owners.manage`, then creating or saving it is refused (`400`).
-- [ ] Given a role assigned to a room, when its permissions are changed to channel ones, then the change is refused
+- [x] Given a role with room permissions only, then it can be assigned to a floor or a room, and not to a channel.
+- [x] Given a role that includes `town.owners.manage`, then creating or saving it is refused (`400`).
+- [x] Given a role assigned to a room, when its permissions are changed to channel ones, then the change is refused
       (`409`) with a plain message, and nothing changes.
-- [ ] Given a role assigned to two people, when it is deleted after confirming, then both lose its permissions at once.
-- [ ] Given a built-in role, then it can't be changed or deleted, but copied into a new custom role.
-- [ ] Given a Member, then the roles API answers `403`.
-- [ ] Non-spatial path: everything works in the Administration view, by keyboard; there is no world part.
-- [ ] Accessibility: permissions are labelled checkboxes in labelled groups; the delete confirmation is announced.
-- [ ] i18n: every permission and all new strings exist in English and German, using German **du**.
+- [x] Given a role assigned to two people, when it is deleted after confirming, then both lose its permissions at once.
+- [x] Given a built-in role, then it can't be changed or deleted, but copied into a new custom role.
+- [x] Given a Member, then the roles API answers `403`.
+- [x] Non-spatial path: everything works in the Administration view, by keyboard; there is no world part.
+- [x] Accessibility: permissions are labelled checkboxes in labelled groups; the delete confirmation is announced.
+- [x] i18n: every permission and all new strings exist in English and German, using German **du**.
 
 ## Permissions
 
