@@ -1,4 +1,5 @@
 import { Migration } from '@mikro-orm/migrations';
+import { AccessCustomRolesMigration } from './access-custom-roles.migration.ts';
 
 /** Role assignments, groups and the first Owner (M4a, ADR-0011, ADR-0036). Custom roles add their tables in M4b. */
 export class AccessInitialMigration extends Migration {
@@ -34,4 +35,7 @@ export class AccessInitialMigration extends Migration {
   }
 }
 
-export const ACCESS_MIGRATIONS = [{ name: '20261104180000_access_initial', class: AccessInitialMigration }];
+export const ACCESS_MIGRATIONS = [
+  { name: '20261104180000_access_initial', class: AccessInitialMigration },
+  { name: '20261112120000_access_custom_roles', class: AccessCustomRolesMigration },
+];

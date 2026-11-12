@@ -33,7 +33,7 @@ export class PostgresAssignmentRepository implements AssignmentRepository {
       );
     return rows.map((row) => ({
       principal: { kind: row.principal_kind as Assignment['principal']['kind'], id: row.principal_id },
-      roleId: row.role_id as Assignment['roleId'],
+      roleId: row.role_id,
       scope: row.scope,
     }));
   }

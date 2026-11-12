@@ -3,9 +3,11 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import type { Assignment } from '../domain/assignment.ts';
 import type { RoleAssignment } from '../domain/evaluate.ts';
 import { CachedAccessPolicy } from './access-policy.ts';
+import { AdministerCustomRoles } from './administer-custom-roles.ts';
 import { AdministerGroups, GetAccessOverview } from './administer-groups.ts';
 import { AssignRole, GetMyAccess, RevokeRole } from './administer-roles.ts';
 import type { AssignmentRepository } from './ports/assignment-repository.port.ts';
+import type { RoleRepository } from './ports/role-repository.port.ts';
 import type { GroupRepository, GroupView } from './ports/group-repository.port.ts';
 
 class InMemoryAccess implements AssignmentRepository, GroupRepository {
@@ -24,7 +26,7 @@ class InMemoryAccess implements AssignmentRepository, GroupRepository {
     return Promise.resolve([...this.rows]);
   }
   assignToPerson(personId: string, assignment: RoleAssignment): Promise<void> {
-    return this.assign({ ...assignment, principal: { kind: 'person', id: personId } } as Assignment);
+    return this.assign({ ...assignment, principal: { kind: 'person', id: personId } });
   }
   assign(assignment: Assignment): Promise<void> {
     if (!this.rows.some((row) => same(row, assignment))) this.rows.push(assignment);
@@ -94,6 +96,14 @@ const hostOfRoom = (principal: Assignment['principal']): Assignment => ({
 });
 const room = { kind: 'room', floorId: 'f1', roomId: 'r1' } as const;
 
+const noCustomRoles: RoleRepository = {
+  list: () => Promise.resolve([]),
+  create: () => Promise.resolve(true),
+  update: () => Promise.resolve(true),
+  delete: () => Promise.resolve(0),
+  scopesOf: () => Promise.resolve([]),
+};
+
 describe('Administration', () => {
   let repository: InMemoryAccess;
   let policy: CachedAccessPolicy;
@@ -105,12 +115,17 @@ describe('Administration', () => {
 
   beforeEach(async () => {
     repository = new InMemoryAccess();
-    policy = new CachedAccessPolicy(repository);
+    policy = new CachedAccessPolicy(repository, noCustomRoles);
     assign = new AssignRole(repository, policy);
     revoke = new RevokeRole(repository, policy);
     let next = 0;
     groups = new AdministerGroups(policy, repository, { next: () => `g${String(++next)}` });
-    overview = new GetAccessOverview(policy, repository, repository);
+    overview = new GetAccessOverview(
+      policy,
+      repository,
+      repository,
+      new AdministerCustomRoles(policy, noCustomRoles, { next: () => 'r' }),
+    );
     me = new GetMyAccess(policy);
     await repository.assign(owner('olga'));
     await repository.assign(admin('ada'));

@@ -33,7 +33,7 @@ export class AssignRole {
 
   async execute(input: { actorId: string; assignment: Assignment }): Promise<Result<void, AdministerRoleError>> {
     if (!(await mayChange(this.policy, input.actorId, input.assignment))) return err('not-allowed');
-    const assignable = checkAssignable(input.assignment);
+    const assignable = checkAssignable(input.assignment, await this.policy.permissionsOf(input.assignment.roleId));
     if (!assignable.ok) return assignable;
     await this.assignments.assign(input.assignment);
     this.policy.forgetAll();

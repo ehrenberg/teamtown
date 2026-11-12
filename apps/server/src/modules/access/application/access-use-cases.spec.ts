@@ -4,6 +4,7 @@ import { CachedAccessPolicy } from './access-policy.ts';
 import { AssignChannelModerator } from './assign-channel-moderator.ts';
 import { ClaimFirstOwner } from './claim-first-owner.ts';
 import type { AssignmentRepository } from './ports/assignment-repository.port.ts';
+import type { RoleRepository } from './ports/role-repository.port.ts';
 
 class InMemoryAssignments implements AssignmentRepository {
   readonly byPerson = new Map<string, RoleAssignment[]>();
@@ -34,6 +35,14 @@ class InMemoryAssignments implements AssignmentRepository {
 
 const channel = { kind: 'channel', channelId: 'c1' } as const;
 
+const noCustomRoles: RoleRepository = {
+  list: () => Promise.resolve([]),
+  create: () => Promise.resolve(true),
+  update: () => Promise.resolve(true),
+  delete: () => Promise.resolve(0),
+  scopesOf: () => Promise.resolve([]),
+};
+
 describe('Access use cases', () => {
   let repository: InMemoryAssignments;
   let policy: CachedAccessPolicy;
@@ -41,7 +50,7 @@ describe('Access use cases', () => {
 
   beforeEach(() => {
     repository = new InMemoryAssignments();
-    policy = new CachedAccessPolicy(repository);
+    policy = new CachedAccessPolicy(repository, noCustomRoles);
     claim = new ClaimFirstOwner(repository, policy);
   });
 
@@ -71,7 +80,7 @@ describe('Access use cases', () => {
   it('settles on a restart without changing the Owner', async () => {
     await claim.execute('anna');
 
-    await new ClaimFirstOwner(repository, new CachedAccessPolicy(repository)).execute('ben');
+    await new ClaimFirstOwner(repository, new CachedAccessPolicy(repository, noCustomRoles)).execute('ben');
 
     expect(repository.owner).toBe('anna');
   });

@@ -4,6 +4,8 @@ import { ACCESS_POLICY, CachedAccessPolicy } from './application/access-policy.t
 import { AssignChannelModerator } from './application/assign-channel-moderator.ts';
 import { ClaimFirstOwner } from './application/claim-first-owner.ts';
 import { ASSIGNMENT_REPOSITORY, type AssignmentRepository } from './application/ports/assignment-repository.port.ts';
+import { ROLE_REPOSITORY, type RoleRepository } from './application/ports/role-repository.port.ts';
+import { PostgresRoleRepository } from './infrastructure/persistence/postgres-role.repository.ts';
 import { ACCESS_MIGRATIONS } from './infrastructure/persistence/migrations/access-initial.migration.ts';
 import { PostgresAssignmentRepository } from './infrastructure/persistence/postgres-assignment.repository.ts';
 
@@ -11,14 +13,20 @@ import { PostgresAssignmentRepository } from './infrastructure/persistence/postg
 @Module({
   providers: [
     {
+      provide: ROLE_REPOSITORY,
+      useFactory: (orm: MikroORM) => new PostgresRoleRepository(orm),
+      inject: [MikroORM],
+    },
+    {
       provide: ASSIGNMENT_REPOSITORY,
       useFactory: (orm: MikroORM) => new PostgresAssignmentRepository(orm),
       inject: [MikroORM],
     },
     {
       provide: CachedAccessPolicy,
-      useFactory: (repository: AssignmentRepository) => new CachedAccessPolicy(repository),
-      inject: [ASSIGNMENT_REPOSITORY],
+      useFactory: (repository: AssignmentRepository, roles: RoleRepository) =>
+        new CachedAccessPolicy(repository, roles),
+      inject: [ASSIGNMENT_REPOSITORY, ROLE_REPOSITORY],
     },
     { provide: ACCESS_POLICY, useExisting: CachedAccessPolicy },
     {
@@ -34,7 +42,14 @@ import { PostgresAssignmentRepository } from './infrastructure/persistence/postg
       inject: [ASSIGNMENT_REPOSITORY, CachedAccessPolicy],
     },
   ],
-  exports: [ACCESS_POLICY, CachedAccessPolicy, ASSIGNMENT_REPOSITORY, ClaimFirstOwner, AssignChannelModerator],
+  exports: [
+    ACCESS_POLICY,
+    CachedAccessPolicy,
+    ASSIGNMENT_REPOSITORY,
+    ROLE_REPOSITORY,
+    ClaimFirstOwner,
+    AssignChannelModerator,
+  ],
 })
 export class AccessModule {
   static readonly migrations = ACCESS_MIGRATIONS;

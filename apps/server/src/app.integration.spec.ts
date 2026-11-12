@@ -481,6 +481,48 @@ describe('TeamTown server (integration)', () => {
       expect(await canPinGeneral()).toBe(false);
     });
 
+    it('lets an administrator put a role together, give it and delete it again (M4b-2)', async () => {
+      const mine = async (token: string) => MyAccessResponse.parse(await (await get('/access/me', token)).json());
+      const admin = (await mine('token-olga')).canManageOwners ? 'token-olga' : 'token-omar';
+      const miaId = await idOf('token-mia');
+      const canPinGeneral = async () =>
+        ChannelSummarySchema.parse(await (await get('/channels/general', 'token-mia')).json()).canPin;
+
+      expect(
+        (await send('POST', '/access/roles', 'token-mia', { name: 'x', permissions: ['message.pin'] })).status,
+      ).toBe(403);
+      expect(
+        (await send('POST', '/access/roles', admin, { name: 'King', permissions: ['town.owners.manage'] })).status,
+      ).toBe(400);
+      const created = await send('POST', '/access/roles', admin, {
+        name: 'Team Lead',
+        permissions: ['message.pin', 'room.lock'],
+      });
+      const { roleId } = (await created.json()) as { roleId: string };
+      const overview = AccessOverviewResponse.parse(await (await get('/access/overview', admin)).json());
+      expect(overview.roles.find((role) => role.roleId === roleId)).toMatchObject({
+        name: 'Team Lead',
+        permissions: ['room.lock', 'message.pin'],
+        builtIn: false,
+        places: ['town'],
+      });
+
+      const onChannel = { principal: { kind: 'person', id: miaId }, roleId, scope: 'channel:general' };
+      expect((await send('PUT', '/access/assignments', admin, onChannel)).status).toBe(400);
+      expect((await send('PUT', '/access/assignments', admin, { ...onChannel, scope: 'town' })).status).toBe(204);
+      expect(await canPinGeneral()).toBe(true);
+
+      // Narrowed to channel permissions it still fits the town; deleting it takes it from Mia at once.
+      expect(
+        (await send('PATCH', `/access/roles/${roleId}`, admin, { name: 'Pinner', permissions: ['message.pin'] }))
+          .status,
+      ).toBe(204);
+      expect(await canPinGeneral()).toBe(true);
+      expect((await remove(`/access/roles/${roleId}`, admin)).status).toBe(204);
+      expect(await canPinGeneral()).toBe(false);
+      expect((await remove('/access/roles/admin', admin)).status).toBe(400);
+    });
+
     it("lets a channel's creator moderate it, and keeps a private channel from the Owner (M4a)", async () => {
       const crew = ChannelSummarySchema.parse(
         await (await send('POST', '/channels', 'token-lena', { kind: 'private', name: 'nur-wir' })).json(),

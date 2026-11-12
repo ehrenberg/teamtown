@@ -5,6 +5,7 @@ import type { AccessPolicy, CachedAccessPolicy } from './access-policy.ts';
 import type { AssignmentRepository } from './ports/assignment-repository.port.ts';
 import type { GroupRepository, GroupView } from './ports/group-repository.port.ts';
 import type { Assignment } from '../domain/assignment.ts';
+import type { AdministerCustomRoles, RoleView } from './administer-custom-roles.ts';
 
 export type GroupError = 'not-allowed' | 'not-found' | 'invalid-group-name' | 'group-name-taken';
 
@@ -14,12 +15,19 @@ export class GetAccessOverview {
     private readonly access: AccessPolicy,
     private readonly assignments: AssignmentRepository,
     private readonly groups: GroupRepository,
+    private readonly roles: AdministerCustomRoles,
   ) {}
 
-  async execute(actorId: string): Promise<Result<{ assignments: Assignment[]; groups: GroupView[] }, 'not-allowed'>> {
+  async execute(
+    actorId: string,
+  ): Promise<Result<{ assignments: Assignment[]; groups: GroupView[]; roles: RoleView[] }, 'not-allowed'>> {
     if (!(await this.access.can(actorId, 'town.roles.manage', TOWN))) return err('not-allowed');
-    const [assignments, groups] = await Promise.all([this.assignments.listAll(), this.groups.list()]);
-    return ok({ assignments, groups });
+    const [assignments, groups, roles] = await Promise.all([
+      this.assignments.listAll(),
+      this.groups.list(),
+      this.roles.list(),
+    ]);
+    return ok({ assignments, groups, roles });
   }
 }
 

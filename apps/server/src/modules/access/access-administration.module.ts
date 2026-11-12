@@ -5,7 +5,9 @@ import { ID_GENERATOR } from '../../platform/config/config.module.ts';
 import { PeopleModule } from '../people/public-api.ts';
 import { AccessModule } from './access.module.ts';
 import { CachedAccessPolicy } from './application/access-policy.ts';
+import { AdministerCustomRoles } from './application/administer-custom-roles.ts';
 import { AdministerGroups, GetAccessOverview } from './application/administer-groups.ts';
+import { ROLE_REPOSITORY, type RoleRepository } from './application/ports/role-repository.port.ts';
 import { AssignRole, GetMyAccess, RevokeRole } from './application/administer-roles.ts';
 import { ASSIGNMENT_REPOSITORY, type AssignmentRepository } from './application/ports/assignment-repository.port.ts';
 import { GROUP_REPOSITORY, type GroupRepository } from './application/ports/group-repository.port.ts';
@@ -26,15 +28,25 @@ import { AccessController } from './interface/http/access.controller.ts';
       inject: [MikroORM],
     },
     {
+      provide: AdministerCustomRoles,
+      useFactory: (policy: CachedAccessPolicy, roles: RoleRepository, ids: IdGenerator) =>
+        new AdministerCustomRoles(policy, roles, ids),
+      inject: [CachedAccessPolicy, ROLE_REPOSITORY, ID_GENERATOR],
+    },
+    {
       provide: GetMyAccess,
       useFactory: (policy: CachedAccessPolicy) => new GetMyAccess(policy),
       inject: [CachedAccessPolicy],
     },
     {
       provide: GetAccessOverview,
-      useFactory: (policy: CachedAccessPolicy, assignments: AssignmentRepository, groups: GroupRepository) =>
-        new GetAccessOverview(policy, assignments, groups),
-      inject: [CachedAccessPolicy, ASSIGNMENT_REPOSITORY, GROUP_REPOSITORY],
+      useFactory: (
+        policy: CachedAccessPolicy,
+        assignments: AssignmentRepository,
+        groups: GroupRepository,
+        roles: AdministerCustomRoles,
+      ) => new GetAccessOverview(policy, assignments, groups, roles),
+      inject: [CachedAccessPolicy, ASSIGNMENT_REPOSITORY, GROUP_REPOSITORY, AdministerCustomRoles],
     },
     {
       provide: AssignRole,

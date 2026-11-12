@@ -45,3 +45,13 @@ describe('holds', () => {
     }
   });
 });
+
+describe('holds with custom roles', () => {
+  it("reads a custom role's permissions, and grants nothing for one that is gone", () => {
+    const teamLead: RoleAssignment = { roleId: 'custom-1', scope: 'town' };
+    const lookup = (roleId: string) => (roleId === 'custom-1' ? (['message.pin'] as const) : undefined);
+
+    expect(holds([teamLead], 'message.pin', channel, lookup)).toBe(true);
+    expect(holds([teamLead], 'message.pin', channel)).toBe(false);
+  });
+});
