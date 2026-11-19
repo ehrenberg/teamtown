@@ -97,7 +97,7 @@ services:
       - tempo-data:/var/tempo
 
   grafana:
-    image: grafana/grafana:13.3.0
+    image: grafana/grafana:13.3.1
     environment:
       # Development only: no login. Production uses Caddy + Grafana login (ADR-0025).
       GF_AUTH_ANONYMOUS_ENABLED: 'true'
